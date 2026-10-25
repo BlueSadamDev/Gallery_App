@@ -1,0 +1,34 @@
+# Dépendances
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Fichiers de build natifs
+*.apk
+*.aab
+*.ipa
+ios/Pods/
+android/build/
+ios/build/
+
+# Variables d'environnement et secrets
+.env
+.env.local
+.env.*.local
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Systèmes d'exploitation
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.idea/
+*.swp
+*.swo

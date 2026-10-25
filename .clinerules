@@ -1,0 +1,39 @@
+# Règles du projet
+
+## Contexte
+- Je ne sais pas développer. Explique-moi tout en français simple, sans jargon (ou explique chaque terme technique).
+- Projet : application Android. Livrable : un APK de test que je peux installer sur mon téléphone.
+- Technologie imposée : Expo (React Native, TypeScript), avec Expo Go pour les tests et EAS Build pour l'APK. Ne propose pas d'autre framework sans me demander.
+- Avant de créer le projet, explique en 3 lignes pourquoi ce choix est adapté, puis attends ma validation.
+
+## Façon de travailler
+- Commence toujours par un plan court et attends ma validation avant d'écrire du code.
+- Demande-moi une validation à chaque étape majeure : création du projet, nouvelle fonctionnalité, changement d'architecture, ajout d'une dépendance. Pour une petite modification, avance sans demander.
+- Fais de petites modifications, vérifie que ça fonctionne après chacune.
+- Après chaque étape, résume en 3 à 5 lignes ce qui a changé et comment je peux le vérifier.
+- Ne supprime jamais de fichiers et n'installe aucun outil global sans me demander.
+- N'ajoute aucune fonctionnalité que je n'ai pas demandée et ne réécris pas du code qui marche.
+- Si tu es bloqué après 2 tentatives, arrête-toi, explique le problème et propose des options. Ne tourne pas en boucle.
+
+## Git et GitHub
+- Le code est versionné avec Git et poussé sur GitHub.
+- Fais un commit de sécurité avant chaque grosse modification.
+- Fais des commits fréquents avec des messages clairs en français.
+- Ne travaille jamais directement sur la branche main.
+- Crée une branche par fonctionnalité majeure (nom clair, par exemple feature/ajout-saisie).
+- Après chaque étape validée : commit, puis push de la branche sur GitHub.
+- Fusionne dans main uniquement après ma validation, quand l'APK de la branche a été testé.
+- Après la fusion, explique-moi ce qui a été fait et propose de supprimer la branche.
+- Ne mets jamais de secrets dans le dépôt (clés API, mots de passe, fichiers de signature). Utilise le fichier .gitignore.
+- Ne fais jamais de force push et ne réécris jamais l'historique sans mon accord.
+
+## Build de l'APK
+- Utilise EAS Build ou GitHub Actions. Donne-moi les commandes exactes à copier-coller.
+- Explique-moi comment télécharger et installer l'APK sur mon téléphone.
+
+## Maîtrise des coûts
+- Lis uniquement les fichiers nécessaires, pas tout le projet à chaque fois.
+- Prévient-moi quand la conversation devient longue et suggère-moi de démarrer une nouvelle tâche.
+
+## Documentation
+- Tiens à jour un fichier README.md : objectif de l'app, comment la lancer, comment construire l'APK.
