@@ -1,12 +1,27 @@
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '@/theme';
+
+function SettingsButton() {
+  return (
+    <Link href="/settings" asChild>
+      <Pressable style={styles.settingsButton}>
+        <Text style={styles.settingsIcon}>⚙️</Text>
+      </Pressable>
+    </Link>
+  );
+}
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
     <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerRight: () => <SettingsButton />,
+        }}
+      />
       <Text style={styles.title}>Détail de l’œuvre</Text>
       <Text style={styles.hint}>Référence : {id}</Text>
       <Text style={styles.subtitle}>
@@ -44,4 +59,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     maxWidth: 280,
   },
+  settingsButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  settingsIcon: {
+    fontSize: 22,
+  },
 });
+

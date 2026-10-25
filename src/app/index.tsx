@@ -1,4 +1,4 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   FlatList,
@@ -10,6 +10,16 @@ import {
 } from 'react-native';
 import { colors, fonts, spacing, radius } from '@/theme';
 import { Artwork, getArtworks } from '@/db/database';
+
+function SettingsButton() {
+  return (
+    <Link href="/settings" asChild>
+      <Pressable style={styles.settingsButton}>
+        <Text style={styles.settingsIcon}>⚙️</Text>
+      </Pressable>
+    </Link>
+  );
+}
 
 export default function HomeScreen() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
@@ -31,13 +41,19 @@ export default function HomeScreen() {
     }, [])
   );
 
-  if (artworks.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <View style={styles.header}>
-          <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
-          <Text style={styles.title}>Ma collection</Text>
-        </View>
+  return (
+    <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerRight: () => <SettingsButton />,
+        }}
+      />
+      <View style={styles.header}>
+        <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
+        <Text style={styles.title}>Ma collection</Text>
+      </View>
+
+      {artworks.length === 0 ? (
         <View style={styles.emptyBody}>
           <Text style={styles.emptyText}>
             Votre collection est encore vide.
@@ -56,73 +72,66 @@ export default function HomeScreen() {
             </Pressable>
           </Link>
         </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
-        <Text style={styles.title}>Ma collection</Text>
-      </View>
-
-      <FlatList
-        data={artworks}
-        keyExtractor={(item) => String(item.id)}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <Link href={`/detail/${item.id}`} asChild>
+      ) : (
+        <>
+          <FlatList
+            data={artworks}
+            keyExtractor={(item) => String(item.id)}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <Link href={`/detail/${item.id}`} asChild>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.card,
+                    pressed && styles.cardPressed,
+                  ]}
+                >
+                  <View style={styles.thumbWrap}>
+                    {item.imageUri ? (
+                      <Image
+                        source={{ uri: item.imageUri }}
+                        style={styles.thumb}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.thumb, styles.placeholder]}>
+                        <Text style={styles.placeholderIcon}>✦</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    {item.artist ? (
+                      <Text style={styles.cardArtist} numberOfLines={1}>
+                        {item.artist}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+              </Link>
+            )}
+          />
+          <Link href="/add" asChild>
             <Pressable
               style={({ pressed }) => [
-                styles.card,
-                pressed && styles.cardPressed,
+                styles.fab,
+                pressed && styles.buttonPressed,
               ]}
             >
-              <View style={styles.thumbWrap}>
-                {item.imageUri ? (
-                  <Image
-                    source={{ uri: item.imageUri }}
-                    style={styles.thumb}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.thumb, styles.placeholder]}>
-                    <Text style={styles.placeholderIcon}>✦</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.cardText}>
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-                {item.artist ? (
-                  <Text style={styles.cardArtist} numberOfLines={1}>
-                    {item.artist}
-                  </Text>
-                ) : null}
-              </View>
+              <Text style={styles.fabIcon}>＋</Text>
             </Pressable>
           </Link>
-        )}
-      />
-
-      <Link href="/add" asChild>
-        <Pressable
-          style={({ pressed }) => [
-            styles.fab,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.fabIcon}>＋</Text>
-        </Pressable>
-      </Link>
+        </>
+      )}
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -259,6 +268,14 @@ const styles = StyleSheet.create({
     color: colors.onAccent,
     lineHeight: 30,
   },
+  settingsButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  settingsIcon: {
+    fontSize: 22,
+  },
+
 });
 
 

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Link, router, Stack } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
@@ -15,6 +15,18 @@ import {
 import { colors, fonts, spacing, radius } from '@/theme';
 import { addArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
+import { identifyArtwork } from '@/utils/gemini';
+import { getGeminiApiKey } from '@/config/settings';
+
+function SettingsButton() {
+  return (
+    <Link href="/settings" asChild>
+      <Pressable style={styles.settingsButton}>
+        <Text style={styles.settingsIcon}>⚙️</Text>
+      </Pressable>
+    </Link>
+  );
+}
 
 export default function AddScreen() {
   const [title, setTitle] = useState('');
@@ -23,6 +35,7 @@ export default function AddScreen() {
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [identifying, setIdentifying] = useState(false);
 
   const canSave = title.trim().length > 0 && !saving;
 
@@ -34,6 +47,37 @@ export default function AddScreen() {
   async function handleTakePhoto() {
     const uri = await takePhotoWithCamera();
     if (uri) setImageUri(uri);
+  }
+
+  // Envoie la photo à Gemini pour identifier automatiquement l'œuvre.
+  async function handleIdentify() {
+    if (!imageUri || identifying) return;
+    const hasKey = await getGeminiApiKey();
+    if (!hasKey) {
+      Alert.alert(
+        'Clé API manquante',
+        'Ajoutez d’abord votre clé Gemini dans les paramètres (roue ⚙️).'
+      );
+      return;
+    }
+    setIdentifying(true);
+    try {
+      const info = await identifyArtwork(imageUri);
+      if (info) {
+        if (info.title) setTitle(info.title);
+        if (info.artist) setArtist(info.artist);
+        if (info.year) setYear(info.year);
+        if (info.description) setDescription(info.description);
+        Alert.alert('Œuvre identifiée', 'Les informations ont été complétées.');
+      } else {
+        Alert.alert('Aucun résultat', 'Gemini n’a pas pu identifier cette œuvre.');
+      }
+    } catch (error) {
+      console.error('Erreur de reconnaissance', error);
+      Alert.alert('Erreur', 'Impossible d’identifier l’œuvre. Vérifiez votre connexion.');
+    } finally {
+      setIdentifying(false);
+    }
   }
 
   async function handleSave() {
@@ -56,7 +100,14 @@ export default function AddScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
+    <>
+      <Stack.Screen
+        options={{
+          headerRight: () => <SettingsButton />,
+        }}
+      />
+
+      <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
@@ -95,6 +146,21 @@ export default function AddScreen() {
               <Text style={styles.imageButtonText}>Caméra</Text>
             </Pressable>
           </View>
+          {imageUri ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.identifyButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleIdentify}
+              disabled={identifying}
+            >
+              <Text style={styles.identifyButtonText}>
+                {identifying ? 'Identification…' : 'Identifier l’œuvre avec Gemini'}
+              </Text>
+            </Pressable>
+          ) : null}
+
         </View>
 
 
@@ -161,6 +227,7 @@ export default function AddScreen() {
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -243,6 +310,20 @@ const styles = StyleSheet.create({
     color: colors.accent,
   },
 
+  identifyButton: {
+    backgroundColor: colors.accent,
+    paddingVertical: 13,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  identifyButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.onAccent,
+  },
+
+
   saveButton: {
     backgroundColor: colors.accent,
     paddingVertical: 15,
@@ -261,5 +342,13 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.85,
   },
+  settingsButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  settingsIcon: {
+    fontSize: 22,
+  },
+
 });
 
