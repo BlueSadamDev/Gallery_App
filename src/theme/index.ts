@@ -23,13 +23,13 @@ export const colors = {
 } as const;
 
 export const fonts = {
-  // Titres élégants, style musée
-  title: 'PlayfairDisplay_600SemiBold',
-  titleBold: 'PlayfairDisplay_700Bold',
-  // Texte simple et lisible
-  regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
-  semibold: 'Inter_600SemiBold',
+  // Titres élégants, style musée (Satoshi Bold)
+  title: 'Satoshi-Medium',
+  titleBold: 'Satoshi-Bold',
+  // Texte simple et lisible (Satoshi)
+  regular: 'Satoshi-Regular',
+  medium: 'Satoshi-Medium',
+  semibold: 'Satoshi-Bold',
 } as const;
 
 export const spacing = {

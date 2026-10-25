@@ -1,25 +1,14 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-} from '@expo-google-fonts/inter';
-import {
-  PlayfairDisplay_600SemiBold,
-  PlayfairDisplay_700Bold,
-} from '@expo-google-fonts/playfair-display';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '@/theme';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    PlayfairDisplay_600SemiBold,
-    PlayfairDisplay_700Bold,
+    'Satoshi-Regular': require('../assets/fonts/Satoshi-Regular.ttf'),
+    'Satoshi-Medium': require('../assets/fonts/Satoshi-Medium.ttf'),
+    'Satoshi-Bold': require('../assets/fonts/Satoshi-Bold.ttf'),
   });
 
   if (!fontsLoaded) {
@@ -52,4 +41,5 @@ export default function RootLayout() {
     </>
   );
 }
+
 
