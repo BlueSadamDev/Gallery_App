@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors, fonts, spacing } from '@/theme';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -7,10 +8,9 @@ export default function DetailScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Détail de l’œuvre</Text>
-      <Text style={styles.hint}>Identifiant : {id}</Text>
+      <Text style={styles.hint}>Référence : {id}</Text>
       <Text style={styles.subtitle}>
-        Les informations complètes (image, auteur, description…) apparaîtront
-        ici dans une prochaine étape.
+        Les informations complètes de l’œuvre apparaîtront ici.
       </Text>
     </View>
   );
@@ -21,23 +21,27 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAFAFA',
-    padding: 24,
+    backgroundColor: colors.background,
+    padding: spacing.lg,
   },
   title: {
+    fontFamily: fonts.titleBold,
     fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   hint: {
-    fontSize: 16,
-    color: '#2C3E50',
-    marginBottom: 12,
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.accent,
+    marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    color: colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 280,
   },
 });

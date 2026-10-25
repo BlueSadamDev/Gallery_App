@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, fonts, spacing } from '@/theme';
 
 export default function AddScreen() {
   return (
@@ -8,7 +9,13 @@ export default function AddScreen() {
       <Text style={styles.hint}>
         Le formulaire de saisie arrivera dans une prochaine étape.
       </Text>
-      <Pressable style={styles.button} onPress={() => router.back()}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          pressed && styles.buttonPressed,
+        ]}
+        onPress={() => router.back()}
+      >
         <Text style={styles.buttonText}>Retour</Text>
       </Pressable>
     </View>
@@ -20,30 +27,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FAFAFA',
-    padding: 24,
+    backgroundColor: colors.background,
+    padding: spacing.lg,
   },
   title: {
+    fontFamily: fonts.titleBold,
     fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   hint: {
-    fontSize: 16,
-    color: '#666666',
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 22,
+    maxWidth: 280,
+    marginBottom: spacing.xl,
   },
   button: {
-    backgroundColor: '#2C3E50',
+    backgroundColor: colors.accent,
     paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+  },
+  buttonPressed: {
+    opacity: 0.85,
   },
   buttonText: {
-    color: '#FFFFFF',
+    fontFamily: fonts.semibold,
     fontSize: 16,
-    fontWeight: '600',
+    color: colors.onAccent,
   },
 });
