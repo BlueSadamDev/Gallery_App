@@ -2,7 +2,9 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { colors } from '@/theme';
+import { initDatabase } from '@/db/database';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -10,8 +12,19 @@ export default function RootLayout() {
     'Satoshi-Medium': require('../assets/fonts/Satoshi-Medium.ttf'),
     'Satoshi-Bold': require('../assets/fonts/Satoshi-Bold.ttf'),
   });
+  const [dbReady, setDbReady] = useState(false);
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    initDatabase()
+      .then(() => setDbReady(true))
+      .catch((error) => {
+        console.error('Erreur d’initialisation de la base de données', error);
+        // On laisse l'app démarrer même en cas d'erreur de base.
+        setDbReady(true);
+      });
+  }, []);
+
+  if (!fontsLoaded || !dbReady) {
     return (
       <View
         style={{
@@ -41,5 +54,6 @@ export default function RootLayout() {
     </>
   );
 }
+
 
 

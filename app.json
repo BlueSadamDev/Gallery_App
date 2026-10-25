@@ -33,7 +33,8 @@
             "./src/assets/fonts/Satoshi-Bold.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
