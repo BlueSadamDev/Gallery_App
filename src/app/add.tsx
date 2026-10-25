@@ -1,62 +1,172 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, spacing } from '@/theme';
+import { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { colors, fonts, spacing, radius } from '@/theme';
+import { addArtwork } from '@/db/database';
 
 export default function AddScreen() {
+  const [title, setTitle] = useState('');
+  const [artist, setArtist] = useState('');
+  const [year, setYear] = useState('');
+  const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const canSave = title.trim().length > 0 && !saving;
+
+  async function handleSave() {
+    if (!canSave) return;
+    setSaving(true);
+    try {
+      await addArtwork({
+        title: title.trim(),
+        artist: artist.trim(),
+        description: description.trim(),
+        year: year.trim(),
+        imageUri: null,
+      });
+      router.back();
+    } catch (error) {
+      console.error('Erreur lors de l’enregistrement', error);
+      setSaving(false);
+    }
+  }
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Ajouter une œuvre</Text>
-      <Text style={styles.hint}>
-        Le formulaire de saisie arrivera dans une prochaine étape.
-      </Text>
-      <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={() => router.back()}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.buttonText}>Retour</Text>
-      </Pressable>
-    </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Nom de l’œuvre *</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Ex. La Joconde"
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Auteur</Text>
+          <TextInput
+            style={styles.input}
+            value={artist}
+            onChangeText={setArtist}
+            placeholder="Ex. Léonard de Vinci"
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Année</Text>
+          <TextInput
+            style={styles.input}
+            value={year}
+            onChangeText={setYear}
+            placeholder="Ex. 1503"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="number-pad"
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Quelques mots sur cette œuvre…"
+            placeholderTextColor={colors.textSecondary}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+        </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.saveButton,
+            !canSave && styles.saveButtonDisabled,
+            pressed && canSave && styles.buttonPressed,
+          ]}
+          onPress={handleSave}
+          disabled={!canSave}
+        >
+          <Text style={styles.saveButtonText}>
+            {saving ? 'Enregistrement…' : 'Enregistrer'}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: colors.background,
-    padding: spacing.lg,
   },
-  title: {
-    fontFamily: fonts.titleBold,
-    fontSize: 28,
+  content: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  fieldGroup: {
+    marginBottom: spacing.lg,
+  },
+  label: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
-  hint: {
+  input: {
+    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.textPrimary,
     fontFamily: fonts.regular,
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 280,
-    marginBottom: spacing.xl,
   },
-  button: {
+  textArea: {
+    minHeight: 100,
+  },
+  saveButton: {
     backgroundColor: colors.accent,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+    paddingVertical: 15,
     borderRadius: 30,
+    alignItems: 'center',
+    marginTop: spacing.sm,
   },
-  buttonPressed: {
-    opacity: 0.85,
+  saveButtonDisabled: {
+    opacity: 0.5,
   },
-  buttonText: {
+  saveButtonText: {
     fontFamily: fonts.semibold,
     fontSize: 16,
     color: colors.onAccent,
   },
+  buttonPressed: {
+    opacity: 0.85,
+  },
 });
+
