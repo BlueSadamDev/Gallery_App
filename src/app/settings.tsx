@@ -14,6 +14,7 @@ import {
 import { colors, fonts, spacing, radius } from '@/theme';
 import { getGeminiApiKey, saveGeminiApiKey } from '@/config/settings';
 import { logoutUser } from '@/auth/auth';
+import { exportBackup, importBackup } from '@/utils/backup';
 
 export default function SettingsScreen() {
   const [apiKey, setApiKey] = useState('');
@@ -98,6 +99,41 @@ export default function SettingsScreen() {
     );
   }
 
+  // Exporte la collection vers un fichier partageable.
+  async function handleExport() {
+    try {
+      const ok = await exportBackup();
+      if (!ok) {
+        Alert.alert('Export', 'Impossible de partager la sauvegarde sur cet appareil.');
+      }
+    } catch (error) {
+      console.error('Erreur d’export', error);
+      Alert.alert('Erreur', 'Impossible d’exporter la sauvegarde.');
+    }
+  }
+
+  // Importe une sauvegarde depuis un fichier.
+  async function handleImport() {
+    try {
+      const count = await importBackup();
+      if (count > 0) {
+        Alert.alert(
+          'Import terminé',
+          `${count} œuvre(s) ont été restaurée(s).`
+        );
+      } else {
+        Alert.alert('Import annulé', 'Aucune œuvre importée.');
+      }
+    } catch (error) {
+      console.error('Erreur d’import', error);
+      Alert.alert(
+        'Erreur',
+        'Le fichier sélectionné ne semble pas être une sauvegarde valide.'
+      );
+    }
+  }
+
+
 
   return (
     <KeyboardAvoidingView
@@ -156,6 +192,33 @@ export default function SettingsScreen() {
         >
           <Text style={styles.testButtonText}>Tester la clé</Text>
         </Pressable>
+
+        <Text style={styles.sectionTitle}>Sauvegarde et restauration</Text>
+        <Text style={styles.sectionHint}>
+          Exportez votre collection dans un fichier pour la conserver ailleurs,
+          ou importez une sauvegarde précédente.
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.backupButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleExport}
+        >
+          <Text style={styles.backupButtonText}>Exporter la sauvegarde</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.backupButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleImport}
+        >
+          <Text style={styles.backupButtonText}>Importer une sauvegarde</Text>
+        </Pressable>
+
 
         <Pressable
           style={({ pressed }) => [
@@ -258,6 +321,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     textAlign: 'center',
   },
+
+  backupButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    paddingVertical: 13,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  backupButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.accent,
+  },
+
 
   logoutButton: {
     backgroundColor: colors.card,
