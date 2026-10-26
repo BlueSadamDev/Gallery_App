@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { colors, fonts, spacing, radius } from '@/theme';
 import { getGeminiApiKey, saveGeminiApiKey } from '@/config/settings';
+import { logoutUser } from '@/auth/auth';
 
 export default function SettingsScreen() {
   const [apiKey, setApiKey] = useState('');
@@ -77,6 +79,26 @@ export default function SettingsScreen() {
     }
   }
 
+  // Déconnecte l'utilisateur et revient à l'écran de connexion.
+  function handleLogout() {
+    Alert.alert(
+      'Se déconnecter ?',
+      'Vous devrez vous reconnecter pour accéder à votre collection.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            await logoutUser();
+            router.replace('/login');
+          },
+        },
+      ]
+    );
+  }
+
+
   return (
     <KeyboardAvoidingView
       style={styles.flex}
@@ -134,6 +156,17 @@ export default function SettingsScreen() {
         >
           <Text style={styles.testButtonText}>Tester la clé</Text>
         </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutButtonText}>Se déconnecter</Text>
+        </Pressable>
+
 
         <Text style={styles.privacyNote}>
           Votre clé est stockée de manière sécurisée sur votre téléphone et
@@ -225,6 +258,22 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     textAlign: 'center',
   },
+
+  logoutButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  logoutButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: colors.danger,
+  },
+
   buttonPressed: {
     opacity: 0.85,
   },

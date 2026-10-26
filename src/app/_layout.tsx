@@ -1,10 +1,11 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { colors } from '@/theme';
 import { initDatabase } from '@/db/database';
+import { isLoggedIn, isUserRegistered } from '@/auth/auth';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -13,6 +14,7 @@ export default function RootLayout() {
     'Satoshi-Bold': require('../assets/fonts/Satoshi-Bold.ttf'),
   });
   const [dbReady, setDbReady] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     initDatabase()
@@ -24,7 +26,26 @@ export default function RootLayout() {
       });
   }, []);
 
-  if (!fontsLoaded || !dbReady) {
+  // Vérifie l'état de connexion et redirige si nécessaire.
+  useEffect(() => {
+    if (!dbReady) return;
+    (async () => {
+      const loggedIn = await isLoggedIn();
+      if (loggedIn) {
+        setAuthChecked(true);
+        return;
+      }
+      const registered = await isUserRegistered();
+      if (registered) {
+        router.replace('/login');
+      } else {
+        router.replace('/register');
+      }
+      setAuthChecked(true);
+    })();
+  }, [dbReady]);
+
+  if (!fontsLoaded || !dbReady || !authChecked) {
     return (
       <View
         style={{
@@ -54,6 +75,7 @@ export default function RootLayout() {
     </>
   );
 }
+
 
 
 
