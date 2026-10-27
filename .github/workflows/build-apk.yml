@@ -32,8 +32,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Configurer le SDK Android
-        uses: android-actions/setup-android@v3
+      # Le runner ubuntu-latest contient déjà un SDK Android complet,
+      # donc aucune action d'installation supplémentaire n'est nécessaire.
 
       - name: Générer le projet natif Android
         run: npx expo prebuild --platform android --no-install
