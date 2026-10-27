@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Gallery App",
+    "slug": "gallery-app",
+    "scheme": "galleryapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.bluesadam.galleryapp",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.bluesadamdevsteam.galleryapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./src/assets/fonts/Satoshi-Regular.ttf",
+            "./src/assets/fonts/Satoshi-Medium.ttf",
+            "./src/assets/fonts/Satoshi-Bold.ttf"
+          ]
+        }
+      ],
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Autoriser Gallery App à accéder à vos photos pour enregistrer vos œuvres.",
+          "cameraPermission": "Autoriser Gallery App à utiliser la caméra pour photographier vos œuvres."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "b791e3e2-abcc-4485-9dd9-bcb8104c3fad"
+      }
+    }
+  }
+}
