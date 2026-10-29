@@ -64,11 +64,11 @@ export default function HomeScreen() {
           <Link href="/add" asChild>
             <Pressable
               style={({ pressed }) => [
-                styles.button,
+                styles.bigAddButton,
                 pressed && styles.buttonPressed,
               ]}
             >
-              <Text style={styles.buttonText}>Ajouter une œuvre</Text>
+              <Text style={styles.bigAddIcon}>＋</Text>
             </Pressable>
           </Link>
         </View>
@@ -132,7 +132,6 @@ export default function HomeScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -183,19 +182,24 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     marginBottom: spacing.xl,
   },
-  button: {
+  bigAddButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: colors.accent,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+    marginTop: spacing.xl,
   },
-  buttonPressed: {
-    opacity: 0.85,
-  },
-  buttonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 16,
+  bigAddIcon: {
+    fontSize: 56,
     color: colors.onAccent,
+    lineHeight: 60,
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -275,7 +279,7 @@ const styles = StyleSheet.create({
   settingsIcon: {
     fontSize: 22,
   },
-
+  buttonPressed: {
+    opacity: 0.85,
+  },
 });
-
-
