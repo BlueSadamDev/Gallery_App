@@ -11,6 +11,7 @@ export type ArtworkInfo = {
   artist: string;
   year: string;
   description: string;
+  style: string;
 };
 
 // Lit une image locale en base64 (pour l'envoyer à Gemini).
@@ -41,6 +42,7 @@ Renvoie UNIQUEMENT un objet JSON au format suivant, sans aucun texte autour :
   "title": "Titre de l'œuvre",
   "artist": "Nom de l'artiste",
   "year": "Année de création",
+  "style": "Style ou mouvement artistique (ex. Renaissance, Impressionnisme, Art abstrait, Rococo...)",
   "description": "Description courte et élégante de l'œuvre en français (2-3 phrases)"
 }
 Si tu ne reconnais pas l'œuvre, décris ce que tu vois de façon générale.
@@ -90,9 +92,10 @@ function parseArtworkInfo(raw: string): ArtworkInfo {
       artist: String(parsed.artist ?? '').trim(),
       year: String(parsed.year ?? '').trim(),
       description: String(parsed.description ?? '').trim(),
+      style: String(parsed.style ?? '').trim(),
     };
   } catch {
     // En cas d'échec d'analyse, on renvoie un objet vide.
-    return { title: '', artist: '', year: '', description: '' };
+    return { title: '', artist: '', year: '', description: '', style: '' };
   }
 }

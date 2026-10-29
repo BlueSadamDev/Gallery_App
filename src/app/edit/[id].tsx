@@ -34,6 +34,7 @@ export default function EditScreen() {
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
   const [description, setDescription] = useState('');
+  const [style, setStyle] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(!Number.isNaN(numericId));
   const [saving, setSaving] = useState(false);
@@ -52,6 +53,7 @@ export default function EditScreen() {
           setArtist(artwork.artist);
           setYear(artwork.year);
           setDescription(artwork.description);
+          setStyle(artwork.style);
           setImageUri(artwork.imageUri);
         }
       })
@@ -80,6 +82,7 @@ export default function EditScreen() {
         artist: artist.trim(),
         description: description.trim(),
         year: year.trim(),
+        style: style.trim(),
         imageUri,
       });
       router.back();
@@ -174,6 +177,17 @@ export default function EditScreen() {
               placeholder="Ex. 1503"
               placeholderTextColor={colors.textSecondary}
               keyboardType="number-pad"
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Style</Text>
+            <TextInput
+              style={styles.input}
+              value={style}
+              onChangeText={setStyle}
+              placeholder="Ex. Renaissance, Impressionnisme…"
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
 

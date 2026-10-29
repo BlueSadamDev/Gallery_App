@@ -14,6 +14,7 @@ type BackupArtwork = {
   artist: string;
   description: string;
   year: string;
+  style: string;
   imageBase64?: string | null;
 };
 
@@ -53,6 +54,7 @@ export async function exportBackup(): Promise<boolean> {
       artist: artwork.artist,
       description: artwork.description,
       year: artwork.year,
+      style: artwork.style,
       imageBase64,
     });
   }
@@ -114,6 +116,7 @@ export async function importBackup(): Promise<number> {
       artist: item.artist || '',
       description: item.description || '',
       year: item.year || '',
+      style: item.style || '',
       imageUri,
     });
     inserted++;

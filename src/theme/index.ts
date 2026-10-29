@@ -12,6 +12,8 @@ export const colors = {
   textSecondary: '#6B7280',
   // Seule couleur d'accent : brun doré discret (cadres de musée)
   accent: '#8B6F47',
+  // Couleur d'action (ex. bouton de création d'une œuvre) : bleu, bien visible
+  action: '#2563EB',
   // Séparateurs et bordures très légères
   border: '#E8E8E8',
   // Couleur des champs de saisie

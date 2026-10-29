@@ -33,6 +33,7 @@ export default function AddScreen() {
   const [artist, setArtist] = useState('');
   const [year, setYear] = useState('');
   const [description, setDescription] = useState('');
+  const [style, setStyle] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [identifying, setIdentifying] = useState(false);
@@ -41,17 +42,24 @@ export default function AddScreen() {
 
   async function handlePickFromGallery() {
     const uri = await pickImageFromGallery();
-    if (uri) setImageUri(uri);
+    if (uri) {
+      setImageUri(uri);
+      // Complète automatiquement les informations grâce à l'IA Gemini.
+      populateFromImage(uri);
+    }
   }
 
   async function handleTakePhoto() {
     const uri = await takePhotoWithCamera();
-    if (uri) setImageUri(uri);
+    if (uri) {
+      setImageUri(uri);
+      populateFromImage(uri);
+    }
   }
 
-  // Envoie la photo à Gemini pour identifier automatiquement l'œuvre.
-  async function handleIdentify() {
-    if (!imageUri || identifying) return;
+  // Envoie la photo à Gemini pour remplir automatiquement les informations.
+  async function populateFromImage(uri: string) {
+    if (identifying) return;
     const hasKey = await getGeminiApiKey();
     if (!hasKey) {
       Alert.alert(
@@ -62,13 +70,14 @@ export default function AddScreen() {
     }
     setIdentifying(true);
     try {
-      const info = await identifyArtwork(imageUri);
+      const info = await identifyArtwork(uri);
       if (info) {
         if (info.title) setTitle(info.title);
         if (info.artist) setArtist(info.artist);
         if (info.year) setYear(info.year);
+        if (info.style) setStyle(info.style);
         if (info.description) setDescription(info.description);
-        Alert.alert('Œuvre identifiée', 'Les informations ont été complétées.');
+        Alert.alert('Œuvre identifiée', 'Les informations ont été complétées automatiquement.');
       } else {
         Alert.alert('Aucun résultat', 'Gemini n’a pas pu identifier cette œuvre.');
       }
@@ -80,6 +89,12 @@ export default function AddScreen() {
     }
   }
 
+  // Permet de relancer l'identification manuellement (bouton).
+  async function handleIdentify() {
+    if (!imageUri || identifying) return;
+    await populateFromImage(imageUri);
+  }
+
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
@@ -89,6 +104,7 @@ export default function AddScreen() {
         artist: artist.trim(),
         description: description.trim(),
         year: year.trim(),
+        style: style.trim(),
         imageUri,
       });
       router.back();
@@ -195,6 +211,17 @@ export default function AddScreen() {
             placeholder="Ex. 1503"
             placeholderTextColor={colors.textSecondary}
             keyboardType="number-pad"
+          />
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Style</Text>
+          <TextInput
+            style={styles.input}
+            value={style}
+            onChangeText={setStyle}
+            placeholder="Ex. Renaissance, Impressionnisme…"
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
