@@ -79,7 +79,7 @@ En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas 
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - Carrousel horizontal de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte : image (coins 2 px) ≈ 80 % de la largeur de l'écran, hauteur totale 220 px, titre et artiste dessous. Défilement carte par carte avec snap, sans boucle. Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel. Pas de défilement automatique. L'appui ouvre le détail de l'œuvre.
-  - (Étape 3) Regroupement des œuvres par artiste sous le carrousel (en-tête + grille 2 colonnes).
+  - Regroupement des œuvres par artiste sous le carrousel : en-tête avec nom (style étiquette #8A6A45) et nombre d'œuvres, puis grille de 2 colonnes (image carrée, titre, année). Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier. Œuvres d'un groupe triées par année croissante.
 - Pas de barre de navigation en bas.
 
 ### 4. Ajout d'une œuvre

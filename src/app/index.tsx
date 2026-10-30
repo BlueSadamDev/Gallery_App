@@ -6,6 +6,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -18,6 +19,46 @@ import { Artwork, getArtworks } from '@/db/database';
 const ACCENT = '#7B3F3A';
 const ON_ACCENT = '#F6F2EA';
 const ICON_GRAY = '#7A756B';
+const LABEL = '#8A6A45';
+
+// Regroupe les œuvres par artiste et les trie pour l'affichage.
+// - compare les artistes sans tenir compte des majuscules ni des espaces.
+// - artiste vide → groupe « Artiste inconnu », placé en dernier.
+// - œuvres de chaque groupe triées par année croissante.
+function groupByArtist(artworks: Artwork[]) {
+  const groups: Record<string, { display: string; data: Artwork[] }> = {};
+  for (const artwork of artworks) {
+    const raw = (artwork.artist ?? '').trim();
+    const key = raw === '' ? '__unknown__' : raw.toLowerCase();
+    const display = raw === '' ? 'Artiste inconnu' : raw;
+    if (!groups[key]) groups[key] = { display, data: [] };
+    groups[key].data.push(artwork);
+  }
+  // Trie les œuvres de chaque groupe par année croissante.
+  for (const key in groups) {
+    groups[key].data.sort((a, b) => {
+      const ya = parseInt(a.year, 10);
+      const yb = parseInt(b.year, 10);
+      if (Number.isNaN(ya) && Number.isNaN(yb)) return 0;
+      if (Number.isNaN(ya)) return 1;
+      if (Number.isNaN(yb)) return -1;
+      return ya - yb;
+    });
+  }
+  // Convertit en tableau trié.
+  const sections = Object.keys(groups).map((key) => ({
+    artistKey: key,
+    artist: groups[key].display,
+    count: groups[key].data.length,
+    data: groups[key].data,
+  }));
+  sections.sort((a, b) => {
+    if (a.artistKey === '__unknown__') return 1;
+    if (b.artistKey === '__unknown__') return -1;
+    return a.artistKey.localeCompare(b.artistKey);
+  });
+  return sections;
+}
 
 function SettingsButton() {
   return (
@@ -124,7 +165,7 @@ export default function HomeScreen() {
           </Link>
         </View>
       ) : (
-        <>
+        <ScrollView style={{ flex: 1 }}>
           {(() => {
             const screenWidth = Dimensions.get('window').width;
             const cardWidth = screenWidth * 0.8;
@@ -232,10 +273,118 @@ export default function HomeScreen() {
                     />
                   ))}
                 </View>
+
+                {/* Regroupement par artiste */}
+                {groupByArtist(artworks).map((section) => (
+                  <View key={section.artistKey} style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
+                    {/* En-tête du groupe */}
+                    <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.sm }}>
+                      <Text
+                        style={{
+                          fontFamily: fonts.medium,
+                          fontSize: 11,
+                          letterSpacing: 2,
+                          color: LABEL,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {section.artist}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: fonts.regular,
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                          marginLeft: spacing.sm,
+                        }}
+                      >
+                        {section.count === 1 ? '1 œuvre' : `${section.count} œuvres`}
+                      </Text>
+                    </View>
+
+                    {/* Grille 2 colonnes */}
+                    {section.data.reduce<Artwork[][]>((rows, art, i) => {
+                      if (i % 2 === 0) rows.push([art]);
+                      else rows[rows.length - 1].push(art);
+                      return rows;
+                    }, []).map((pair, rowIndex) => (
+                      <View
+                        key={String(rowIndex)}
+                        style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm }}
+                      >
+                        {pair.map((artwork) => (
+                          <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
+                            <Pressable
+                              style={{
+                                flex: 1,
+                                backgroundColor: colors.card,
+                                borderRadius: radius.lg,
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <View
+                                style={{
+                                  width: '100%',
+                                  aspectRatio: 1,
+                                  backgroundColor: colors.border,
+                                }}
+                              >
+                                {artwork.imageUri ? (
+                                  <Image
+                                    source={{ uri: artwork.imageUri }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    resizeMode="cover"
+                                  />
+                                ) : (
+                                  <View
+                                    style={{
+                                      width: '100%', height: '100%',
+                                      alignItems: 'center', justifyContent: 'center',
+                                      backgroundColor: colors.background,
+                                    }}
+                                  >
+                                    <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
+                                      ✦
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                              <View style={{ padding: spacing.md }}>
+                                <Text
+                                  style={{
+                                    fontFamily: fonts.title,
+                                    fontSize: 16,
+                                    color: colors.textPrimary,
+                                  }}
+                                  numberOfLines={1}
+                                >
+                                  {artwork.title}
+                                </Text>
+                                {artwork.year ? (
+                                  <Text
+                                    style={{
+                                      fontFamily: fonts.regular,
+                                      fontSize: 13,
+                                      color: colors.textSecondary,
+                                      marginTop: 2,
+                                    }}
+                                    numberOfLines={1}
+                                  >
+                                    {artwork.year}
+                                  </Text>
+                                ) : null}
+                              </View>
+                            </Pressable>
+                          </Link>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
+                ))}
               </>
             );
           })()}
-        </>
+        </ScrollView>
       )}
     </View>
   );
