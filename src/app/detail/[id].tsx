@@ -112,6 +112,9 @@ export default function DetailScreen() {
             {artwork.year ? (
               <Text style={styles.year}>{artwork.year}</Text>
             ) : null}
+            {artwork.style ? (
+              <Text style={styles.styleText}>{artwork.style}</Text>
+            ) : null}
             {artwork.description ? (
               <Text style={styles.description}>{artwork.description}</Text>
             ) : null}
@@ -209,6 +212,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textSecondary,
     marginBottom: spacing.md,
+  },
+  styleText: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.accent,
+    marginBottom: spacing.md,
+    textTransform: 'capitalize',
   },
   description: {
     fontFamily: fonts.regular,

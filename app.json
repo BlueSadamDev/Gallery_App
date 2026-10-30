@@ -11,18 +11,18 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.bluesadam.galleryapp",
+      "package": "com.bluesadamdevsteam.galleryapp",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO"
-      ],
-      "package": "com.bluesadamdevsteam.galleryapp"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +46,8 @@
           "photosPermission": "Autoriser Gallery App à accéder à vos photos pour enregistrer vos œuvres.",
           "cameraPermission": "Autoriser Gallery App à utiliser la caméra pour photographier vos œuvres."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

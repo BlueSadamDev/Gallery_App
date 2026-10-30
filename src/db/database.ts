@@ -7,6 +7,7 @@ export type Artwork = {
   artist: string;
   description: string;
   year: string;
+  style: string;
   imageUri: string | null;
 };
 
@@ -16,6 +17,7 @@ export type NewArtwork = {
   artist: string;
   description: string;
   year: string;
+  style: string;
   imageUri: string | null;
 };
 
@@ -38,9 +40,19 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
           artist TEXT NOT NULL,
           description TEXT NOT NULL,
           year TEXT NOT NULL,
+          style TEXT NOT NULL DEFAULT '',
           imageUri TEXT
         );
       `);
+      // Migration : ajoute la colonne "style" si elle n'existe pas (anciennes bases).
+      const columns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(artworks);'
+      );
+      if (!columns.some((col) => col.name === 'style')) {
+        await db.execAsync(
+          `ALTER TABLE artworks ADD COLUMN style TEXT NOT NULL DEFAULT '';`
+        );
+      }
       return db;
     })();
   }
@@ -70,12 +82,13 @@ export async function getArtwork(id: number): Promise<Artwork | null> {
 export async function addArtwork(artwork: NewArtwork): Promise<Artwork> {
   const db = await initDatabase();
   const result = await db.runAsync(
-    `INSERT INTO artworks (title, artist, description, year, imageUri)
-     VALUES (?, ?, ?, ?, ?);`,
+    `INSERT INTO artworks (title, artist, description, year, style, imageUri)
+     VALUES (?, ?, ?, ?, ?, ?);`,
     artwork.title,
     artwork.artist,
     artwork.description,
     artwork.year,
+    artwork.style,
     artwork.imageUri
   );
   const inserted = await getArtwork(result.lastInsertRowId);
@@ -93,12 +106,13 @@ export async function updateArtwork(
   const db = await initDatabase();
   await db.runAsync(
     `UPDATE artworks
-     SET title = ?, artist = ?, description = ?, year = ?, imageUri = ?
+     SET title = ?, artist = ?, description = ?, year = ?, style = ?, imageUri = ?
      WHERE id = ?;`,
     artwork.title,
     artwork.artist,
     artwork.description,
     artwork.year,
+    artwork.style,
     artwork.imageUri,
     id
   );
