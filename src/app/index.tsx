@@ -1,3 +1,4 @@
+import Feather from '@expo/vector-icons/Feather';
 import { Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -8,14 +9,40 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing, radius } from '@/theme';
 import { Artwork, getArtworks } from '@/db/database';
+
+// Couleurs de la charte DESIGN.md utilisées sur l'accueil.
+const ACCENT = '#7B3F3A';
+const ON_ACCENT = '#F6F2EA';
+const ICON_GRAY = '#7A756B';
 
 function SettingsButton() {
   return (
     <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton}>
-        <Text style={styles.settingsIcon}>⚙️</Text>
+      <Pressable
+        style={({ pressed }) => [
+          styles.settingsButton,
+          pressed && styles.buttonPressed,
+        ]}
+      >
+        <Feather name="settings" size={22} color={ICON_GRAY} />
+      </Pressable>
+    </Link>
+  );
+}
+
+function AddButton() {
+  return (
+    <Link href="/add" asChild>
+      <Pressable
+        style={({ pressed }) => [
+          styles.addButton,
+          pressed && styles.buttonPressed,
+        ]}
+      >
+        <Feather name="plus" size={24} color={ON_ACCENT} />
       </Pressable>
     </Link>
   );
@@ -41,16 +68,24 @@ export default function HomeScreen() {
     }, [])
   );
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerRight: () => <SettingsButton />,
-        }}
-      />
-      <View style={styles.header}>
-        <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
-        <Text style={styles.title}>Ma collection</Text>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View
+        style={[styles.header, { paddingTop: insets.top + spacing.md }]}
+      >
+        <View style={styles.headerRow}>
+          <View style={styles.headerTitles}>
+            <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
+            <Text style={styles.title}>Ma collection</Text>
+          </View>
+          <View style={styles.headerActions}>
+            {artworks.length > 0 ? <AddButton /> : null}
+            <SettingsButton />
+          </View>
+        </View>
       </View>
 
       {artworks.length === 0 ? (
@@ -68,7 +103,7 @@ export default function HomeScreen() {
                 pressed && styles.buttonPressed,
               ]}
             >
-              <Text style={styles.bigAddIcon}>＋</Text>
+              <Feather name="plus" size={48} color={ON_ACCENT} />
             </Pressable>
           </Link>
         </View>
@@ -116,16 +151,6 @@ export default function HomeScreen() {
               </Link>
             )}
           />
-          <Link href="/add" asChild>
-            <Pressable
-              style={({ pressed }) => [
-                styles.fab,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.fabIcon}>＋</Text>
-            </Pressable>
-          </Link>
         </>
       )}
     </View>
@@ -143,9 +168,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   header: {
-    paddingTop: spacing.xl,
     paddingBottom: spacing.md,
     paddingHorizontal: spacing.lg,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerTitles: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   kicker: {
     fontFamily: fonts.medium,
@@ -186,22 +224,10 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 3,
-    borderColor: colors.action,
-    backgroundColor: colors.card,
+    backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
     marginTop: spacing.xl,
-  },
-  bigAddIcon: {
-    fontSize: 64,
-    color: colors.action,
-    lineHeight: 68,
   },
   listContent: {
     paddingHorizontal: spacing.lg,
@@ -253,33 +279,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.lg,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.accent,
+  addButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
-  },
-  fabIcon: {
-    fontSize: 28,
-    color: colors.onAccent,
-    lineHeight: 30,
   },
   settingsButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  settingsIcon: {
-    fontSize: 22,
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonPressed: {
     opacity: 0.85,
