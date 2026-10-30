@@ -75,6 +75,7 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
+- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), sans contour. Zone tactile 48 × 48 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - « À la une » : grande image de la dernière œuvre ajoutée, avec titre, artiste et année.
@@ -115,5 +116,5 @@ Recherche, tri, page Artistes, catégories, sauvegarde ou export de la collectio
 ## Corrections à appliquer en priorité
 
 1. Supprimer le titre technique « index » en haut de l'accueil.
-2. Passer le bouton « + » de bleu à l'accent #7B3F3A, en bouton rond.
+2. ✅ Passer le bouton « + » de bleu à l'accent #7B3F3A, en bouton rond (sans contour).
 3. Remplacer la roue système par une icône fine grise.

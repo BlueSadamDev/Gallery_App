@@ -17,8 +17,6 @@ import { Artwork, getArtworks } from '@/db/database';
 const ACCENT = '#7B3F3A';
 const ON_ACCENT = '#F6F2EA';
 const ICON_GRAY = '#7A756B';
-// Bleu de contour, volontairement soutenu pour être bien visible.
-const BORDER_BLUE = '#1D4ED8';
 
 function SettingsButton() {
   return (
@@ -226,8 +224,6 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    borderWidth: 6,
-    borderColor: BORDER_BLUE,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -287,8 +283,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 6,
-    borderColor: BORDER_BLUE,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
