@@ -50,3 +50,6 @@ Thumbs.db
 # generated native folders
 /ios
 /android
+
+# APK de test téléchargés localement (EAS Build)
+*.apk

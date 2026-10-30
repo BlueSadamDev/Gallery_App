@@ -2,7 +2,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { getGeminiApiKey } from '@/config/settings';
 
 // Modèle Gemini utilisé pour la reconnaissance d'œuvres d'art.
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// gemini-1.5-flash a été retiré par Google ; gemini-3.8-flash est le modèle stable actuel.
+const GEMINI_MODEL = 'gemini-3.8-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // Informations structurées renvoyées par Gemini pour une œuvre.
@@ -20,6 +21,33 @@ async function readImageAsBase64(uri: string): Promise<string> {
     encoding: FileSystem.EncodingType.Base64,
   });
   return base64;
+}
+
+// Envoie une requête au modèle Gemini et renvoie le texte brut de la réponse.
+async function sendRequest(
+  apiKey: string,
+  parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[]
+): Promise<string> {
+  const requestBody = {
+    contents: [
+      {
+        parts,
+      },
+    ],
+  };
+
+  const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erreur Gemini (${response.status})`);
+  }
+
+  const data = await response.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 }
 
 // Envoie une image à Gemini pour identifier l'œuvre et renvoyer ses infos.
@@ -49,34 +77,45 @@ Si tu ne reconnais pas l'œuvre, décris ce que tu vois de façon générale.
 Si tu ne connais pas l'année, mets une valeur vide.
 `;
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          { text: prompt },
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: base64,
-            },
-          },
-        ],
+  const text = await sendRequest(apiKey, [
+    { text: prompt },
+    {
+      inline_data: {
+        mime_type: mimeType,
+        data: base64,
       },
-    ],
-  };
+    },
+  ]);
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
-  });
+  return parseArtworkInfo(text);
+}
 
-  if (!response.ok) {
-    throw new Error(`Erreur Gemini (${response.status})`);
+// Envoie un titre d'œuvre à Gemini pour retrouver ses informations.
+// Si la clé API est absente, renvoie null.
+export async function identifyArtworkByTitle(
+  artworkTitle: string
+): Promise<ArtworkInfo | null> {
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) {
+    return null;
   }
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const prompt = `
+Tu es un expert en histoire de l'art. Une personne te donne le titre d'une œuvre d'art : « ${artworkTitle} ».
+Retrouve l'œuvre la plus célèbre correspondant à ce titre.
+Renvoie UNIQUEMENT un objet JSON au format suivant, sans aucun texte autour :
+{
+  "title": "Titre exact de l'œuvre",
+  "artist": "Nom de l'artiste",
+  "year": "Année de création",
+  "style": "Style ou mouvement artistique (ex. Renaissance, Impressionnisme, Art abstrait, Rococo...)",
+  "description": "Description courte et élégante de l'œuvre en français (2-3 phrases)"
+}
+Si tu ne connais pas l'année, mets une valeur vide.
+Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
+`;
+
+  const text = await sendRequest(apiKey, [{ text: prompt }]);
 
   return parseArtworkInfo(text);
 }

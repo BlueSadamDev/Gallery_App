@@ -15,7 +15,7 @@ import {
 import { colors, fonts, spacing, radius } from '@/theme';
 import { addArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
-import { identifyArtwork } from '@/utils/gemini';
+import { identifyArtwork, identifyArtworkByTitle } from '@/utils/gemini';
 import { getGeminiApiKey } from '@/config/settings';
 
 function SettingsButton() {
@@ -37,6 +37,7 @@ export default function AddScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [identifying, setIdentifying] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   const canSave = title.trim().length > 0 && !saving;
 
@@ -93,6 +94,39 @@ export default function AddScreen() {
   async function handleIdentify() {
     if (!imageUri || identifying) return;
     await populateFromImage(imageUri);
+  }
+
+  // Cherche les informations d'une œuvre à partir de son titre via Gemini.
+  async function handleSearchByTitle() {
+    const query = title.trim();
+    if (query.length === 0 || identifying || searching) return;
+    const hasKey = await getGeminiApiKey();
+    if (!hasKey) {
+      Alert.alert(
+        'Clé API manquante',
+        'Ajoutez d’abord votre clé Gemini dans les paramètres (roue ⚙️).'
+      );
+      return;
+    }
+    setSearching(true);
+    try {
+      const info = await identifyArtworkByTitle(query);
+      if (info && (info.title || info.artist || info.year || info.style || info.description)) {
+        if (info.title) setTitle(info.title);
+        if (info.artist) setArtist(info.artist);
+        if (info.year) setYear(info.year);
+        if (info.style) setStyle(info.style);
+        if (info.description) setDescription(info.description);
+        Alert.alert('Œuvre trouvée', 'Les informations ont été complétées automatiquement.');
+      } else {
+        Alert.alert('Aucun résultat', 'Gemini n’a pas trouvé d’œuvre correspondant à ce titre.');
+      }
+    } catch (error) {
+      console.error('Erreur de recherche par titre', error);
+      Alert.alert('Erreur', 'Impossible de rechercher l’œuvre. Vérifiez votre connexion.');
+    } finally {
+      setSearching(false);
+    }
   }
 
   async function handleSave() {
@@ -189,6 +223,19 @@ export default function AddScreen() {
             placeholder="Ex. La Joconde"
             placeholderTextColor={colors.textSecondary}
           />
+          <Pressable
+            style={({ pressed }) => [
+              styles.titleSearchButton,
+              (searching || title.trim().length === 0) && styles.titleSearchButtonDisabled,
+              pressed && !searching && title.trim().length > 0 && styles.buttonPressed,
+            ]}
+            onPress={handleSearchByTitle}
+            disabled={searching || title.trim().length === 0}
+          >
+            <Text style={styles.titleSearchButtonText}>
+              {searching ? 'Recherche en cours…' : 'Chercher avec Gemini'}
+            </Text>
+          </Pressable>
         </View>
 
         <View style={styles.fieldGroup}>
@@ -290,6 +337,24 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 100,
+  },
+  titleSearchButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: radius.md,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  titleSearchButtonDisabled: {
+    opacity: 0.5,
+  },
+  titleSearchButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.accent,
   },
   imageSection: {
     marginBottom: spacing.lg,
