@@ -26,15 +26,19 @@ async function readImageAsBase64(uri: string): Promise<string> {
 // Envoie une requête au modèle Gemini et renvoie le texte brut de la réponse.
 async function sendRequest(
   apiKey: string,
-  parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[]
+  parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[],
+  config?: { temperature?: number; maxOutputTokens?: number }
 ): Promise<string> {
-  const requestBody = {
+  const requestBody: Record<string, unknown> = {
     contents: [
       {
         parts,
       },
     ],
   };
+  if (config) {
+    requestBody.generationConfig = config;
+  }
 
   const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
     method: 'POST',
@@ -85,7 +89,7 @@ Si tu ne connais pas l'année, mets une valeur vide.
         data: base64,
       },
     },
-  ]);
+  ], { temperature: 0, maxOutputTokens: 8192 });
 
   return parseArtworkInfo(text);
 }
@@ -115,7 +119,7 @@ Si tu ne connais pas l'année, mets une valeur vide.
 Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
 `;
 
-  const text = await sendRequest(apiKey, [{ text: prompt }]);
+  const text = await sendRequest(apiKey, [{ text: prompt }], { temperature: 0, maxOutputTokens: 8192 });
 
   return parseArtworkInfo(text);
 }
@@ -123,7 +127,17 @@ Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
 // Extrait et analyse le JSON renvoyé par Gemini.
 function parseArtworkInfo(raw: string): ArtworkInfo {
   // Enlève les blocs de code markdown éventuels (```json ... ```).
-  const cleaned = raw.replace(/```json|```/g, '').trim();
+  let cleaned = raw.replace(/```json\s*|```\s*/g, '').trim();
+
+  // Si le texte ne commence pas par {, on cherche le premier { et le dernier }.
+  if (!cleaned.startsWith('{')) {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      cleaned = cleaned.substring(start, end + 1);
+    }
+  }
+
   try {
     const parsed = JSON.parse(cleaned);
     return {
@@ -134,7 +148,9 @@ function parseArtworkInfo(raw: string): ArtworkInfo {
       style: String(parsed.style ?? '').trim(),
     };
   } catch {
-    // En cas d'échec d'analyse, on renvoie un objet vide.
+    // En cas d'échec d'analyse, on affiche la réponse brute dans les logs
+    // pour pouvoir identifier le problème.
+    console.warn('Gemini : réponse impossible à analyser :', raw);
     return { title: '', artist: '', year: '', description: '', style: '' };
   }
 }
