@@ -1,3 +1,4 @@
+import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -12,16 +13,25 @@ import {
   View,
 } from 'react-native';
 import { colors, fonts, spacing, radius } from '@/theme';
-import { getGeminiApiKey, saveGeminiApiKey } from '@/config/settings';
+import {
+  getGeminiApiKey,
+  getGeminiModel,
+  saveGeminiApiKey,
+  saveGeminiModel,
+  GEMINI_MODELS,
+  DEFAULT_GEMINI_MODEL,
+} from '@/config/settings';
 import { logoutUser } from '@/auth/auth';
 import { exportBackup, importBackup } from '@/utils/backup';
+import { testGeminiModel } from '@/utils/gemini';
 
 export default function SettingsScreen() {
   const [apiKey, setApiKey] = useState('');
   const [hasSavedKey, setHasSavedKey] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [model, setModel] = useState<string>(DEFAULT_GEMINI_MODEL);
 
-  // Au chargement, récupère la clé déjà enregistrée (masquée).
+  // Au chargement, récupère la clé déjà enregistrée (masquée) et le modèle choisi.
   useEffect(() => {
     getGeminiApiKey().then((key) => {
       if (key) {
@@ -29,12 +39,14 @@ export default function SettingsScreen() {
         setHasSavedKey(true);
       }
     });
+    getGeminiModel().then((saved) => setModel(saved));
   }, []);
 
   async function handleSave() {
     setSaving(true);
     try {
       await saveGeminiApiKey(apiKey);
+      await saveGeminiModel(model);
       const key = apiKey.trim();
       if (key.length > 0) {
         setHasSavedKey(true);
@@ -52,7 +64,7 @@ export default function SettingsScreen() {
   }
 
   async function handleTest() {
-    // On sauvegarde d'abord la clé saisie, puis on fait un test simple.
+    // On sauvegarde d'abord la clé et le modèle saisis, puis on teste vraiment le modèle.
     const key = apiKey.trim();
     if (key.length === 0) {
       Alert.alert('Clé manquante', 'Saisissez d’abord votre clé API Gemini.');
@@ -61,15 +73,15 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       await saveGeminiApiKey(key);
-      const testUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-      const response = await fetch(testUrl);
-      if (response.ok) {
-        setHasSavedKey(true);
-        Alert.alert('Test réussi', 'Votre clé API Gemini est valide.');
+      await saveGeminiModel(model);
+      setHasSavedKey(true);
+      const result = await testGeminiModel();
+      if (result.endsWith(': OK')) {
+        Alert.alert('Test réussi', result);
       } else {
         Alert.alert(
           'Test échoué',
-          'La clé semble invalide. Vérifiez-la dans la console Google AI Studio.'
+          `${result}\n\nEssayez un autre modèle dans la liste (par exemple Gemini 2.5 Flash ou Gemini 3.1 Flash-Lite).`
         );
       }
     } catch (error) {
@@ -169,6 +181,31 @@ export default function SettingsScreen() {
           ) : null}
         </View>
 
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Modèle Gemini</Text>
+          <Text style={styles.fieldHint}>
+            Choisissez le modèle autorisé par votre clé. En cas d’échec,
+            essayez Gemini 2.5 Flash ou Gemini 3.1 Flash-Lite.
+          </Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={model}
+              onValueChange={(value) => setModel(String(value))}
+              dropdownIconColor={colors.textSecondary}
+              style={styles.picker}
+            >
+              {GEMINI_MODELS.map((item) => (
+                <Picker.Item
+                  key={item.value}
+                  label={item.label}
+                  value={item.value}
+                  color={colors.textPrimary}
+                />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
         <Pressable
           style={({ pressed }) => [
             styles.saveButton,
@@ -265,6 +302,13 @@ const styles = StyleSheet.create({
   fieldGroup: {
     marginBottom: spacing.lg,
   },
+  fieldHint: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: spacing.sm,
+  },
   label: {
     fontFamily: fonts.semibold,
     fontSize: 14,
@@ -287,6 +331,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.accent,
     marginTop: spacing.sm,
+  },
+  pickerWrapper: {
+    backgroundColor: colors.inputBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    minHeight: 48,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  picker: {
+    color: colors.textPrimary,
+    minHeight: 48,
   },
   saveButton: {
     backgroundColor: colors.accent,

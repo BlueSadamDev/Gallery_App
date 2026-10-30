@@ -1,10 +1,11 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { getGeminiApiKey } from '@/config/settings';
+import { getGeminiApiKey, getGeminiModel } from '@/config/settings';
 
-// Modèle Gemini utilisé pour la reconnaissance d'œuvres d'art.
-// gemini-1.5-flash a été retiré par Google ; gemini-3.8-flash est le modèle stable actuel.
-const GEMINI_MODEL = 'gemini-3.8-flash';
-const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// Construit l'adresse de l'API pour le modèle Gemini choisi dans les paramètres.
+// gemini-1.5-flash a été retiré par Google ; on utilise des modèles actuels.
+function getEndpoint(model: string): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
 
 // Informations structurées renvoyées par Gemini pour une œuvre.
 export type ArtworkInfo = {
@@ -26,6 +27,7 @@ async function readImageAsBase64(uri: string): Promise<string> {
 // Envoie une requête au modèle Gemini et renvoie le texte brut de la réponse.
 async function sendRequest(
   apiKey: string,
+  model: string,
   parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[],
   config?: { temperature?: number; maxOutputTokens?: number }
 ): Promise<string> {
@@ -41,14 +43,14 @@ async function sendRequest(
     },
   };
 
-  // Timeout de sécurité : si Gemini ne répond pas en 90 s, on interrompt.
-  // (Les modèles 3.x « réfléchissent » avant de répondre, d'où la marge.)
+  // Timeout de sécurité : si Gemini ne répond pas en 45 s, on interrompt
+  // (un modèle trop lent ou non autorisé échoue alors rapidement).
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000);
+  const timeout = setTimeout(() => controller.abort(), 45000);
 
   let response: Response;
   try {
-    response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+    response = await fetch(`${getEndpoint(model)}?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
@@ -86,6 +88,7 @@ export async function identifyArtwork(
   if (!apiKey) {
     return null;
   }
+  const model = await getGeminiModel();
 
   const base64 = await readImageAsBase64(imageUri);
   const mimeType = imageUri.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
@@ -104,7 +107,7 @@ Si tu ne reconnais pas l'œuvre, décris ce que tu vois de façon générale.
 Si tu ne connais pas l'année, mets une valeur vide.
 `;
 
-  const text = await sendRequest(apiKey, [
+  const text = await sendRequest(apiKey, model, [
     { text: prompt },
     {
       inline_data: {
@@ -126,6 +129,7 @@ export async function identifyArtworkByTitle(
   if (!apiKey) {
     return null;
   }
+  const model = await getGeminiModel();
 
   const prompt = `
 Tu es un expert en histoire de l'art. Une personne te donne le titre d'une œuvre d'art : « ${artworkTitle} ».
@@ -142,9 +146,29 @@ Si tu ne connais pas l'année, mets une valeur vide.
 Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
 `;
 
-  const text = await sendRequest(apiKey, [{ text: prompt }], { temperature: 0, maxOutputTokens: 8192 });
+  const text = await sendRequest(apiKey, model, [{ text: prompt }], { temperature: 0, maxOutputTokens: 8192 });
 
   return parseArtworkInfo(text);
+}
+
+// Envoie une requête très simple au modèle choisi pour vérifier qu'il fonctionne.
+// Renvoie un message lisible : succès, ou la cause de l'échec.
+export async function testGeminiModel(): Promise<string> {
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) {
+    return 'Aucune clé API enregistrée.';
+  }
+  const model = await getGeminiModel();
+  try {
+    await sendRequest(apiKey, model, [{ text: 'Réponds uniquement : ok' }], {
+      temperature: 0,
+      maxOutputTokens: 256,
+    });
+    return `Modèle ${model} : OK`;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return `Modèle ${model} : échec (${detail})`;
+  }
 }
 
 // Extrait et analyse le JSON renvoyé par Gemini.
