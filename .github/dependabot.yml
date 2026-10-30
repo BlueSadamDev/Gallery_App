@@ -1,0 +1,27 @@
+# Dependabot – Mises à jour automatiques des dépendances
+# Documentation : https://docs.github.com/en/code-security/dependabot
+version: 2
+updates:
+  # Surveille les dépendances npm (Expo, React, etc.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    # Limite le nombre de PR ouvertes simultanément
+    open-pull-requests-limit: 5
+    # Étiquette des PR créées par Dependabot
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # Surveille les workflows GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"

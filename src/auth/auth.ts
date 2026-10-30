@@ -6,25 +6,60 @@ const USERNAME_KEY = 'auth_username';
 const PASSWORD_HASH_KEY = 'auth_password_hash';
 const LOGGED_IN_KEY = 'auth_logged_in';
 
-// Hashe le mot de passe en SHA-256 (jamais stocké en clair).
-export async function hashPassword(password: string): Promise<string> {
-  return await Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    password
-  );
+// Taille du sel aléatoire en octets.
+const SALT_BYTES = 32;
+
+// Marqueur qui distingue un hash "ancien" (sans sel) d'un hash "nouveau" (avec sel).
+// Les hash anciens sont des hexstrings (SHA-256) de 64 caractères exactement.
+// Les hash nouveaux sont stockés comme "sel_hex:hash_hex".
+const HASH_SEPARATOR = ':';
+
+// ---------------------------------------------------------------------------
+// Génère un sel aléatoire cryptographique.
+// ---------------------------------------------------------------------------
+async function generateSalt(): Promise<string> {
+  const bytes = await Crypto.getRandomBytesAsync(SALT_BYTES);
+  // Convertit chaque octet en hexadécimal (deux caractères par octet).
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Crée le compte utilisateur au premier lancement.
+// ---------------------------------------------------------------------------
+// Hashe un mot de passe + sel en SHA-256 (jamais stocké en clair).
+// Renvoie "sel_hex:hash_hex".
+// ---------------------------------------------------------------------------
+async function hashWithSalt(password: string, saltHex: string): Promise<string> {
+  const salted = saltHex + password;
+  const hash = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    salted,
+  );
+  return saltHex + HASH_SEPARATOR + hash;
+}
+
+// ---------------------------------------------------------------------------
+// Vérifie si une valeur correspond à l'ancien format (SHA-256 seul, 64 hex).
+// ---------------------------------------------------------------------------
+function isLegacyHash(value: string): boolean {
+  return /^[0-9a-f]{64}$/i.test(value);
+}
+
+// ---------------------------------------------------------------------------
+// Crée le compte utilisateur avec un sel aléatoire.
+// ---------------------------------------------------------------------------
 export async function registerUser(
   username: string,
   password: string
 ): Promise<void> {
-  const hash = await hashPassword(password);
+  const salt = await generateSalt();
+  const stored = await hashWithSalt(password, salt);
   await SecureStore.setItemAsync(USERNAME_KEY, username.trim());
-  await SecureStore.setItemAsync(PASSWORD_HASH_KEY, hash);
+  await SecureStore.setItemAsync(PASSWORD_HASH_KEY, stored);
 }
 
+// ---------------------------------------------------------------------------
 // Vérifie les identifiants lors de la connexion et ouvre la session.
+// Gère aussi la migration des anciens hashs (SHA-256 sans sel).
+// ---------------------------------------------------------------------------
 export async function loginUser(
   username: string,
   password: string
@@ -33,11 +68,35 @@ export async function loginUser(
   const storedHash = await SecureStore.getItemAsync(PASSWORD_HASH_KEY);
   if (!storedUsername || !storedHash) return false;
 
-  const usernameMatch = storedUsername === username.trim();
-  if (!usernameMatch) return false;
+  if (storedUsername !== username.trim()) return false;
 
-  const inputHash = await hashPassword(password);
-  if (inputHash !== storedHash) return false;
+  // --- Migration de l'ancien format (SHA-256 sans sel) ---
+  if (isLegacyHash(storedHash)) {
+    const legacyHash = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      password,
+    );
+    if (legacyHash !== storedHash) return false;
+
+    // Mot de passe correct → on migre vers le nouveau format avec sel.
+    const salt = await generateSalt();
+    const newStored = await hashWithSalt(password, salt);
+    await SecureStore.setItemAsync(PASSWORD_HASH_KEY, newStored);
+    await SecureStore.setItemAsync(LOGGED_IN_KEY, 'true');
+    return true;
+  }
+
+  // --- Nouveau format (sel:hash) ---
+  const separatorIndex = storedHash.indexOf(HASH_SEPARATOR);
+  if (separatorIndex === -1) return false; // format inattendu
+
+  const storedSalt = storedHash.slice(0, separatorIndex);
+  const storedDigest = storedHash.slice(separatorIndex + 1);
+
+  const computed = await hashWithSalt(password, storedSalt);
+  const computedDigest = computed.slice(computed.indexOf(HASH_SEPARATOR) + 1);
+
+  if (computedDigest !== storedDigest) return false;
 
   await SecureStore.setItemAsync(LOGGED_IN_KEY, 'true');
   return true;

@@ -1,0 +1,25 @@
+# Semgrep – Analyse statique de sécurité
+# Remplace CodeQL (non disponible gratuitement sur les dépôts privés).
+# Exécute un scan de sécurité à chaque push/PR sur main, + chaque dimanche.
+name: Semgrep
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'  # dimanche à minuit
+
+jobs:
+  semgrep:
+    name: Scan de sécurité
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: semgrep/semgrep-action@v1
+        with:
+          config: |
+            p/default
+          auditOn: push
+          output: semgrep-results.sarif
