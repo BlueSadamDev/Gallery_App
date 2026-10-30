@@ -4,9 +4,9 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 
 ## Fonctionnalités
 
-- 📷 Galerie photo : ajout, détail, édition, suppression
-- 🗂️ Stockage local avec **SQLite**
-- 🧠 Reconnaissance automatique des photos avec l'**IA Gemini**
+- 📷 Galerie photo : ajout, détail, édition, suppression (grand bouton « + » bleu pour la première œuvre, petit « + » en bas à droite ensuite)
+- 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description)
+- 🧠 Remplissage automatique des informations avec l'**IA Gemini** : dès qu'une photo est ajoutée, le nom, l'auteur, l'année, le style et la description sont complétés automatiquement
 - 🔐 Connexion / inscription protégée par mot de passe
 - 💾 Sauvegarde et restauration des données
 
