@@ -84,7 +84,9 @@ export default function AddScreen() {
       }
     } catch (error) {
       console.error('Erreur de reconnaissance', error);
-      Alert.alert('Erreur', 'Impossible d’identifier l’œuvre. Vérifiez votre connexion.');
+      const detail =
+        error instanceof Error ? ` (${error.message})` : '';
+      Alert.alert('Erreur', `Impossible d’identifier l’œuvre. Vérifiez votre connexion.${detail}`);
     } finally {
       setIdentifying(false);
     }
@@ -123,7 +125,9 @@ export default function AddScreen() {
       }
     } catch (error) {
       console.error('Erreur de recherche par titre', error);
-      Alert.alert('Erreur', 'Impossible de rechercher l’œuvre. Vérifiez votre connexion.');
+      const detail =
+        error instanceof Error ? ` (${error.message})` : '';
+      Alert.alert('Erreur', `Impossible de rechercher l’œuvre. Vérifiez votre connexion.${detail}`);
     } finally {
       setSearching(false);
     }

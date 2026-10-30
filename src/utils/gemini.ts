@@ -35,23 +35,46 @@ async function sendRequest(
         parts,
       },
     ],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      ...(config ?? {}),
+    },
   };
-  if (config) {
-    requestBody.generationConfig = config;
-  }
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody),
-  });
+  // Timeout de sécurité : si Gemini ne répond pas en 90 s, on interrompt.
+  // (Les modèles 3.x « réfléchissent » avant de répondre, d'où la marge.)
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 90000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${GEMINI_ENDPOINT}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     throw new Error(`Erreur Gemini (${response.status})`);
   }
 
   const data = await response.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const partsList = data?.candidates?.[0]?.content?.parts ?? [];
+
+  // Les modèles récents (Gemini 3.x) peuvent renvoyer plusieurs parties :
+  // la réflexion interne d'abord, la réponse finale ensuite.
+  // On prend la DERNIÈRE partie contenant du texte, c'est la réponse exploitable.
+  let text = '';
+  for (const part of partsList) {
+    if (part?.text) {
+      text = String(part.text);
+    }
+  }
+  return text;
 }
 
 // Envoie une image à Gemini pour identifier l'œuvre et renvoyer ses infos.
