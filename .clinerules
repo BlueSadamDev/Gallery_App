@@ -6,6 +6,9 @@
 - Technologie imposée : Expo (React Native, TypeScript), avec Expo Go pour les tests et EAS Build pour l'APK. Ne propose pas d'autre framework sans me demander.
 - L'application utilise Expo Router : les écrans sont dans `src/app/`, le reste (composants, utilitaires) dans `src/` hors de `src/app/`.
 
+##Design
+Lis DESIGN.md avant tout modification d'interface et respecte-le
+
 ## Façon de travailler
 - Commence toujours par un plan court et attends ma validation avant d'écrire du code.
 - Demande-moi une validation à chaque étape majeure : création du projet, nouvelle fonctionnalité, changement d'architecture, ajout d'une dépendance. Pour une petite modification, avance sans demander.
