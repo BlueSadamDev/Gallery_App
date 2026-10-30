@@ -2,6 +2,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
+  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -50,6 +51,9 @@ function AddButton() {
 
 export default function HomeScreen() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
+  const [randomSample, setRandomSample] = useState<Artwork[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastCount, setLastCount] = useState(0);
 
   // Recharge la liste à chaque fois que l'écran redevient visible.
   useFocusEffect(
@@ -57,7 +61,19 @@ export default function HomeScreen() {
       let active = true;
       getArtworks()
         .then((rows) => {
-          if (active) setArtworks(rows);
+          if (!active) return;
+          setArtworks(rows);
+          // Nouveau tirage au premier chargement ou si la taille a changé.
+          if (rows.length > 0 && (lastCount !== rows.length || randomSample.length === 0)) {
+            const shuffled = [...rows].sort(() => Math.random() - 0.5);
+            setRandomSample(shuffled.slice(0, Math.min(5, shuffled.length)));
+            setLastCount(rows.length);
+            setCurrentIndex(0);
+          } else if (rows.length === 0) {
+            setRandomSample([]);
+            setLastCount(0);
+            setCurrentIndex(0);
+          }
         })
         .catch((error) => {
           console.error('Erreur de lecture de la collection', error);
@@ -65,7 +81,7 @@ export default function HomeScreen() {
       return () => {
         active = false;
       };
-    }, [])
+    }, [lastCount, randomSample.length])
   );
 
   const insets = useSafeAreaInsets();
@@ -109,48 +125,116 @@ export default function HomeScreen() {
         </View>
       ) : (
         <>
-          <FlatList
-            data={artworks}
-            keyExtractor={(item) => String(item.id)}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Link href={`/detail/${item.id}`} asChild>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.card,
-                    pressed && styles.cardPressed,
-                  ]}
+          {(() => {
+            const screenWidth = Dimensions.get('window').width;
+            const cardWidth = screenWidth * 0.8;
+            const imageHeight = 175;
+            return (
+              <>
+                <FlatList
+                  data={randomSample}
+                  keyExtractor={(item) => String(item.id)}
+                  horizontal={true}
+                  pagingEnabled={true}
+                  snapToInterval={cardWidth + spacing.sm}
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(e: any) => {
+                    const pos = e?.target?.scrollPosition?.x ?? 0;
+                    const idx = Math.round(pos / (cardWidth + spacing.sm));
+                    if (idx >= 0 && idx < randomSample.length) {
+                      setCurrentIndex(idx);
+                    }
+                  }}
+                  style={{ height: imageHeight + 56, marginBottom: spacing.sm }}
+                  renderItem={({ item }) => (
+                    <Link href={`/detail/${item.id}`} asChild>
+                      <Pressable
+                        style={{
+                          width: cardWidth,
+                          height: imageHeight + 48,
+                          alignItems: 'center' as 'center',
+                        }}
+                      >
+                        {item.imageUri ? (
+                          <Image
+                            source={{ uri: item.imageUri }}
+                            style={{
+                              width: cardWidth - spacing.sm,
+                              height: imageHeight,
+                              borderRadius: 2,
+                              backgroundColor: colors.border,
+                            }}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            style={{
+                              width: cardWidth - spacing.sm,
+                              height: imageHeight,
+                              borderRadius: 2,
+                              backgroundColor: colors.border,
+                              alignItems: 'center' as 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
+                              ✦
+                            </Text>
+                          </View>
+                        )}
+                        <Text
+                          style={{
+                            fontFamily: fonts.title,
+                            fontSize: 16,
+                            color: colors.textPrimary,
+                            marginTop: spacing.sm,
+                          }}
+                          numberOfLines={1}
+                        >
+                          {item.title}
+                        </Text>
+                        {item.artist ? (
+                          <Text
+                            style={{
+                              fontFamily: fonts.regular,
+                              fontSize: 13,
+                              color: colors.textSecondary,
+                              marginTop: 2,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {item.artist}
+                          </Text>
+                        ) : null}
+                      </Pressable>
+                    </Link>
+                  )}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 6,
+                    marginTop: spacing.sm,
+                    marginBottom: spacing.md,
+                  }}
                 >
-                  <View style={styles.thumbWrap}>
-                    {item.imageUri ? (
-                      <Image
-                        source={{ uri: item.imageUri }}
-                        style={styles.thumb}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={[styles.thumb, styles.placeholder]}>
-                        <Text style={styles.placeholderIcon}>✦</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.cardText}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>
-                      {item.title}
-                    </Text>
-                    {item.artist ? (
-                      <Text style={styles.cardArtist} numberOfLines={1}>
-                        {item.artist}
-                      </Text>
-                    ) : null}
-                  </View>
-                </Pressable>
-              </Link>
-            )}
-          />
+                  {randomSample.map((_, i) => (
+                    <View
+                      key={String(i)}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: i === currentIndex ? '#7B3F3A' : '#CFC8BA',
+                      }}
+                    />
+                  ))}
+                </View>
+              </>
+            );
+          })()}
         </>
       )}
     </View>
