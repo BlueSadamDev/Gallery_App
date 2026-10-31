@@ -113,7 +113,8 @@ export default function EditScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss} focusable={false}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View>
           <View style={styles.imageSection}>
             {imageUri ? (
               <Image
@@ -221,6 +222,7 @@ export default function EditScreen() {
               {loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}
             </Text>
           </Pressable>
+          </View>
           </TouchableWithoutFeedback>
         </ScrollView>
       </KeyboardAvoidingView>

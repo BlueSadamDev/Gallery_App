@@ -213,7 +213,8 @@ export default function AddScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} focusable={false}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View>
         <View style={styles.imageSection}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="cover" />
@@ -404,6 +405,7 @@ export default function AddScreen() {
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </Text>
         </Pressable>
+        </View>
         </TouchableWithoutFeedback>
       </ScrollView>
     </KeyboardAvoidingView>

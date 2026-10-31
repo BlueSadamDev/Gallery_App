@@ -52,7 +52,8 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} focusable={false}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View>
         <Text style={styles.title}>Créer votre compte</Text>
         <Text style={styles.hint}>
           Votre compte est stocké uniquement sur votre téléphone. Aucune donnée
@@ -115,6 +116,7 @@ export default function RegisterScreen() {
             {saving ? 'Création…' : 'Créer le compte'}
           </Text>
         </Pressable>
+        </View>
         </TouchableWithoutFeedback>
       </ScrollView>
     </KeyboardAvoidingView>

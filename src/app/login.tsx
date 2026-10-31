@@ -52,7 +52,8 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} focusable={false}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View>
         <Text style={styles.title}>Bienvenue</Text>
         <Text style={styles.hint}>
           Connectez-vous pour accéder à votre collection.
@@ -96,6 +97,7 @@ export default function LoginScreen() {
             {saving ? 'Connexion…' : 'Se connecter'}
           </Text>
         </Pressable>
+        </View>
         </TouchableWithoutFeedback>
       </ScrollView>
     </KeyboardAvoidingView>
