@@ -17,6 +17,7 @@ import { addArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
 import { identifyArtwork, identifyArtworkByTitle } from '@/utils/gemini';
 import { getGeminiApiKey } from '@/config/settings';
+import { downloadImage, searchImageUrl } from '@/utils/artworkImageSearch';
 
 function SettingsButton() {
   return (
@@ -38,6 +39,9 @@ export default function AddScreen() {
   const [saving, setSaving] = useState(false);
   const [identifying, setIdentifying] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [searchingImage, setSearchingImage] = useState(false);
+  const [imageSearchDone, setImageSearchDone] = useState(false);
+  const [foundImageUrl, setFoundImageUrl] = useState<string | null>(null);
 
   const canSave = title.trim().length > 0 && !saving;
 
@@ -120,6 +124,25 @@ export default function AddScreen() {
         if (info.style) setStyle(info.style);
         if (info.description) setDescription(info.description);
         Alert.alert('Œuvre trouvée', 'Les informations ont été complétées automatiquement.');
+
+        // Recherche d'une image sur Internet (Wikipedia → Met → Chicago).
+        setImageSearchDone(false);
+        setSearchingImage(true);
+        setFoundImageUrl(null);
+        try {
+          const imgUrl = await searchImageUrl(
+            info.title || title,
+            info.artist || artist
+          );
+          if (imgUrl) {
+            setFoundImageUrl(imgUrl);
+          }
+        } catch {
+          // Échec de la recherche d'image, on laisse imageSearchDone = true
+        } finally {
+          setSearchingImage(false);
+          setImageSearchDone(true);
+        }
       } else {
         Alert.alert('Aucun résultat', 'Gemini n’a pas trouvé d’œuvre correspondant à ce titre.');
       }
@@ -131,6 +154,23 @@ export default function AddScreen() {
     } finally {
       setSearching(false);
     }
+  }
+
+  // Télécharge et utilise l'image trouvée sur Internet.
+  async function handleUseFoundImage() {
+    if (!foundImageUrl) return;
+    const uri = await downloadImage(foundImageUrl);
+    if (uri) {
+      setImageUri(uri);
+    }
+  }
+
+  // Abandonne l'image trouvée et ouvre la galerie du téléphone.
+  function handleSkipFoundImage() {
+    setFoundImageUrl(null);
+    setImageSearchDone(false);
+    // Ouvre la galerie pour choisir une photo.
+    handlePickFromGallery();
   }
 
   async function handleSave() {
@@ -217,6 +257,64 @@ export default function AddScreen() {
 
         </View>
 
+          {/* Résultat de la recherche d'image */          }
+          {imageSearchDone || searchingImage ? (
+            <View style={styles.fieldGroup}>
+              {searchingImage ? (
+                <Text style={styles.label}>Recherche d’une image…</Text>
+              ) : foundImageUrl ? (
+                <>
+                  <Text style={styles.label}>Image trouvée sur Internet</Text>
+                  <Image
+                    source={{ uri: foundImageUrl }}
+                    style={styles.preview}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.imageButtonsRow}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.imageButton,
+                        pressed && styles.buttonPressed,
+                      ]}
+                      onPress={handleUseFoundImage}
+                    >
+                      <Text style={styles.imageButtonText}>
+                        Utiliser cette image
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.imageButton,
+                        pressed && styles.buttonPressed,
+                      ]}
+                      onPress={handleSkipFoundImage}
+                    >
+                      <Text style={styles.imageButtonText}>
+                        Choisir ma propre photo
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: colors.textSecondary, marginBottom: spacing.sm }}>
+                    Aucune image trouvée sur Internet.
+                  </Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.imageButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    onPress={handleSkipFoundImage}
+                  >
+                    <Text style={styles.imageButtonText}>
+                      Choisir une photo
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          ) : null}
 
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Nom de l’œuvre *</Text>
