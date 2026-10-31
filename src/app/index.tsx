@@ -79,12 +79,14 @@ function AddButton() {
   return (
     <Link href="/add" asChild>
       <Pressable
+        hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
         style={({ pressed }) => [
-          styles.addButton,
-          pressed && styles.buttonPressed,
+          { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <Feather name="plus" size={24} color={ON_ACCENT} />
+        <View style={styles.addButtonCircle}>
+          <Feather name="plus" size={22} color={ON_ACCENT} />
+        </View>
       </Pressable>
     </Link>
   );
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 16,
   },
   kicker: {
     fontFamily: fonts.medium,
@@ -514,12 +516,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  addButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: '#CFC8BA',
+  addButtonCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
