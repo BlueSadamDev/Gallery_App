@@ -75,7 +75,7 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
-- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), sans contour. Zone tactile 48 × 48 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
+- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - Carrousel horizontal de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte : image (coins 2 px) ≈ 80 % de la largeur de l'écran, hauteur totale 220 px, titre et artiste dessous. Défilement carte par carte avec snap, sans boucle. Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel. Pas de défilement automatique. L'appui ouvre le détail de l'œuvre.
