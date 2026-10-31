@@ -75,11 +75,11 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
+- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), sans contour. Zone tactile 48 × 48 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
-  - « À la une » : grande image de la dernière œuvre ajoutée, avec titre, artiste et année.
-  - « Ajoutées récemment » : rangée de 3 miniatures, avec le lien « Tout voir ».
-- « Tout voir » ouvre le catalogue : grille de deux colonnes, images de hauteurs variables, titre et artiste sous chaque image.
+  - Carrousel horizontal de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte : image (coins 2 px) ≈ 80 % de la largeur de l'écran, hauteur totale 220 px, titre et artiste dessous. Défilement carte par carte avec snap, sans boucle. Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel. Pas de défilement automatique. L'appui ouvre le détail de l'œuvre.
+  - Regroupement des œuvres par artiste sous le carrousel : en-tête avec nom (style étiquette #8A6A45) et nombre d'œuvres, puis grille de 2 colonnes (image carrée, titre, année). Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier. Œuvres d'un groupe triées par année croissante.
 - Pas de barre de navigation en bas.
 
 ### 4. Ajout d'une œuvre
@@ -115,5 +115,5 @@ Recherche, tri, page Artistes, catégories, sauvegarde ou export de la collectio
 ## Corrections à appliquer en priorité
 
 1. Supprimer le titre technique « index » en haut de l'accueil.
-2. Passer le bouton « + » de bleu à l'accent #7B3F3A, en bouton rond.
+2. ✅ Passer le bouton « + » de bleu à l'accent #7B3F3A, en bouton rond (sans contour).
 3. Remplacer la roue système par une icône fine grise.
