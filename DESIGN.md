@@ -72,14 +72,31 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 
 ### 3. Accueil
 
-En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas de titre technique (« index »).
+En-tête : étiquette « Galerie personnelle », titre « Ma collection » (graisse Medium, 34 px). Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
 - Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
-  - Carrousel horizontal de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte : image (coins 2 px) ≈ 80 % de la largeur de l'écran, hauteur totale 220 px, titre et artiste dessous. Défilement carte par carte avec snap, sans boucle. Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel. Pas de défilement automatique. L'appui ouvre le détail de l'œuvre.
-  - Regroupement des œuvres par artiste sous le carrousel : en-tête avec nom (style étiquette #8A6A45) et nombre d'œuvres, puis grille de 2 colonnes (image carrée, titre, année). Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier. Œuvres d'un groupe triées par année croissante.
+  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel aussi (première carte à 24 px du bord).
+  - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte :
+    - Image (coins 2 px) occupant ≈ 80 % de la largeur de l'écran, hauteur 175 px.
+    - Espacement de 12 px entre les cartes.
+    - Image, titre et artiste alignés à gauche (bord gauche de l'image).
+    - Fond d'image en chargement ou absente : #E3DDD1.
+    - Hauteur totale de la carte (image + texte) : 220 px environ.
+    - Défilement carte par carte avec snap, sans boucle.
+    - Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel, centrés.
+    - Pas de défilement automatique.
+    - L'appui ouvre le détail de l'œuvre.
+  - **Regroupement par artiste** sous le carrousel :
+    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres.
+    - Grille de **2 colonnes** : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes), même s'il n'y a qu'une œuvre sur la ligne.
+    - Image carrée (coins 2 px), sans fond blanc ni cadre autour. Fond de chargement #E3DDD1.
+    - Titre et année alignés à gauche sous l'image.
+    - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
+    - Œuvres d'un groupe triées par année croissante.
+  - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
 - Pas de barre de navigation en bas.
 
 ### 4. Ajout d'une œuvre

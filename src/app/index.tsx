@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts, spacing, radius } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 import { Artwork, getArtworks } from '@/db/database';
 
 // Couleurs de la charte DESIGN.md utilisées sur l'accueil.
@@ -20,6 +20,8 @@ const ACCENT = '#7B3F3A';
 const ON_ACCENT = '#F6F2EA';
 const ICON_GRAY = '#7A756B';
 const LABEL = '#8A6A45';
+const CAROUSEL_GAP = 12;
+const IMAGE_PLACEHOLDER_BG = '#E3DDD1';
 
 // Regroupe les œuvres par artiste et les trie pour l'affichage.
 // - compare les artistes sans tenir compte des majuscules ni des espaces.
@@ -167,11 +169,12 @@ export default function HomeScreen() {
           </Link>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1, paddingBottom: insets.bottom + spacing.lg }}>
           {(() => {
             const screenWidth = Dimensions.get('window').width;
             const cardWidth = screenWidth * 0.8;
             const imageHeight = 175;
+            const cellWidth = (screenWidth - spacing.lg * 2 - spacing.sm) / 2;
             return (
               <>
                 <FlatList
@@ -179,11 +182,12 @@ export default function HomeScreen() {
                   keyExtractor={(item) => String(item.id)}
                   horizontal={true}
                   pagingEnabled={true}
-                  snapToInterval={cardWidth + spacing.sm}
+                  snapToInterval={cardWidth + CAROUSEL_GAP}
                   showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: spacing.lg }}
                   onMomentumScrollEnd={(e: any) => {
                     const pos = e?.target?.scrollPosition?.x ?? 0;
-                    const idx = Math.round(pos / (cardWidth + spacing.sm));
+                    const idx = Math.round(pos / (cardWidth + CAROUSEL_GAP));
                     if (idx >= 0 && idx < randomSample.length) {
                       setCurrentIndex(idx);
                     }
@@ -195,27 +199,26 @@ export default function HomeScreen() {
                         style={{
                           width: cardWidth,
                           height: imageHeight + 48,
-                          alignItems: 'center' as 'center',
                         }}
                       >
                         {item.imageUri ? (
                           <Image
                             source={{ uri: item.imageUri }}
                             style={{
-                              width: cardWidth - spacing.sm,
+                              width: cardWidth - CAROUSEL_GAP,
                               height: imageHeight,
                               borderRadius: 2,
-                              backgroundColor: colors.border,
+                              backgroundColor: IMAGE_PLACEHOLDER_BG,
                             }}
                             resizeMode="cover"
                           />
                         ) : (
                           <View
                             style={{
-                              width: cardWidth - spacing.sm,
+                              width: cardWidth - CAROUSEL_GAP,
                               height: imageHeight,
                               borderRadius: 2,
-                              backgroundColor: colors.border,
+                              backgroundColor: IMAGE_PLACEHOLDER_BG,
                               alignItems: 'center' as 'center',
                               justifyContent: 'center',
                             }}
@@ -318,9 +321,7 @@ export default function HomeScreen() {
                           <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
                             <Pressable
                               style={{
-                                flex: 1,
-                                backgroundColor: colors.card,
-                                borderRadius: radius.lg,
+                                width: cellWidth,
                                 overflow: 'hidden',
                               }}
                             >
@@ -328,7 +329,9 @@ export default function HomeScreen() {
                                 style={{
                                   width: '100%',
                                   aspectRatio: 1,
-                                  backgroundColor: colors.border,
+                                  backgroundColor: IMAGE_PLACEHOLDER_BG,
+                                  borderRadius: 2,
+                                  overflow: 'hidden',
                                 }}
                               >
                                 {artwork.imageUri ? (
@@ -342,7 +345,7 @@ export default function HomeScreen() {
                                     style={{
                                       width: '100%', height: '100%',
                                       alignItems: 'center', justifyContent: 'center',
-                                      backgroundColor: colors.background,
+                                      backgroundColor: IMAGE_PLACEHOLDER_BG,
                                     }}
                                   >
                                     <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
@@ -351,7 +354,7 @@ export default function HomeScreen() {
                                   </View>
                                 )}
                               </View>
-                              <View style={{ padding: spacing.md }}>
+                              <View style={{ marginTop: spacing.sm }}>
                                 <Text
                                   style={{
                                     fontFamily: fonts.title,
@@ -429,7 +432,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   title: {
-    fontFamily: fonts.titleBold,
+    fontFamily: fonts.medium,
     fontSize: 34,
     color: colors.textPrimary,
   },
@@ -466,55 +469,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.xl,
   },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: 90,
-  },
   row: {
     gap: spacing.md,
     marginBottom: spacing.md,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  cardPressed: {
-    opacity: 0.9,
-  },
-  thumbWrap: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: colors.border,
-  },
-  thumb: {
-    width: '100%',
-    height: '100%',
-  },
-  placeholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-  },
-  placeholderIcon: {
-    fontSize: 36,
-    color: colors.accent,
-    opacity: 0.5,
-  },
-  cardText: {
-    padding: spacing.md,
-  },
-  cardTitle: {
-    fontFamily: fonts.title,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  cardArtist: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   addButtonCircle: {
     width: 44,
