@@ -85,6 +85,11 @@ En-tête : étiquette « Galerie personnelle », titre « Ma collection ». Pas 
 ### 4. Ajout d'une œuvre
 
 - Zone de visuel en pointillés : photo prise avec l'appareil ou choisie dans la galerie du téléphone.
+- Bouton « Chercher avec Gemini » : après avoir saisi un titre, envoie la recherche à Gemini (clé API dans le stockage sécurisé). Les champs sont remplis automatiquement.
+- **Recherche d'image** : après le résultat de Gemini, une image est cherchée gratuitement sur Internet (Wikipedia → Metropolitan Museum → Art Institute of Chicago). Si une image est trouvée, elle s'affiche avec deux boutons :
+  - « Utiliser cette image » : télécharge et copie l'image dans le stockage de l'app.
+  - « Choisir ma propre photo » : ouvre la galerie du téléphone.
+  - Si aucune image n'est trouvée, un message l'indique et propose la galerie.
 - Champs : Titre, Artiste, Année, Description.
 - Bouton « Enregistrer » plein, en bas de l'écran.
 
