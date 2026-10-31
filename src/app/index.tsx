@@ -85,7 +85,7 @@ function AddButton() {
         ]}
       >
         <View style={styles.addButtonCircle}>
-          <Feather name="plus" size={22} color={ON_ACCENT} />
+          <Feather name="plus" size={22} color={ACCENT} />
         </View>
       </Pressable>
     </Link>
@@ -520,7 +520,8 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: ACCENT,
+    borderWidth: 1.5,
+    borderColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
   },
