@@ -12,6 +12,9 @@ jobs:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      # Supprime les warnings npm pour que expo-modules-autolinking
+      # puisse parser la sortie JSON de npm list --json
+      npm_config_warn: "false"
 
     steps:
       - name: Récupérer le code source
