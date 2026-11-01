@@ -3,7 +3,7 @@
 ## Contexte
 - Je ne sais pas développer. Explique-moi tout en français simple, sans jargon (ou explique chaque terme technique).
 - Projet : application Android. Livrable : un APK de test que je peux installer sur mon téléphone.
-- Technologie imposée : Expo (React Native, TypeScript), avec Expo Go pour les tests et EAS Build pour l'APK. Ne propose pas d'autre framework sans me demander.
+- Technologie imposée : Expo (React Native, TypeScript), avec Expo Go pour les tests et GitHub Actions pour l'APK de production. Ne propose pas d'autre framework sans me demander.
 - L'application utilise Expo Router : les écrans sont dans `src/app/`, le reste (composants, utilitaires) dans `src/` hors de `src/app/`.
 
 ##Design
@@ -42,21 +42,29 @@ Lis DESIGN.md avant tout modification d'interface et respecte-le
 - Je ne fais jamais de force push et ne réécris jamais l'historique sans ton accord.
 
 ## Build de l'APK
-- Méthode privilégiée : **EAS Build** (`npx eas-cli build --platform android --profile preview`). C'est l'environnement contrôlé par Expo, à utiliser par défaut.
-- GitHub Actions n'est à tenter que si EAS Build est indisponible et que l'environnement CI est maîtrisé. En cas d'échec d'une tâche native propre à la CI (ex. `generateInlineModules`), ne pas insister : basculer immédiatement sur EAS Build.
+
+- Méthode unique : **GitHub Actions** (workflow `.github/workflows/build-apk.yml`). Déclenchement manuel depuis l'onglet Actions.
+- L'APK signé est publié comme artifact téléchargeable (`gallery-apk`).
 - Avant chaque build : exécuter les 3 vérifications de la section « Qualité du code ».
-- Noter l'ID du build EAS et conserver les fichiers de log téléchargés (ex. `eas-view*.log`) pour le diagnostic.
-- Donner les commandes exactes à copier-coller.
-- Expliquer comment télécharger et installer l'APK sur le téléphone.
+- **Erreurs connues et correctifs :**
+  - `generateInlineModules` (SyntaxError JSON) → ajouter `npm_config_warn: "false"` dans l'env du workflow.
+  - `Could not get unknown property 'GALLERY_...'` → passer les propriétés via `./gradlew -PKEY=VALUE` (pas via `gradle.properties`).
+  - Dans les blocs `signingConfigs`, utiliser `project.getProperty('KEY')` plutôt que la variable nue `KEY`.
+- Donner les commandes exactes à copier-coller pour lancer le workflow.
+- Expliquer comment télécharger et installer l'APK sur le téléphone (artifact → ZIP → `.apk`).
 
 ## Gestion des erreurs natives (Gradle / Android)
-- Si une erreur Gradle survient uniquement en CI (GitHub Actions) et pas en local : ne pas essayer de la réparer en CI.
-- Passer directement à EAS Build qui dispose d'un environnement contrôlé par Expo.
+
+- Si une erreur Gradle survient en CI (GitHub Actions), diagnostiquer avec `gh run view <ID> --log`.
+- Les erreurs connues ont des correctifs documentés dans la section « Build de l'APK » ci-dessus.
 - Après 2 tentatives infructueuses sur une erreur technique : s'arrêter, expliquer clairement le problème et proposer des options.
 
 ## Maîtrise des coûts
 - Lire uniquement les fichiers nécessaires, pas tout le projet à chaque fois.
 - Prévenir l'utilisateur quand la conversation devient longue et lui suggérer de démarrer une nouvelle tâche.
+
+## Secrets
+Ne crée ni ne modifie jamais de secret GitHub, de keystore ou de mot de passe de signature
 
 ## Documentation
 - Tenir à jour le fichier README.md : objectif de l'app, comment la lancer, comment construire l'APK.
