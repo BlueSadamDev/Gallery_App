@@ -62,16 +62,16 @@ jobs:
 
       - name: Configurer la signature de l'APK
         run: |
-          echo "GALLERY_STORE_FILE=gallery-release.keystore" >> android/gradle.properties
-          echo "GALLERY_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> android/gradle.properties
-          echo "GALLERY_STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> android/gradle.properties
-          echo "GALLERY_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> android/gradle.properties
           python3 .github/patch_build_gradle.py
 
       - name: Compiler l'APK release
         run: |
           chmod +x android/gradlew
-          cd android && ./gradlew assembleRelease --no-daemon
+          cd android && ./gradlew assembleRelease --no-daemon \
+            -PGALLERY_STORE_FILE=gallery-release.keystore \
+            -PGALLERY_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
+            -PGALLERY_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
+            -PGALLERY_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
 
       - name: Déposer l'APK (artefact téléchargeable)
         uses: actions/upload-artifact@v7

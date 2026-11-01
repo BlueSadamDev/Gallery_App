@@ -22,14 +22,14 @@ SIGNING_BLOCKS = """    signingConfigs {
                 && project.hasProperty('GALLERY_KEY_ALIAS')
                 && project.hasProperty('GALLERY_STORE_PASSWORD')
                 && project.hasProperty('GALLERY_KEY_PASSWORD')) {
-                storeFile file(GALLERY_STORE_FILE)
-                storePassword GALLERY_STORE_PASSWORD
-                keyAlias GALLERY_KEY_ALIAS
-                keyPassword GALLERY_KEY_PASSWORD
+                storeFile file(project.getProperty('GALLERY_STORE_FILE'))
+                storePassword project.getProperty('GALLERY_STORE_PASSWORD')
+                keyAlias project.getProperty('GALLERY_KEY_ALIAS')
+                keyPassword project.getProperty('GALLERY_KEY_PASSWORD')
             } else {
                 throw new GradleException(
-                    "ERREUR: les proprietes de signature ne sont pas definies " +
-                    "dans android/gradle.properties. Verifie que les 4 secrets " +
+                    "ERREUR: les proprietes de signature ne sont pas definies. " +
+                    "Verifie que les 4 secrets " +
                     "(ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, " +
                     "ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS) sont presents " +
                     "dans Settings > Secrets and variables."
