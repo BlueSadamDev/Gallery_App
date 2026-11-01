@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { colors, fonts, spacing, radius } from '@/theme';
@@ -202,15 +204,17 @@ export default function AddScreen() {
       />
 
       <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View>
         <View style={styles.imageSection}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.preview} resizeMode="cover" />
@@ -401,6 +405,8 @@ export default function AddScreen() {
             {saving ? 'Enregistrement…' : 'Enregistrer'}
           </Text>
         </Pressable>
+        </View>
+        </TouchableWithoutFeedback>
       </ScrollView>
     </KeyboardAvoidingView>
     </>
@@ -415,7 +421,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: 180,
   },
   fieldGroup: {
     marginBottom: spacing.lg,

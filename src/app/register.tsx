@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { colors, fonts, spacing, radius } from '@/theme';
@@ -42,7 +44,7 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
         style={styles.flex}
@@ -50,6 +52,8 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View>
         <Text style={styles.title}>Créer votre compte</Text>
         <Text style={styles.hint}>
           Votre compte est stocké uniquement sur votre téléphone. Aucune donnée
@@ -112,6 +116,8 @@ export default function RegisterScreen() {
             {saving ? 'Création…' : 'Créer le compte'}
           </Text>
         </Pressable>
+        </View>
+        </TouchableWithoutFeedback>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -126,6 +132,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: spacing.lg,
+    paddingBottom: 180,
   },
   title: {
     fontFamily: fonts.titleBold,
