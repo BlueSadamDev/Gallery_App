@@ -111,7 +111,7 @@ export default function HomeScreen() {
           // Nouveau tirage au premier chargement ou si la taille a changé.
           if (rows.length > 0 && (lastCount !== rows.length || randomSample.length === 0)) {
             const shuffled = [...rows].sort(() => Math.random() - 0.5);
-            setRandomSample(shuffled.slice(0, Math.min(5, shuffled.length)));
+            setRandomSample(shuffled.slice(0, Math.min(10, shuffled.length)));
             setLastCount(rows.length);
             setCurrentIndex(0);
           } else if (rows.length === 0) {
@@ -199,6 +199,7 @@ export default function HomeScreen() {
                         style={{
                           width: cardWidth,
                           height: imageHeight + 48,
+                          alignItems: 'center',
                         }}
                       >
                         {item.imageUri ? (
@@ -235,8 +236,7 @@ export default function HomeScreen() {
                             color: colors.textPrimary,
                             marginTop: spacing.sm,
                           }}
-                          numberOfLines={1}
-                        >
+                          >
                           {item.title}
                         </Text>
                         {item.artist ? (
@@ -247,7 +247,6 @@ export default function HomeScreen() {
                               color: colors.textSecondary,
                               marginTop: 2,
                             }}
-                            numberOfLines={1}
                           >
                             {item.artist}
                           </Text>
@@ -361,7 +360,6 @@ export default function HomeScreen() {
                                     fontSize: 16,
                                     color: colors.textPrimary,
                                   }}
-                                  numberOfLines={1}
                                 >
                                   {artwork.title}
                                 </Text>
@@ -373,7 +371,6 @@ export default function HomeScreen() {
                                       color: colors.textSecondary,
                                       marginTop: 2,
                                     }}
-                                    numberOfLines={1}
                                   >
                                     {artwork.year}
                                   </Text>

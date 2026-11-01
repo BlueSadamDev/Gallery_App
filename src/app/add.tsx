@@ -205,7 +205,7 @@ export default function AddScreen() {
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
       >
       <ScrollView
         style={styles.flex}
@@ -420,6 +420,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
+    flexGrow: 1,
     padding: spacing.lg,
     paddingBottom: 180,
   },
