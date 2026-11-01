@@ -57,13 +57,14 @@ npx expo install --fix   # corrige les versions incompatibles si besoin
 
 ## Construire l'APK de test
 
-L'APK est construit dans le cloud avec **EAS Build** (compte Expo gratuit requis) :
+L'APK est construit avec **GitHub Actions** (pas de build local nécessaire, pas de compte Expo requis) :
 
-```bash
-npx eas-cli login                                       # connexion au compte Expo
-npx eas-cli build --platform android --profile preview  # lance le build APK
-```
+1. Va sur **GitHub** → ton dépôt → onglet **Actions**
+2. Clique sur **Build APK Android** dans la colonne de gauche
+3. Clique sur le bouton **Run workflow** (dropdown à droite)
+4. Laisse la branche `main` et clique **Run workflow**
+5. Une fois le build terminé (case ✅), clique sur le run pour voir les détails
+6. Dans la section **Artifacts**, télécharge **gallery-apk** (fichier ZIP)
+7. Décompresse le ZIP sur ton téléphone et installe le `.apk` (accepte l'installation depuis une source inconnue si Android le demande)
 
-Le profil `preview` est configuré dans `eas.json` pour produire un **APK téléchargeable et installable directement**.
-
-Quand le build est terminé, EAS affiche un lien de téléchargement (ou connecte-toi à https://expo.dev pour suivre la progression). Sur ton téléphone Android, ouvre le fichier `.apk` téléchargé et accepte l'installation depuis une source inconnue si Android le demande.
+> **Astuce :** Tu peux aussi accéder à l'URL du run depuis le navigateur de ton téléphone pour télécharger l'APK directement sans passer par un PC.
