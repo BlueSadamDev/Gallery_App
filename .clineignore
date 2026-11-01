@@ -1,0 +1,13 @@
+credentials.json
+*.jks
+*.keystore
+credentials/
+node_modules/
+.expo/
+android/
+ios/
+dist/
+build/
+*.apk
+*.aab
+package-lock.json
