@@ -18,12 +18,10 @@ SIGNING_BLOCKS = """    signingConfigs {
             keyPassword 'android'
         }
         release {
-            if (project.hasProperty('GALLERY_STORE_FILE')) {
-                storeFile file(GALLERY_STORE_FILE)
-                storePassword GALLERY_STORE_PASSWORD
-                keyAlias GALLERY_KEY_ALIAS
-                keyPassword GALLERY_KEY_PASSWORD
-            }
+            storeFile file(GALLERY_STORE_FILE)
+            storePassword GALLERY_STORE_PASSWORD
+            keyAlias GALLERY_KEY_ALIAS
+            keyPassword GALLERY_KEY_PASSWORD
         }
     }"""
 

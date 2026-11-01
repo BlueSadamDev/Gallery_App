@@ -26,6 +26,14 @@ jobs:
       - name: Installer les dépendances du projet
         run: npm install --legacy-peer-deps --no-audit --no-fund
 
+      - name: Vérifier que les 4 secrets de signature sont présents
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then echo "ERREUR : secret ANDROID_KEYSTORE_BASE64 manquant – ajoute-le dans Settings > Secrets and variables"; exit 1; fi
+          if [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then echo "ERREUR : secret ANDROID_KEYSTORE_PASSWORD manquant – ajoute-le dans Settings > Secrets and variables"; exit 1; fi
+          if [ -z "$ANDROID_KEY_PASSWORD" ]; then echo "ERREUR : secret ANDROID_KEY_PASSWORD manquant – ajoute-le dans Settings > Secrets and variables"; exit 1; fi
+          if [ -z "$ANDROID_KEY_ALIAS" ]; then echo "ERREUR : secret ANDROID_KEY_ALIAS manquant – ajoute-le dans Settings > Secrets and variables"; exit 1; fi
+          echo "Les 4 secrets de signature sont présents"
+
       - name: Installer Java 17
         uses: actions/setup-java@v6
         with:
@@ -34,6 +42,13 @@ jobs:
 
       # Le runner ubuntu-latest contient déjà un SDK Android complet,
       # donc aucune action d'installation supplémentaire n'est nécessaire.
+
+      - name: Injecter le versionCode dans app.json
+        run: |
+          BASE_VERSION=1
+          VERSION_CODE=$((BASE_VERSION + GITHUB_RUN_NUMBER))
+          jq ".expo.android.versionCode = $VERSION_CODE" app.json > app.json.tmp && mv app.json.tmp app.json
+          echo "versionCode injecté : $VERSION_CODE"
 
       - name: Générer le projet natif Android
         run: npx expo prebuild --platform android --no-install
@@ -60,3 +75,7 @@ jobs:
         with:
           name: gallery-apk
           path: android/app/build/outputs/apk/release/*.apk
+
+      - name: Nettoyer le keystore décodé
+        if: always()
+        run: rm -f android/app/gallery-release.keystore
