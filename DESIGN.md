@@ -80,10 +80,12 @@ En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et ro
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
   - **Carrousel horizontal** de 10 œuvres tirées au hasard (ou toutes si moins de 10). Chaque carte :
-    - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes.
+    - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes (ItemSeparatorComponent).
     - Image (coins 2 px) occupant 100 % de la largeur de la carte, hauteur 220 px.
+    - Pas de hauteur fixe sur la carte ni sur le conteneur : la hauteur est automatique en fonction du texte.
+    - Les cartes s'alignent en haut de la liste (alignItems 'flex-start').
     - Titre et artiste alignés à gauche, sous l'image, à 100 % de la largeur de la carte.
-    - Titre : numberOfLines 3, ellipsizeMode tail. Artiste : numberOfLines 1, ellipsizeMode tail.
+    - Titre : numberOfLines 3, lineHeight 20 (1,25 × 16), marginTop 8, ellipsizeMode tail. Artiste : numberOfLines 1, lineHeight 16, marginTop 4, ellipsizeMode tail.
     - Les tirets et espaces spéciaux sont nettoyés à l'affichage (tirets insécables → tirets normaux, espace insécable → espace, ajout de zero-width space après les tirets pour le retour à la ligne).
     - Fond d'image en chargement ou absente : #E3DDD1.
     - Hauteur totale de la carte (image + texte) : 268 px environ.
@@ -92,7 +94,7 @@ En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et ro
     - Pas de défilement automatique.
     - L'appui ouvre le détail de l'œuvre.
   - **Regroupement par artiste** sous le carrousel :
-    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres.
+    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres. Le conteneur a flexWrap 'wrap', columnGap 12, rowGap 2. Le nom a numberOfLines 2, maxWidth '100%'. Le compteur passe à la ligne si nécessaire.
     - Grille de **2 colonnes** : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes), même s'il n'y a qu'une œuvre sur la ligne.
     - Image carrée (coins 2 px), sans fond blanc ni cadre autour. Fond de chargement #E3DDD1.
     - Titre (numberOfLines 3, ellipsizeMode tail) et année alignés à gauche sous l'image.

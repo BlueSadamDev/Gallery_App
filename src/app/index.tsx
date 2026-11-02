@@ -202,7 +202,6 @@ export default function HomeScreen() {
                   pagingEnabled={true}
                   snapToInterval={cardWidth + CAROUSEL_GAP}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: (screenWidth - cardWidth) / 2 }}
                   onMomentumScrollEnd={(e: any) => {
                     const pos = e?.target?.scrollPosition?.x ?? 0;
                     const idx = Math.round(pos / (cardWidth + CAROUSEL_GAP));
@@ -210,13 +209,16 @@ export default function HomeScreen() {
                       setCurrentIndex(idx);
                     }
                   }}
-                  style={{ height: imageHeight + 56, marginBottom: spacing.sm }}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ width: CAROUSEL_GAP }} />
+                  )}
+                  contentContainerStyle={{ paddingHorizontal: (screenWidth - cardWidth) / 2, alignItems: 'flex-start' }}
+                  style={{ marginBottom: spacing.sm }}
                   renderItem={({ item }) => (
                     <Link href={`/detail/${item.id}`} asChild>
                       <Pressable
                         style={{
                           width: cardWidth,
-                          height: imageHeight + 48,
                         }}
                       >
                         <View
@@ -258,7 +260,9 @@ export default function HomeScreen() {
                             flexShrink: 1,
                             fontFamily: fonts.title,
                             fontSize: 16,
+                            lineHeight: 20,
                             color: colors.textPrimary,
+                            marginTop: 8,
                           }}
                         >
                           {formatDisplayText(item.title)}
@@ -272,8 +276,9 @@ export default function HomeScreen() {
                               flexShrink: 1,
                               fontFamily: fonts.regular,
                               fontSize: 13,
+                              lineHeight: 16,
                               color: colors.textSecondary,
-                              marginTop: 2,
+                              marginTop: 4,
                             }}
                           >
                             {formatDisplayText(item.artist)}
@@ -289,7 +294,7 @@ export default function HomeScreen() {
                     justifyContent: 'center',
                     alignItems: 'center',
                     gap: 6,
-                    marginTop: spacing.sm,
+                    marginTop: 16,
                     marginBottom: spacing.md,
                   }}
                 >
@@ -310,24 +315,26 @@ export default function HomeScreen() {
                 {groupByArtist(artworks).map((section) => (
                   <View key={section.artistKey} style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
                     {/* En-tête du groupe */}
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.sm }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12, rowGap: 2, marginBottom: spacing.sm }}>
                       <Text
+                        numberOfLines={2}
                         style={{
                           fontFamily: fonts.medium,
                           fontSize: 11,
                           letterSpacing: 2,
                           color: LABEL,
                           textTransform: 'uppercase',
+                          maxWidth: '100%',
                         }}
                       >
                         {section.artist}
                       </Text>
                       <Text
+                        numberOfLines={1}
                         style={{
                           fontFamily: fonts.regular,
                           fontSize: 11,
                           color: colors.textSecondary,
-                          marginLeft: spacing.sm,
                         }}
                       >
                         {section.count === 1 ? '1 œuvre' : `${section.count} œuvres`}
