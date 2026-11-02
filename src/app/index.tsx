@@ -199,9 +199,9 @@ export default function HomeScreen() {
                         style={{
                           width: cardWidth,
                           height: imageHeight + 48,
-                          alignItems: 'center',
                         }}
                       >
+                        <View style={{ alignItems: 'center' }}> {/* centrage de l image seulement */}
                         {item.imageUri ? (
                           <Image
                             source={{ uri: item.imageUri }}
@@ -229,6 +229,7 @@ export default function HomeScreen() {
                             </Text>
                           </View>
                         )}
+                        </View>
                         <Text
                           style={{
                             fontFamily: fonts.title,

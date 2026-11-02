@@ -198,6 +198,7 @@ export default function AddScreen() {
     <>
       <Stack.Screen
         options={{
+          title: '',
           headerRight: () => <SettingsButton />,
         }}
       />
