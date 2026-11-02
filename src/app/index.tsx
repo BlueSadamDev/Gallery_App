@@ -23,6 +23,19 @@ const LABEL = '#8A6A45';
 const CAROUSEL_GAP = 12;
 const IMAGE_PLACEHOLDER_BG = '#E3DDD1';
 
+// Remplace les caractères spéciaux qui empêchent le retour à la ligne,
+// et insère un espace de largeur nulle (U+200B) après chaque tiret
+// pour que React Native puisse couper le mot au bon endroit.
+// N'affecte PAS les données enregistrées (simple affichage).
+function formatDisplayText(text: string): string {
+  const cleaned = text
+    .replace(/\u2011/g, '-')   // tiret insécable → tiret normal
+    .replace(/\u00A0/g, ' ');  // espace insécable → espace normale
+  // Ajoute ZWSP après chaque tiret (sauf si déjà suivi d'un ZWSP, d'une
+  // espace ou de fin de chaîne, pour éviter les doublons).
+  return cleaned.replace(/-(?!\u200B| |$)/g, '-\u200B');
+}
+
 // Regroupe les œuvres par artiste et les trie pour l'affichage.
 // - compare les artistes sans tenir compte des majuscules ni des espaces.
 // - artiste vide → groupe « Artiste inconnu », placé en dernier.
@@ -138,15 +151,20 @@ export default function HomeScreen() {
         style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <View style={styles.headerRow}>
-          <View style={styles.headerTitles}>
-            <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
-            <Text style={styles.title}>Ma collection</Text>
-          </View>
+          <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
+          <View style={{ flex: 1 }} />
           <View style={styles.headerActions}>
             {artworks.length > 0 ? <AddButton /> : null}
             <SettingsButton />
           </View>
         </View>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          style={styles.title}
+        >
+          Ma collection
+        </Text>
       </View>
 
       {artworks.length === 0 ? (
@@ -169,11 +187,11 @@ export default function HomeScreen() {
           </Link>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1, paddingBottom: insets.bottom + spacing.lg }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.lg + 24 }}>
           {(() => {
             const screenWidth = Dimensions.get('window').width;
             const cardWidth = screenWidth * 0.8;
-            const imageHeight = 175;
+            const imageHeight = 220;
             const cellWidth = (screenWidth - spacing.lg * 2 - spacing.sm) / 2;
             return (
               <>
@@ -184,7 +202,7 @@ export default function HomeScreen() {
                   pagingEnabled={true}
                   snapToInterval={cardWidth + CAROUSEL_GAP}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: spacing.lg }}
+                  contentContainerStyle={{ paddingHorizontal: (screenWidth - cardWidth) / 2 }}
                   onMomentumScrollEnd={(e: any) => {
                     const pos = e?.target?.scrollPosition?.x ?? 0;
                     const idx = Math.round(pos / (cardWidth + CAROUSEL_GAP));
@@ -201,55 +219,64 @@ export default function HomeScreen() {
                           height: imageHeight + 48,
                         }}
                       >
-                        <View style={{ alignItems: 'center' }}> {/* centrage de l image seulement */}
-                        {item.imageUri ? (
-                          <Image
-                            source={{ uri: item.imageUri }}
-                            style={{
-                              width: cardWidth - CAROUSEL_GAP,
-                              height: imageHeight,
-                              borderRadius: 2,
-                              backgroundColor: IMAGE_PLACEHOLDER_BG,
-                            }}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View
-                            style={{
-                              width: cardWidth - CAROUSEL_GAP,
-                              height: imageHeight,
-                              borderRadius: 2,
-                              backgroundColor: IMAGE_PLACEHOLDER_BG,
-                              alignItems: 'center' as 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
-                              ✦
-                            </Text>
-                          </View>
-                        )}
+                        <View
+                          style={{
+                            width: '100%',
+                            height: imageHeight,
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                            backgroundColor: IMAGE_PLACEHOLDER_BG,
+                          }}
+                        >
+                          {item.imageUri ? (
+                            <Image
+                              source={{ uri: item.imageUri }}
+                              style={{ width: '100%', height: '100%' }}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <View
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: IMAGE_PLACEHOLDER_BG,
+                              }}
+                            >
+                              <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
+                                ✦
+                              </Text>
+                            </View>
+                          )}
                         </View>
                         <Text
+                          numberOfLines={3}
+                          ellipsizeMode="tail"
                           style={{
+                            width: '100%',
+                            flexShrink: 1,
                             fontFamily: fonts.title,
                             fontSize: 16,
                             color: colors.textPrimary,
-                            marginTop: spacing.sm,
                           }}
-                          >
-                          {item.title}
+                        >
+                          {formatDisplayText(item.title)}
                         </Text>
                         {item.artist ? (
                           <Text
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
                             style={{
+                              width: '100%',
+                              flexShrink: 1,
                               fontFamily: fonts.regular,
                               fontSize: 13,
                               color: colors.textSecondary,
                               marginTop: 2,
                             }}
                           >
-                            {item.artist}
+                            {formatDisplayText(item.artist)}
                           </Text>
                         ) : null}
                       </Pressable>
@@ -356,13 +383,15 @@ export default function HomeScreen() {
                               </View>
                               <View style={{ marginTop: spacing.sm }}>
                                 <Text
+                                  numberOfLines={3}
+                                  ellipsizeMode="tail"
                                   style={{
                                     fontFamily: fonts.title,
                                     fontSize: 16,
                                     color: colors.textPrimary,
                                   }}
                                 >
-                                  {artwork.title}
+                                  {formatDisplayText(artwork.title)}
                                 </Text>
                                 {artwork.year ? (
                                   <Text
@@ -431,7 +460,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.medium,
-    fontSize: 34,
+    fontSize: 32,
     color: colors.textPrimary,
   },
   emptyBody: {
