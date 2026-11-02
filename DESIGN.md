@@ -72,20 +72,22 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 
 ### 3. Accueil
 
-En-tête : étiquette « Galerie personnelle », titre « Ma collection » (graisse Medium, 34 px). Pas de titre technique (« index »).
+En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et roue à droite (même ligne, alignés au centre vertical). En dessous, titre « Ma collection » (graisse Medium, 32 px) sur toute la largeur, sur une seule ligne (numberOfLines 1, adjustsFontSizeToFit). Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
 - Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
-  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel aussi (première carte à 24 px du bord).
-  - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte :
-    - Image (coins 2 px) occupant ≈ 80 % de la largeur de l'écran, hauteur 175 px.
-    - Espacement de 12 px entre les cartes.
-    - Image, titre et artiste alignés à gauche (bord gauche de l'image).
+  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
+  - **Carrousel horizontal** de 10 œuvres tirées au hasard (ou toutes si moins de 10). Chaque carte :
+    - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes.
+    - Image (coins 2 px) occupant 100 % de la largeur de la carte, hauteur 220 px.
+    - Titre et artiste alignés à gauche, sous l'image, à 100 % de la largeur de la carte.
+    - Titre : numberOfLines 3, ellipsizeMode tail. Artiste : numberOfLines 1, ellipsizeMode tail.
+    - Les tirets et espaces spéciaux sont nettoyés à l'affichage (tirets insécables → tirets normaux, espace insécable → espace, ajout de zero-width space après les tirets pour le retour à la ligne).
     - Fond d'image en chargement ou absente : #E3DDD1.
-    - Hauteur totale de la carte (image + texte) : 220 px environ.
-    - Défilement carte par carte avec snap, sans boucle.
+    - Hauteur totale de la carte (image + texte) : 268 px environ.
+    - Défilement carte par carte avec snap (decelerationRate fast), sans boucle.
     - Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel, centrés.
     - Pas de défilement automatique.
     - L'appui ouvre le détail de l'œuvre.
@@ -93,7 +95,7 @@ En-tête : étiquette « Galerie personnelle », titre « Ma collection » (grai
     - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres.
     - Grille de **2 colonnes** : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes), même s'il n'y a qu'une œuvre sur la ligne.
     - Image carrée (coins 2 px), sans fond blanc ni cadre autour. Fond de chargement #E3DDD1.
-    - Titre et année alignés à gauche sous l'image.
+    - Titre (numberOfLines 3, ellipsizeMode tail) et année alignés à gauche sous l'image.
     - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
     - Œuvres d'un groupe triées par année croissante.
   - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
