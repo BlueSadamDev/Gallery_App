@@ -45,13 +45,11 @@ export default function Carousel({ items }: CarouselProps) {
         contentContainerStyle={{ paddingHorizontal: side }}
         ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
         snapToInterval={step}
-        snapToAlignment="start"
         decelerationRate="fast"
-        disableIntervalMomentum
         scrollEventThrottle={16}
-        onScroll={(e: any) => {
-          const x = e?.nativeEvent?.contentOffset?.x ?? 0;
-          setCurrentIndex(Math.round(x / step));
+        onMomentumScrollEnd={(e: any) => {
+          const pos = e?.target?.scrollPosition?.x ?? 0;
+          setCurrentIndex(Math.round(pos / step));
         }}
         renderItem={({ item }: { item: Artwork }) => (
           <Link href={`/detail/${item.id}`} asChild>
