@@ -108,10 +108,10 @@ const CLEAR_AMBIANCES: Record<Moment, Ambiance> = {
   },
   // Éclairage de salle tamisé, venant d'en haut.
   NIGHT: {
-    wallTop: '#D8D0C2',
-    wallBottom: '#C9BFAF',
+    wallTop: '#DCD5C9',
+    wallBottom: '#CFC6B7',
     overlayColor: '#1E2433',
-    overlayOpacity: 0.14,
+    overlayOpacity: 0.1,
     shadowAngleDeg: 90,
     shadowOffset: 5,
     shadowOpacity: 0.08,

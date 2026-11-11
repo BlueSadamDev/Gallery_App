@@ -16,15 +16,8 @@ import { fonts, spacing } from '@/theme';
 import { useGalleryEnvironment } from '@/hooks/useGalleryEnvironment';
 import ModeBar from '@/components/gallery/ModeBar';
 import TimeSlider from '@/components/gallery/TimeSlider';
+import WallBackground from '@/components/gallery/WallBackground';
 import { GalleryMode, minutesOfDay, resolveLighting } from '@/utils/ambiance';
-
-// TEMPORAIRE (étape 2) : minutes depuis minuit → « 14:05 », ou « ? ».
-function formatClock(minutes: number | null): string {
-  if (minutes == null) return '?';
-  const h = String(Math.floor(minutes / 60)).padStart(2, '0');
-  const m = String(minutes % 60).padStart(2, '0');
-  return `${h}:${m}`;
-}
 
 // Couleurs de la charte DESIGN.md.
 const WALL = '#F6F2EA';
@@ -93,18 +86,13 @@ export default function LivingGalleryScreen() {
   );
 
   const isEmpty = loaded && artworks.length === 0;
-  const shownMinutes = mode === 'TIME_TRAVEL' ? simulatedMinutes : minutesOfDay(env.now);
+  const { ambiance } = lighting;
 
   const header = (
     <View style={[styles.header, { paddingTop: isEmpty ? insets.top + spacing.md : spacing.sm }]}>
       <Text style={styles.kicker}>EXPOSITION</Text>
       <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
         Galerie vivante
-      </Text>
-      {/* TEMPORAIRE (étape 2) : état de l'environnement, retiré à l'étape 4. */}
-      <Text style={styles.debug}>
-        {`${mode === 'PURIST' ? 'PURISTE' : lighting.moment} · ${lighting.weather} · ${formatClock(shownMinutes)}` +
-          ` · lever ${formatClock(env.sunriseMin)} · coucher ${formatClock(env.sunsetMin)}`}
       </Text>
     </View>
   );
@@ -133,6 +121,8 @@ export default function LivingGalleryScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Le mur : couche à part, SOUS tout le reste (barre de modes et œuvres). */}
+      <WallBackground ambiance={ambiance} />
       {/* Barre de modes, fixe en haut de l'écran. */}
       <View style={[styles.topBar, { paddingTop: insets.top }]}>
         <ModeBar mode={mode} onChange={changeMode} />
@@ -144,8 +134,15 @@ export default function LivingGalleryScreen() {
         data={artworks}
         keyExtractor={(item) => String(item.id)}
         ListHeaderComponent={header}
+        extraData={ambiance}
         renderItem={({ item }) => (
-          <WallBay artwork={item} maxWidth={artworkMaxWidth} />
+          <WallBay
+            artwork={item}
+            maxWidth={artworkMaxWidth}
+            shadowAngleDeg={ambiance.shadowAngleDeg}
+            shadowOffset={ambiance.shadowOffset}
+            shadowOpacity={ambiance.shadowOpacity}
+          />
         )}
         contentContainerStyle={{ paddingBottom: spacing.xl }}
         showsVerticalScrollIndicator={false}
@@ -177,12 +174,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 32,
     color: TEXT_PRIMARY,
-  },
-  debug: {
-    fontFamily: fonts.regular,
-    fontSize: 11,
-    color: TEXT_SECONDARY,
-    marginTop: spacing.xs,
   },
   emptyBody: {
     flex: 1,

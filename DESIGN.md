@@ -6,7 +6,7 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 
 - Élégant et épuré, dans l'esprit d'une galerie ou d'un musée.
 - Les œuvres sont mises en valeur, avec beaucoup d'espace autour.
-- Aucune décoration inutile : pas d'ombres, pas de dégradés.
+- Aucune décoration inutile : pas d'ombres, pas de dégradés. **Seule exception** : l'écran « Galerie vivante » (dégradé du mur et ombres portées simulées, voir section 7).
 - Une seule couleur d'accent.
 - Version claire uniquement (pas de mode sombre dans la version 1).
 
@@ -119,7 +119,14 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 - Cartel centré sous l'œuvre (20 px plus bas) : titre (Medium 20 px), puis « artiste, année » (Regular 13 px, texte secondaire).
 - L'appui ouvre le détail de l'œuvre.
 - Collection vide : même message d'invitation et même bouton « + » que l'accueil.
-- Mur : neutre #F6F2EA (l'éclairage selon l'heure et la météo viendra ensuite).
+- **Mur éclairé** : couche à part, placée sous les œuvres. Dégradé vertical (expo-linear-gradient) + voile de lumière de faible opacité. Les changements d'ambiance se font en fondu enchaîné de deux couches (environ 0,9 s).
+  - Matin : crème clair, voile doré léger, ombre longue vers la droite.
+  - Midi : presque blanc, ombre courte vers le bas.
+  - Heure dorée : beige chaud, voile orangé, ombre longue vers la gauche.
+  - Nuit : beige grisé tamisé, ombre courte vers le bas ; la météo n'y change rien.
+  - Nuages et pluie (le jour) : mur plus gris et plus froid, ombres plus courtes et plus pâles.
+- **Ombre portée** : une vue sombre (#1C1B19, opacité 0,05 à 0,13) décalée derrière le cadre selon l'heure, plus une pénombre plus pâle. Pas de `shadowColor` ni d'`elevation`.
+- **Règle absolue** : les images des œuvres ne sont jamais modifiées (aucune teinte, aucune opacité inférieure à 1, rien par-dessus, aucun filtre). Les effets ne touchent que le mur et l'espace autour du cadre.
 - **Barre de modes** (fixe en haut, sous la zone sûre, masquée si la collection est vide) : trois mots centrés « Auto », « Time-Travel », « Puriste », espacés de 24 px. Satoshi 13 px ; mode inactif en texte secondaire, mode actif en texte principal Medium, souligné d'un trait de 1 px #7B3F3A. Zone tactile 48 px.
   - Auto : éclairage réel (heure et météo du lieu).
   - Time-Travel : un curseur de 0 h à 24 h (pas de 15 min, piste active et poignée #7B3F3A, piste inactive #CFC8BA) simule l'heure ; la météo réelle est conservée. Libellé à droite : « 14 h », « 14 h 15 ».
