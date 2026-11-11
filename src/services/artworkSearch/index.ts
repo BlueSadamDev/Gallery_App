@@ -6,7 +6,14 @@
 import { prepareSearch, type SearchHints } from '@/utils/gemini';
 import { searchArtworks, type SearchResult } from './wikidata.ts';
 
-export { ArtworkSearchError, type Proposal, type SearchResult } from './wikidata.ts';
+export {
+  ArtworkSearchError,
+  commonsImageUrl,
+  listArtworkImages,
+  USER_AGENT,
+  type Proposal,
+  type SearchResult,
+} from './wikidata.ts';
 
 export type SearchInput = { title: string; artist?: string; year?: string };
 

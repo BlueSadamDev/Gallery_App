@@ -409,6 +409,37 @@ async function runSearch(query: SearchQuery): Promise<SearchResult> {
   return { proposals, tooManyHomonyms };
 }
 
+// Images possibles d'une œuvre : l'image principale (P18), puis les autres
+// fichiers de sa catégorie Wikimedia Commons. Renvoie des noms de fichiers.
+const imagesCache = new Map<string, string[]>();
+
+export async function listArtworkImages(proposal: Proposal): Promise<string[]> {
+  const cached = imagesCache.get(proposal.id);
+  if (cached) return cached;
+  const files: string[] = proposal.imageFile ? [proposal.imageFile] : [];
+  if (proposal.commonsCategory) {
+    try {
+      const params = new URLSearchParams({
+        format: 'json',
+        action: 'query',
+        list: 'categorymembers',
+        cmtitle: `Category:${proposal.commonsCategory}`,
+        cmtype: 'file',
+        cmlimit: '20',
+      });
+      const data = await fetchJson(`https://commons.wikimedia.org/w/api.php?${params.toString()}`);
+      for (const member of data?.query?.categorymembers ?? []) {
+        const file = String(member.title ?? '').replace(/^File:/, '');
+        if (/\.(jpe?g|png)$/i.test(file) && !files.includes(file)) files.push(file);
+      }
+    } catch {
+      // pas d'images supplémentaires : on garde l'image principale
+    }
+  }
+  imagesCache.set(proposal.id, files);
+  return files;
+}
+
 // Cherche des œuvres et renvoie les propositions vérifiées.
 // `excludedIds` : œuvres refusées pendant la session, jamais reproposées.
 // Lève une ArtworkSearchError (hors ligne, service occupé…) en cas de problème.

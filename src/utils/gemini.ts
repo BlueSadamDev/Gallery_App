@@ -29,7 +29,8 @@ async function sendRequest(
   apiKey: string,
   model: string,
   parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[],
-  config?: { temperature?: number; maxOutputTokens?: number }
+  config?: { temperature?: number; maxOutputTokens?: number },
+  timeoutMs = 45000
 ): Promise<string> {
   const requestBody: Record<string, unknown> = {
     contents: [
@@ -43,10 +44,10 @@ async function sendRequest(
     },
   };
 
-  // Timeout de sécurité : si Gemini ne répond pas en 45 s, on interrompt
+  // Timeout de sécurité : si Gemini ne répond pas à temps (45 s par défaut), on interrompt
   // (un modèle trop lent ou non autorisé échoue alors rapidement).
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   let response: Response;
   try {
@@ -117,37 +118,6 @@ Si tu ne connais pas l'année, mets une valeur vide.
       },
     },
   ], { temperature: 0, maxOutputTokens: 8192 });
-
-  return parseArtworkInfo(text);
-}
-
-// Envoie un titre d'œuvre à Gemini pour retrouver ses informations.
-// Si la clé API est absente, renvoie null.
-export async function identifyArtworkByTitle(
-  artworkTitle: string
-): Promise<ArtworkInfo | null> {
-  const apiKey = await getGeminiApiKey();
-  if (!apiKey) {
-    return null;
-  }
-  const model = await getGeminiModel();
-
-  const prompt = `
-Tu es un expert en histoire de l'art. Une personne te donne le titre d'une œuvre d'art : « ${artworkTitle} ».
-Retrouve l'œuvre la plus célèbre correspondant à ce titre.
-Renvoie UNIQUEMENT un objet JSON au format suivant, sans aucun texte autour :
-{
-  "title": "Titre exact de l'œuvre",
-  "artist": "Nom de l'artiste",
-  "year": "Année de création",
-  "style": "Style ou mouvement artistique (ex. Renaissance, Impressionnisme, Art abstrait, Rococo...)",
-  "description": "Description courte et élégante de l'œuvre en français (2-3 phrases)"
-}
-Si tu ne connais pas l'année, mets une valeur vide.
-Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
-`;
-
-  const text = await sendRequest(apiKey, model, [{ text: prompt }], { temperature: 0, maxOutputTokens: 8192 });
 
   return parseArtworkInfo(text);
 }
@@ -228,10 +198,14 @@ Tu aides à rechercher une œuvre d'art dans Wikidata. Voici ce que la personne 
 Complète les pistes de recherche (titres possibles, artiste, année). Ne contredis pas l'artiste
 ni l'année saisis s'ils sont présents.
 ${HINTS_FORMAT}`;
-  const text = await sendRequest(apiKey, model, [{ text: prompt }], {
-    temperature: 0,
-    maxOutputTokens: 2048,
-  });
+  // Délai court : l'IA est facultative, la recherche ne doit pas attendre longtemps.
+  const text = await sendRequest(
+    apiKey,
+    model,
+    [{ text: prompt }],
+    { temperature: 0, maxOutputTokens: 2048 },
+    10000
+  );
   return parseSearchHints(text);
 }
 

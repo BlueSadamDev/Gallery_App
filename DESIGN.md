@@ -135,16 +135,18 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 
 ### 4. Ajout d'une œuvre
 
-- Zone de visuel en pointillés : photo prise avec l'appareil ou choisie dans la galerie du téléphone.
-- Bouton « Chercher avec Gemini » : après avoir saisi un titre, envoie la recherche à Gemini (clé API dans le stockage sécurisé). Les champs sont remplis automatiquement.
-- **Recherche d'image** : après le résultat de Gemini, une image est cherchée gratuitement sur Internet (Wikipedia → Metropolitan Museum → Art Institute of Chicago). Si une image est trouvée, elle s'affiche avec deux boutons :
-  - « Utiliser cette image » : télécharge et copie l'image dans le stockage de l'app.
-  - « Choisir ma propre photo » : ouvre la galerie du téléphone.
-  - Si aucune image n'est trouvée, un message l'indique et propose la galerie.
-- Champs : Titre, Artiste, Année, Description.
-- Bouton « Enregistrer » plein, en bas de l'écran.
+Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE », titre d'étape (Medium, 32 px), roue des paramètres (icône Feather fine, texte secondaire). Couleurs de ce document (pas le fichier de thème). Le bouton retour d'Android revient à l'étape précédente sans rien perdre.
 
-**Recherche v2 (en cours, branche `feature/recherche-oeuvre-v2`)**
+1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). La photo vient de l'appareil photo ou de la galerie et ouvre directement la fiche ; elle n'est jamais envoyée sans action explicite.
+2. **Recherche** (« Rechercher ») : champs soulignés Titre * / Artiste (facultatif) / Année (facultatif), bouton plein « Rechercher ».
+   - Trop d'homonymes et ni artiste ni année : « Ce titre correspond à de nombreuses œuvres. Précisez l'artiste ou l'année. » + « Afficher quand même ».
+   - Aucun résultat : message pour ajouter l'artiste, l'année ou corriger le titre.
+   - Hors ligne (bouton grisé), service occupé ou en panne : message simple + lien « Saisir l'œuvre à la main ».
+3. **Propositions** : lignes séparées d'un trait fin : miniature 64 px (coins 2 px, fond #E3DDD1), titre (Medium 16 px), « artiste, année » et lieu (13 px, texte secondaire). « Voir 5 autres » (contour) et lien « Aucune ne convient » : les œuvres montrées sont exclues et l'app demande de préciser. Après la recherche initiale + 2 relances sans succès, le lien « Saisir l'œuvre à la main » apparaît.
+4. **Fiche** (« Vérifier la fiche ») : image (320 px de haut, jamais recadrée), « Image suivante » et « Utiliser ma photo » ; champs Titre *, Artiste, Année, Style, Description, préremplis et modifiables ; bouton plein « Enregistrer » ; lien « Pas la bonne œuvre » (retour à la liste, œuvre exclue).
+   - Rien n'est enregistré sans « Enregistrer ». L'image Wikimedia est alors téléchargée et copiée dans le stockage de l'app ; aucune adresse Internet n'est conservée. Si la copie échoue, l'app propose d'enregistrer sans image.
+
+**Source et vérification des données**
 
 - Source des données : Wikidata (créateur, date, image, lieu de conservation) et images de Wikimedia Commons. Aucune clé.
 - L'IA prépare seulement la recherche (titres possibles, artiste probable, confiance). Elle ne fournit jamais d'image ni d'adresse, et ne remplit pas la fiche.
