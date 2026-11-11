@@ -14,6 +14,9 @@ import { Artwork, getArtworks } from '@/db/database';
 import WallBay from '@/components/gallery/WallBay';
 import { fonts, spacing } from '@/theme';
 import { useGalleryEnvironment } from '@/hooks/useGalleryEnvironment';
+import ModeBar from '@/components/gallery/ModeBar';
+import TimeSlider from '@/components/gallery/TimeSlider';
+import { GalleryMode, minutesOfDay, resolveLighting } from '@/utils/ambiance';
 
 // TEMPORAIRE (étape 2) : minutes depuis minuit → « 14:05 », ou « ? ».
 function formatClock(minutes: number | null): string {
@@ -42,6 +45,33 @@ export default function LivingGalleryScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const artworkMaxWidth = Math.round(screenWidth * ARTWORK_WIDTH_RATIO);
 
+  // Mode d'affichage : Auto à chaque ouverture de l'onglet, rien n'est mémorisé.
+  const [mode, setMode] = useState<GalleryMode>('AUTO');
+  const [simulatedMinutes, setSimulatedMinutes] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setMode('AUTO');
+    }, []),
+  );
+
+  // En passant en Time-Travel, le curseur part de l'heure actuelle (arrondie au quart d'heure).
+  const changeMode = (next: GalleryMode) => {
+    if (next === 'TIME_TRAVEL' && mode !== 'TIME_TRAVEL') {
+      setSimulatedMinutes(Math.round(minutesOfDay(new Date()) / 15) * 15);
+    }
+    setMode(next);
+  };
+
+  const lighting = resolveLighting({
+    mode,
+    realMoment: env.moment,
+    realWeather: env.weather,
+    simulatedMinutes,
+    sunriseMin: env.sunriseMin,
+    sunsetMin: env.sunsetMin,
+  });
+
   // Recharge les œuvres chaque fois que l'onglet redevient visible.
   useFocusEffect(
     useCallback(() => {
@@ -62,21 +92,24 @@ export default function LivingGalleryScreen() {
     }, []),
   );
 
+  const isEmpty = loaded && artworks.length === 0;
+  const shownMinutes = mode === 'TIME_TRAVEL' ? simulatedMinutes : minutesOfDay(env.now);
+
   const header = (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+    <View style={[styles.header, { paddingTop: isEmpty ? insets.top + spacing.md : spacing.sm }]}>
       <Text style={styles.kicker}>EXPOSITION</Text>
       <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
         Galerie vivante
       </Text>
       {/* TEMPORAIRE (étape 2) : état de l'environnement, retiré à l'étape 4. */}
       <Text style={styles.debug}>
-        {`${env.moment} · ${env.weather} · ${formatClock(env.now.getHours() * 60 + env.now.getMinutes())}` +
+        {`${mode === 'PURIST' ? 'PURISTE' : lighting.moment} · ${lighting.weather} · ${formatClock(shownMinutes)}` +
           ` · lever ${formatClock(env.sunriseMin)} · coucher ${formatClock(env.sunsetMin)}`}
       </Text>
     </View>
   );
 
-  if (loaded && artworks.length === 0) {
+  if (isEmpty) {
     return (
       <View style={styles.container}>
         {header}
@@ -100,6 +133,13 @@ export default function LivingGalleryScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Barre de modes, fixe en haut de l'écran. */}
+      <View style={[styles.topBar, { paddingTop: insets.top }]}>
+        <ModeBar mode={mode} onChange={changeMode} />
+        {mode === 'TIME_TRAVEL' ? (
+          <TimeSlider minutes={simulatedMinutes} onChange={setSimulatedMinutes} />
+        ) : null}
+      </View>
       <FlatList
         data={artworks}
         keyExtractor={(item) => String(item.id)}
@@ -118,6 +158,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: WALL,
+  },
+  topBar: {
+    paddingHorizontal: spacing.lg,
   },
   header: {
     paddingHorizontal: spacing.lg,

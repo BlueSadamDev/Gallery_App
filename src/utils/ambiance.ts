@@ -153,3 +153,44 @@ export function getAmbiance(moment: Moment, weather: Weather): Ambiance {
     shadowOpacity: base.shadowOpacity * (weather === 'RAINY' ? 0.5 : 0.75),
   };
 }
+
+// --- Modes d'affichage de la galerie ---------------------------------------
+
+export type GalleryMode = 'AUTO' | 'TIME_TRAVEL' | 'PURIST';
+
+export type LightingInput = {
+  mode: GalleryMode;
+  realMoment: Moment; // moment réel (hook)
+  realWeather: Weather; // météo réelle (hook)
+  simulatedMinutes: number; // heure choisie au curseur (0 à 1440)
+  sunriseMin: number | null;
+  sunsetMin: number | null;
+};
+
+export type Lighting = {
+  moment: Moment;
+  weather: Weather;
+  ambiance: Ambiance;
+};
+
+// Choisit l'éclairage à afficher selon le mode :
+// - Auto : état réel ;
+// - Time-Travel : heure simulée, météo réelle conservée ;
+// - Puriste : mur neutre, aucune ombre.
+export function resolveLighting(input: LightingInput): Lighting {
+  if (input.mode === 'PURIST') {
+    return { moment: input.realMoment, weather: input.realWeather, ambiance: NEUTRAL_AMBIANCE };
+  }
+  const moment =
+    input.mode === 'TIME_TRAVEL'
+      ? getMoment(input.simulatedMinutes, input.sunriseMin, input.sunsetMin)
+      : input.realMoment;
+  return { moment, weather: input.realWeather, ambiance: getAmbiance(moment, input.realWeather) };
+}
+
+// Libellé d'heure du curseur : 840 → « 14 h », 855 → « 14 h 15 ».
+export function formatHourLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
+}

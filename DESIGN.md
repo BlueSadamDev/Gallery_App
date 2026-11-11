@@ -120,6 +120,11 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 - L'appui ouvre le détail de l'œuvre.
 - Collection vide : même message d'invitation et même bouton « + » que l'accueil.
 - Mur : neutre #F6F2EA (l'éclairage selon l'heure et la météo viendra ensuite).
+- **Barre de modes** (fixe en haut, sous la zone sûre, masquée si la collection est vide) : trois mots centrés « Auto », « Time-Travel », « Puriste », espacés de 24 px. Satoshi 13 px ; mode inactif en texte secondaire, mode actif en texte principal Medium, souligné d'un trait de 1 px #7B3F3A. Zone tactile 48 px.
+  - Auto : éclairage réel (heure et météo du lieu).
+  - Time-Travel : un curseur de 0 h à 24 h (pas de 15 min, piste active et poignée #7B3F3A, piste inactive #CFC8BA) simule l'heure ; la météo réelle est conservée. Libellé à droite : « 14 h », « 14 h 15 ».
+  - Puriste : aucun effet, mur neutre #F6F2EA, aucune ombre.
+  - Le mode revient à Auto à chaque ouverture de l'onglet ; rien n'est mémorisé.
 
 ### 4. Ajout d'une œuvre
 
