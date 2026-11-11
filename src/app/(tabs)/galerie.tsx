@@ -13,6 +13,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Artwork, getArtworks } from '@/db/database';
 import WallBay from '@/components/gallery/WallBay';
 import { fonts, spacing } from '@/theme';
+import { useGalleryEnvironment } from '@/hooks/useGalleryEnvironment';
+
+// TEMPORAIRE (étape 2) : minutes depuis minuit → « 14:05 », ou « ? ».
+function formatClock(minutes: number | null): string {
+  if (minutes == null) return '?';
+  const h = String(Math.floor(minutes / 60)).padStart(2, '0');
+  const m = String(minutes % 60).padStart(2, '0');
+  return `${h}:${m}`;
+}
 
 // Couleurs de la charte DESIGN.md.
 const WALL = '#F6F2EA';
@@ -29,6 +38,7 @@ export default function LivingGalleryScreen() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [loaded, setLoaded] = useState(false);
   const insets = useSafeAreaInsets();
+  const env = useGalleryEnvironment();
   const { width: screenWidth } = useWindowDimensions();
   const artworkMaxWidth = Math.round(screenWidth * ARTWORK_WIDTH_RATIO);
 
@@ -57,6 +67,11 @@ export default function LivingGalleryScreen() {
       <Text style={styles.kicker}>EXPOSITION</Text>
       <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
         Galerie vivante
+      </Text>
+      {/* TEMPORAIRE (étape 2) : état de l'environnement, retiré à l'étape 4. */}
+      <Text style={styles.debug}>
+        {`${env.moment} · ${env.weather} · ${formatClock(env.now.getHours() * 60 + env.now.getMinutes())}` +
+          ` · lever ${formatClock(env.sunriseMin)} · coucher ${formatClock(env.sunsetMin)}`}
       </Text>
     </View>
   );
@@ -119,6 +134,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 32,
     color: TEXT_PRIMARY,
+  },
+  debug: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    color: TEXT_SECONDARY,
+    marginTop: spacing.xs,
   },
   emptyBody: {
     flex: 1,
