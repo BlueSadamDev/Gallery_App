@@ -137,7 +137,12 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 
 Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE », titre d'étape (Medium, 32 px), roue des paramètres (icône Feather fine, texte secondaire). Couleurs de ce document (pas le fichier de thème). Le bouton retour d'Android revient à l'étape précédente sans rien perdre.
 
-1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). La photo vient de l'appareil photo ou de la galerie et ouvre directement la fiche ; elle n'est jamais envoyée sans action explicite.
+1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). La photo vient de l'appareil photo ou de la galerie et ouvre l'étape « Ma photo ».
+   - **Ma photo** : la photo (320 px de haut, jamais recadrée), « Photographier le cartel » (contour, facultatif ; miniature 64 px + « Retirer » une fois pris), bouton plein « Identifier l'œuvre », aide en 12 px : « La photo est réduite et ses informations de lieu sont retirées avant l'envoi. », lien « Saisir l'œuvre à la main ».
+   - Rien ne part sans appui sur « Identifier l'œuvre » ; un seul appel par appui, sans relance automatique. Bouton grisé hors ligne.
+   - Avant l'envoi, la photo et le cartel sont réduits à 1024 px sur le grand côté et réencodés en JPEG (`expo-image-manipulator`), ce qui supprime les métadonnées dont la position GPS. Le cartel n'est pas conservé dans l'app.
+   - L'IA renvoie des pistes structurées (titres, artiste, année, confiance), en lisant le cartel s'il est fourni. Confiance faible : aucune piste, message et saisie manuelle. Sinon, les pistes alimentent la même liste de propositions (l'artiste reconnu remonte en tête, sans rien exclure) : vous confirmez toujours.
+   - Ma photo reste l'image par défaut de la fiche ; « Image suivante » montre les images Wikimedia.
 2. **Recherche** (« Rechercher ») : champs soulignés Titre * / Artiste (facultatif) / Année (facultatif), bouton plein « Rechercher ».
    - Trop d'homonymes et ni artiste ni année : « Ce titre correspond à de nombreuses œuvres. Précisez l'artiste ou l'année. » + « Afficher quand même ».
    - Aucun résultat : message pour ajouter l'artiste, l'année ou corriger le titre.

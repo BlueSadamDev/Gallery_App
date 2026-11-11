@@ -11,6 +11,7 @@ import {
   type SearchResult,
 } from './wikidata.ts';
 
+export type { SearchHints } from '@/utils/gemini';
 export {
   ArtworkSearchError,
   commonsImageUrl,
@@ -22,6 +23,24 @@ export {
 } from './wikidata.ts';
 
 export type SearchInput = { title: string; artist?: string; year?: string };
+
+// Propositions à partir des pistes tirées d'une photo (étape 4).
+// L'artiste lu ou reconnu par l'IA sert à classer (il remonte en tête) mais
+// n'exclut rien : c'est vous qui confirmez dans la liste.
+export async function findProposalsFromHints(
+  hints: SearchHints,
+  excludedIds: string[] = []
+): Promise<SearchResult> {
+  const title = hints.frenchTitle || hints.originalTitle;
+  return searchArtworks(
+    {
+      title,
+      altTitles: [hints.originalTitle, ...hints.altTitles],
+      artistHint: hints.artist,
+    },
+    excludedIds
+  );
+}
 
 // Description d'une proposition, rédigée par l'IA à partir des seuls faits trouvés
 // (Wikidata + extrait Wikipédia). Vide s'il manque des faits ou une clé.

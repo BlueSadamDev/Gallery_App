@@ -12,7 +12,14 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNetworkState } from 'expo-network';
 import { addArtwork } from '@/db/database';
-import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
+import {
+  pickImageFromGallery,
+  prepareForUpload,
+  takePhotoWithCamera,
+  takeTemporaryPhoto,
+} from '@/utils/images';
+import { suggestFromPhoto } from '@/utils/gemini';
+import { PhotoIdentify } from '@/components/add/PhotoIdentify';
 import { downloadImage } from '@/utils/artworkImageSearch';
 import { hasGeminiApiKey } from '@/config/settings';
 import {
@@ -20,6 +27,7 @@ import {
   commonsImageUrl,
   describeProposal,
   findProposals,
+  findProposalsFromHints,
   listArtworkImages,
   type Proposal,
 } from '@/services/artworkSearch';
@@ -36,8 +44,9 @@ import { ProposalList } from '@/components/add/ProposalList';
 import { ArtworkSheet, type SheetForm, type SheetImage } from '@/components/add/ArtworkSheet';
 
 // Étapes de l'écran d'ajout.
-// choice : deux boutons ; search : formulaire ; results : propositions ; sheet : fiche.
-type Phase = 'choice' | 'search' | 'results' | 'sheet';
+// choice : deux boutons ; photo : ma photo et identification ; search : formulaire ;
+// results : propositions ; sheet : fiche.
+type Phase = 'choice' | 'photo' | 'search' | 'results' | 'sheet';
 
 const PAGE_SIZE = 5;
 const IMAGE_WIDTH = 1024; // largeur de l'image Wikimedia affichée et copiée
@@ -100,6 +109,12 @@ export default function AddScreen() {
 
   const [phase, setPhase] = useState<Phase>('choice');
   const [sheetFrom, setSheetFrom] = useState<Phase>('choice');
+  const [resultsFrom, setResultsFrom] = useState<Phase>('search');
+
+  // Ma photo (étape 4) : elle reste l'image par défaut de l'œuvre.
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [cartelUri, setCartelUri] = useState<string | null>(null);
+  const [identifying, setIdentifying] = useState(false);
 
   // Recherche
   const [query, setQuery] = useState({ title: '', artist: '', year: '' });
@@ -129,21 +144,21 @@ export default function AddScreen() {
 
   // ----- Navigation interne (bouton retour d'Android) -----
   const goBack = useCallback((): boolean => {
-    if (saving) return true;
+    if (saving || identifying) return true;
     if (phase === 'sheet') {
       setPhase(sheetFrom);
       return true;
     }
     if (phase === 'results') {
-      setPhase('search');
+      setPhase(resultsFrom);
       return true;
     }
-    if (phase === 'search') {
+    if (phase === 'search' || phase === 'photo') {
       setPhase('choice');
       return true;
     }
     return false; // écran de choix : on quitte l'écran d'ajout
-  }, [phase, sheetFrom, saving]);
+  }, [phase, sheetFrom, resultsFrom, saving, identifying]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', goBack);
@@ -151,10 +166,11 @@ export default function AddScreen() {
   }, [goBack]);
 
   // ----- Recherche -----
-  function showProposals(list: Proposal[]) {
+  function showProposals(list: Proposal[], from: Phase) {
     setHomonyms(null);
     setProposals(list);
     setVisibleCount(PAGE_SIZE);
+    setResultsFrom(from);
     setPhase('results');
   }
 
@@ -189,7 +205,7 @@ export default function AddScreen() {
         setHomonyms(result.proposals);
       } else {
         setMessage(null);
-        showProposals(result.proposals);
+        showProposals(result.proposals, 'search');
       }
     } catch (error) {
       setMessage(errorMessage(error));
@@ -258,7 +274,8 @@ export default function AddScreen() {
     setForm({ ...EMPTY_FORM, title: query.title, artist: query.artist, year: query.year });
     setImageFiles([]);
     setImageIndex(0);
-    setSheetImage(image);
+    // Ma photo, si j'en ai ajouté une, reste l'image par défaut.
+    setSheetImage(image ?? (photoUri ? { kind: 'local', uri: photoUri } : null));
     setSheetFrom(from);
     setPhase('sheet');
   }
@@ -275,7 +292,12 @@ export default function AddScreen() {
     const files = proposal.imageFile ? [proposal.imageFile] : [];
     setImageFiles(files);
     setImageIndex(0);
-    setSheetImage(files[0] ? { kind: 'remote', url: commonsImageUrl(files[0], IMAGE_WIDTH) } : null);
+    // Ma photo reste l'image par défaut ; « Image suivante » montre celles de Wikimedia.
+    if (photoUri) {
+      setSheetImage({ kind: 'local', uri: photoUri });
+    } else {
+      setSheetImage(files[0] ? { kind: 'remote', url: commonsImageUrl(files[0], IMAGE_WIDTH) } : null);
+    }
     setSheetFrom('results');
     setPhase('sheet');
 
@@ -360,14 +382,70 @@ export default function AddScreen() {
     }
   }
 
+  // ----- Ma photo (étape 4) -----
   async function handleAddPhoto() {
     const uri = await askForPhoto();
-    if (uri) openManual('choice', { kind: 'local', uri });
+    if (!uri) return;
+    setPhotoUri(uri);
+    setCartelUri(null);
+    setMessage(null);
+    setManualOffered(false);
+    setPhase('photo');
+  }
+
+  async function handleTakeCartel() {
+    try {
+      const uri = await takeTemporaryPhoto();
+      if (uri) setCartelUri(uri);
+    } catch {
+      Alert.alert('Cartel', 'Impossible d’ouvrir l’appareil photo.');
+    }
+  }
+
+  // Un seul appel par appui, sans relance automatique. Rien ne part sans cet appui.
+  async function handleIdentify() {
+    if (!photoUri || identifying || offline) return;
+    if (!(await hasGeminiApiKey())) {
+      Alert.alert('Clé manquante', 'Ajoutez votre clé Gemini dans les paramètres.');
+      return;
+    }
+    setIdentifying(true);
+    setMessage(null);
+    try {
+      const photo = await prepareForUpload(photoUri);
+      const cartel = cartelUri ? await prepareForUpload(cartelUri) : null;
+      const hints = await suggestFromPhoto(photo, cartel);
+      if (!hints) {
+        setMessage(
+          'L’œuvre n’a pas pu être identifiée avec assez de certitude. Vous pouvez la saisir à la main' +
+            (cartelUri ? '.' : ' ou photographier le cartel.')
+        );
+        return;
+      }
+      // Les pistes préremplissent la recherche, pour pouvoir l'affiner si besoin.
+      setQuery({ title: hints.frenchTitle || hints.originalTitle, artist: '', year: '' });
+      const result = await findProposalsFromHints(hints, excluded);
+      if (result.proposals.length === 0) {
+        setPhase('search');
+        registerMiss('Aucune œuvre correspondante trouvée. Précisez l’artiste ou l’année, ou corrigez le titre.');
+      } else {
+        showProposals(result.proposals, 'photo');
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof ArtworkSearchError
+          ? errorMessage(error)
+          : 'L’identification n’a pas abouti. Vérifiez votre connexion ou saisissez l’œuvre à la main.'
+      );
+    } finally {
+      setIdentifying(false);
+    }
   }
 
   // ----- Affichage -----
   const titles: Record<Phase, string> = {
     choice: 'Ajouter une œuvre',
+    photo: 'Ma photo',
     search: 'Rechercher',
     results: 'Propositions',
     sheet: 'Vérifier la fiche',
@@ -401,11 +479,27 @@ export default function AddScreen() {
                 label="Rechercher par titre"
                 onPress={() => {
                   setMessage(null);
+                  setPhotoUri(null);
+                  setCartelUri(null);
                   setPhase('search');
                 }}
               />
               <SecondaryButton label="Ajouter ma photo" onPress={handleAddPhoto} />
             </View>
+          ) : null}
+
+          {phase === 'photo' && photoUri ? (
+            <PhotoIdentify
+              photoUri={photoUri}
+              cartelUri={cartelUri}
+              onTakeCartel={handleTakeCartel}
+              onRemoveCartel={() => setCartelUri(null)}
+              onIdentify={handleIdentify}
+              identifying={identifying}
+              offline={offline}
+              message={message}
+              onManual={() => openManual('photo', { kind: 'local', uri: photoUri })}
+            />
           ) : null}
 
           {phase === 'search' ? (
@@ -418,7 +512,7 @@ export default function AddScreen() {
               searching={searching}
               offline={offline}
               message={message}
-              onShowAnyway={homonyms ? () => showProposals(homonyms) : undefined}
+              onShowAnyway={homonyms ? () => showProposals(homonyms, 'search') : undefined}
               onManual={manualOffered || offline ? () => openManual('search') : undefined}
             />
           ) : null}
