@@ -50,9 +50,10 @@ async function sendRequest(
 
   let response: Response;
   try {
-    response = await fetch(`${getEndpoint(model)}?key=${apiKey}`, {
+    // La clé part dans un en-tête, jamais dans l'adresse (qui peut finir dans des journaux).
+    response = await fetch(getEndpoint(model), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
@@ -149,6 +150,89 @@ Si tu ne trouves aucune œuvre correspondante, renvoie tous les champs vides.
   const text = await sendRequest(apiKey, model, [{ text: prompt }], { temperature: 0, maxOutputTokens: 8192 });
 
   return parseArtworkInfo(text);
+}
+
+// Pistes de recherche préparées par l'IA. Elles servent uniquement à interroger
+// Wikidata : l'IA ne fournit ni image, ni adresse, ni description.
+export type SearchHints = {
+  originalTitle: string;
+  frenchTitle: string;
+  altTitles: string[];
+  artist: string;
+  year: string;
+  confidence: 'haute' | 'moyenne' | 'faible';
+};
+
+// Retire toute adresse Internet d'un texte renvoyé par l'IA.
+function stripUrls(text: unknown): string {
+  return String(text ?? '')
+    .replace(/\b(?:https?:\/\/|www\.)\S+/gi, '')
+    .trim();
+}
+
+// Lit le JSON des pistes ; renvoie null si la réponse est inexploitable.
+export function parseSearchHints(raw: string): SearchHints | null {
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end <= start) return null;
+  try {
+    const parsed = JSON.parse(raw.substring(start, end + 1));
+    const confidence = ['haute', 'moyenne', 'faible'].includes(parsed.confiance)
+      ? (parsed.confiance as SearchHints['confidence'])
+      : 'faible';
+    const altTitles = Array.isArray(parsed.titresAlternatifs)
+      ? parsed.titresAlternatifs.map(stripUrls).filter((t: string) => t.length > 0).slice(0, 3)
+      : [];
+    return {
+      originalTitle: stripUrls(parsed.titreOriginal),
+      frenchTitle: stripUrls(parsed.titreFrancais),
+      altTitles,
+      artist: stripUrls(parsed.artiste),
+      year: stripUrls(parsed.annee),
+      confidence,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Consigne commune : format des pistes de recherche.
+const HINTS_FORMAT = `
+Renvoie UNIQUEMENT un objet JSON, sans texte autour :
+{
+  "titreOriginal": "titre dans la langue d'origine de l'œuvre",
+  "titreFrancais": "titre usuel en français",
+  "titresAlternatifs": ["autres titres connus, au plus 3"],
+  "artiste": "nom complet de l'artiste",
+  "annee": "année ou période de création",
+  "confiance": "haute | moyenne | faible"
+}
+N'inclus aucune adresse Internet, aucune image, aucune description.
+Si tu n'es pas sûr, laisse le champ vide et mets "confiance": "faible".`;
+
+// Demande à l'IA de préparer la recherche à partir de la saisie de l'utilisateur.
+// Renvoie null si aucune clé n'est enregistrée ou si la réponse est inexploitable.
+export async function prepareSearch(
+  title: string,
+  artist?: string,
+  year?: string
+): Promise<SearchHints | null> {
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) return null;
+  const model = await getGeminiModel();
+  const prompt = `
+Tu aides à rechercher une œuvre d'art dans Wikidata. Voici ce que la personne a saisi :
+- titre : « ${title} »
+- artiste : « ${artist ?? ''} »
+- année : « ${year ?? ''} »
+Complète les pistes de recherche (titres possibles, artiste, année). Ne contredis pas l'artiste
+ni l'année saisis s'ils sont présents.
+${HINTS_FORMAT}`;
+  const text = await sendRequest(apiKey, model, [{ text: prompt }], {
+    temperature: 0,
+    maxOutputTokens: 2048,
+  });
+  return parseSearchHints(text);
 }
 
 // Envoie une requête très simple au modèle choisi pour vérifier qu'il fonctionne.

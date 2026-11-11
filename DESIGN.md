@@ -144,6 +144,16 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 - Champs : Titre, Artiste, Année, Description.
 - Bouton « Enregistrer » plein, en bas de l'écran.
 
+**Recherche v2 (en cours, branche `feature/recherche-oeuvre-v2`)**
+
+- Source des données : Wikidata (créateur, date, image, lieu de conservation) et images de Wikimedia Commons. Aucune clé.
+- L'IA prépare seulement la recherche (titres possibles, artiste probable, confiance). Elle ne fournit jamais d'image ni d'adresse, et ne remplit pas la fiche.
+- Vérification : l'artiste saisi est comparé sans majuscules ni accents ; un candidat d'un autre artiste n'est jamais proposé. L'année saisie est vérifiée à plus ou moins 10 ans (plus large si la source ne connaît que la décennie ou le siècle). Les attributions contestées comptent (ex. Vénus de Milo : « Alexandros d'Antioche (attribution) »).
+- Les œuvres refusées pendant la session ne sont plus proposées.
+- Plus de 5 artistes différents pour un titre, sans artiste saisi : l'app demande d'abord l'artiste ou l'année.
+- Requêtes une par une, délai de 5 s, mémoire de session ; l'app s'identifie auprès de Wikimedia avec l'adresse du dépôt GitHub.
+- La clé Gemini part dans un en-tête, jamais dans l'adresse.
+
 ### 5. Détail d'une œuvre
 
 - Visuel en haut, pleine largeur.
