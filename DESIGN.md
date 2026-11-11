@@ -97,7 +97,29 @@ En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et ro
     - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
     - Œuvres d'un groupe triées par année croissante.
   - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
-- Pas de barre de navigation en bas.
+- L'accueil est l'onglet « Collection » de la barre d'onglets (voir ci-dessous).
+
+### Barre d'onglets
+
+Barre en bas des écrans principaux, avec deux onglets : « Collection » (l'accueil) et « Galerie vivante ».
+
+- Fond #F6F2EA, trait fin (hairline) #E3DDD1 en haut, aucune ombre.
+- Icônes Feather fines : `grid` (Collection), `sun` (Galerie vivante), taille 20.
+- Onglet actif : icône et libellé en accent #7B3F3A. Inactif : texte secondaire #7A756B.
+- Libellés Satoshi Regular 12 px. Zone tactile d'au moins 48 px ; la barre s'ajoute à la zone sûre du bas.
+- Les autres écrans (ajout, détail, modification, paramètres, connexion) s'ouvrent par-dessus, sans barre d'onglets.
+
+### 7. Galerie vivante
+
+Les œuvres sont présentées comme dans une exposition, sur un mur continu.
+
+- En-tête : étiquette « EXPOSITION » (accent, 11 px, lettres espacées), titre « Galerie vivante » (Medium, 32 px).
+- Défilement vertical, une œuvre par travée, centrée, avec 48 px d'espace au-dessus et au-dessous.
+- Œuvre : 72 % de la largeur de l'écran au maximum, proportions d'origine respectées (jamais recadrée ; si l'image est très haute, elle est rétrécie). Cadre fin hairline #CFC8BA, coins 2 px. Fond de chargement #E3DDD1.
+- Cartel centré sous l'œuvre (20 px plus bas) : titre (Medium 20 px), puis « artiste, année » (Regular 13 px, texte secondaire).
+- L'appui ouvre le détail de l'œuvre.
+- Collection vide : même message d'invitation et même bouton « + » que l'accueil.
+- Mur : neutre #F6F2EA (l'éclairage selon l'heure et la météo viendra ensuite).
 
 ### 4. Ajout d'une œuvre
 
