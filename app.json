@@ -45,7 +45,9 @@
           "cameraPermission": "Autoriser Gallery App à utiliser la caméra pour photographier vos œuvres."
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-secure-store",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true
