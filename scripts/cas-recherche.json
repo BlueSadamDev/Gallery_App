@@ -1,0 +1,68 @@
+[
+  {
+    "nom": "Vénus de Milo (pas Dalí)",
+    "titre": "Vénus de Milo",
+    "artiste": "Alexandros d'Antioche",
+    "annee": "vers 100 av. J.-C.",
+    "attendu": {
+      "texte": "La statue du Louvre en premier, aucune œuvre de Dalí",
+      "premierId": "Q151952",
+      "artistesAbsents": ["Dali"]
+    }
+  },
+  {
+    "nom": "Le Baiser / Klimt",
+    "titre": "Le Baiser",
+    "artiste": "Klimt",
+    "annee": "",
+    "attendu": {
+      "texte": "Le tableau de Klimt en premier, ni Rodin ni Brancusi",
+      "premierId": "Q698487",
+      "artistesAbsents": ["Rodin", "Brancusi"]
+    }
+  },
+  {
+    "nom": "Le Baiser sans artiste",
+    "titre": "Le Baiser",
+    "artiste": "",
+    "annee": "",
+    "attendu": {
+      "texte": "Trop d'homonymes signalé ; Klimt avant Rodin et avant Brancusi",
+      "homonymes": true,
+      "ordre": ["Klimt", "Rodin", "Brancusi"]
+    }
+  },
+  {
+    "nom": "La Nuit étoilée / Van Gogh",
+    "titre": "La Nuit étoilée",
+    "artiste": "Van Gogh",
+    "annee": "",
+    "attendu": {
+      "texte": "Le tableau du MoMA en premier, uniquement Van Gogh",
+      "premierId": "Q45585",
+      "artisteDeTous": "Gogh"
+    }
+  },
+  {
+    "nom": "Les Nymphéas / Monet",
+    "titre": "Les Nymphéas",
+    "artiste": "Monet",
+    "annee": "",
+    "attendu": {
+      "texte": "Uniquement Monet, au moins 3 lieux différents parmi les 5 premières",
+      "artisteDeTous": "Monet",
+      "lieuxDifferentsMin": 3
+    }
+  },
+  {
+    "nom": "Basquiat / Untitled (Skull)",
+    "titre": "Untitled (Skull)",
+    "artiste": "Basquiat",
+    "annee": "1981",
+    "attendu": {
+      "texte": "Au moins une proposition, uniquement Basquiat",
+      "auMoins": 1,
+      "artisteDeTous": "Basquiat"
+    }
+  }
+]

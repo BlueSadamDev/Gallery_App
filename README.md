@@ -6,7 +6,10 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 
 - 📷 Galerie photo : ajout, détail, édition, suppression (bouton « + » rond marron avec contour fin beige clair : centré quand la collection est vide, sinon en haut à droite à gauche de la roue)
 - 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description)
-- 🧠 Remplissage automatique avec l'**IA Gemini** : dès qu'une photo est ajoutée, le nom, l'auteur, l'année, le style et la description sont complétés automatiquement. La recherche fonctionne aussi à partir d'un **titre** (« Chercher avec Gemini »). Le **modèle Gemini est choisi dans les réglages** (bouton « Tester la clé » pour vérifier qu'il fonctionne)
+- 🔎 **Recherche d'œuvre fiable** (écran d'ajout) :
+  - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
+  - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut.
+  - L'**IA Gemini** ne fait que préparer la recherche (pistes) et rédiger une description à partir des seuls faits trouvés (mention « À vérifier »). La clé est saisie dans les réglages, rangée dans le stockage sécurisé du téléphone et envoyée dans un en-tête. Pensez à mettre une limite de dépense basse sur la clé.
 - 🔐 Connexion / inscription protégée par mot de passe
 - 💾 Sauvegarde et restauration des données
 - 🗺️ Barre d'onglets en bas : **Collection** (l'accueil) et **Galerie vivante**
@@ -18,11 +21,12 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `(tabs)/_layout.tsx` : barre d'onglets en bas
   - `(tabs)/index.tsx` : onglet « Collection » (galerie principale)
   - `(tabs)/galerie.tsx` : onglet « Galerie vivante »
-  - `add.tsx` : ajout d'une photo
+  - `add.tsx` : ajout d'une œuvre (choix, ma photo, recherche, propositions, fiche)
   - `detail/[id].tsx`, `edit/[id].tsx` : détail et édition d'une photo
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
-- `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante)
-- `src/services/` : position approximative et météo (Galerie vivante)
+- `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout)
+- `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
+- `scripts/` : test de la recherche d'œuvres (`cas-recherche.json` + `test-recherche.ts`)
 - `src/hooks/` : `useGalleryEnvironment` (moment de la journée et météo)
 - `src/db/` : base de données SQLite
 - `src/auth/` : gestion de l'authentification
@@ -59,6 +63,14 @@ Toujours utiliser `expo install` (et non `npm install`) pour obtenir des version
 
 ```bash
 npx expo install <nom-du-module>
+```
+
+## Tester la recherche d'œuvres
+
+Interroge le vrai Wikidata (sans IA) avec les cas du fichier `scripts/cas-recherche.json` et affiche OK ou ÉCHEC pour chacun (Node 22.18 ou plus récent, qui lit le TypeScript directement) :
+
+```bash
+node scripts/test-recherche.ts
 ```
 
 ## Vérifications avant un build
