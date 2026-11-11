@@ -33,6 +33,10 @@ yarn-error.*
 # Secrets - ne jamais committer
 .env
 .env.local
+credentials.json
+*.jks
+*.keystore
+credentials/
 
 # local env files
 .env*.local

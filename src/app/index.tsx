@@ -3,7 +3,6 @@ import { Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   Dimensions,
-  FlatList,
   Image,
   Pressable,
   ScrollView,
@@ -14,14 +13,27 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '@/theme';
 import { Artwork, getArtworks } from '@/db/database';
+import Carousel from '@/components/Carousel';
 
 // Couleurs de la charte DESIGN.md utilisées sur l'accueil.
 const ACCENT = '#7B3F3A';
 const ON_ACCENT = '#F6F2EA';
 const ICON_GRAY = '#7A756B';
 const LABEL = '#8A6A45';
-const CAROUSEL_GAP = 12;
 const IMAGE_PLACEHOLDER_BG = '#E3DDD1';
+
+// Remplace les caractères spéciaux qui empêchent le retour à la ligne,
+// et insère un espace de largeur nulle (U+200B) après chaque tiret
+// pour que React Native puisse couper le mot au bon endroit.
+// N'affecte PAS les données enregistrées (simple affichage).
+function formatDisplayText(text: string): string {
+  const cleaned = text
+    .replace(/\u2011/g, '-')   // tiret insécable → tiret normal
+    .replace(/\u00A0/g, ' ');  // espace insécable → espace normale
+  // Ajoute ZWSP après chaque tiret (sauf si déjà suivi d'un ZWSP, d'une
+  // espace ou de fin de chaîne, pour éviter les doublons).
+  return cleaned.replace(/-(?!\u200B| |$)/g, '-\u200B');
+}
 
 // Regroupe les œuvres par artiste et les trie pour l'affichage.
 // - compare les artistes sans tenir compte des majuscules ni des espaces.
@@ -97,7 +109,6 @@ function AddButton() {
 export default function HomeScreen() {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
   const [randomSample, setRandomSample] = useState<Artwork[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [lastCount, setLastCount] = useState(0);
 
   // Recharge la liste à chaque fois que l'écran redevient visible.
@@ -113,11 +124,9 @@ export default function HomeScreen() {
             const shuffled = [...rows].sort(() => Math.random() - 0.5);
             setRandomSample(shuffled.slice(0, Math.min(5, shuffled.length)));
             setLastCount(rows.length);
-            setCurrentIndex(0);
           } else if (rows.length === 0) {
             setRandomSample([]);
             setLastCount(0);
-            setCurrentIndex(0);
           }
         })
         .catch((error) => {
@@ -138,15 +147,20 @@ export default function HomeScreen() {
         style={[styles.header, { paddingTop: insets.top + spacing.md }]}
       >
         <View style={styles.headerRow}>
-          <View style={styles.headerTitles}>
-            <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
-            <Text style={styles.title}>Ma collection</Text>
-          </View>
+          <Text style={styles.kicker}>GALERIE PERSONNELLE</Text>
+          <View style={{ flex: 1 }} />
           <View style={styles.headerActions}>
             {artworks.length > 0 ? <AddButton /> : null}
             <SettingsButton />
           </View>
         </View>
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          style={styles.title}
+        >
+          Ma collection
+        </Text>
       </View>
 
       {artworks.length === 0 ? (
@@ -169,221 +183,130 @@ export default function HomeScreen() {
           </Link>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1, paddingBottom: insets.bottom + spacing.lg }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.lg + 24 }}>
           {(() => {
             const screenWidth = Dimensions.get('window').width;
-            const cardWidth = screenWidth * 0.8;
-            const imageHeight = 175;
             const cellWidth = (screenWidth - spacing.lg * 2 - spacing.sm) / 2;
             return (
               <>
-                <FlatList
-                  data={randomSample}
-                  keyExtractor={(item) => String(item.id)}
-                  horizontal={true}
-                  pagingEnabled={true}
-                  snapToInterval={cardWidth + CAROUSEL_GAP}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ paddingHorizontal: spacing.lg }}
-                  onMomentumScrollEnd={(e: any) => {
-                    const pos = e?.target?.scrollPosition?.x ?? 0;
-                    const idx = Math.round(pos / (cardWidth + CAROUSEL_GAP));
-                    if (idx >= 0 && idx < randomSample.length) {
-                      setCurrentIndex(idx);
-                    }
-                  }}
-                  style={{ height: imageHeight + 56, marginBottom: spacing.sm }}
-                  renderItem={({ item }) => (
-                    <Link href={`/detail/${item.id}`} asChild>
-                      <Pressable
-                        style={{
-                          width: cardWidth,
-                          height: imageHeight + 48,
-                        }}
-                      >
-                        {item.imageUri ? (
-                          <Image
-                            source={{ uri: item.imageUri }}
-                            style={{
-                              width: cardWidth - CAROUSEL_GAP,
-                              height: imageHeight,
-                              borderRadius: 2,
-                              backgroundColor: IMAGE_PLACEHOLDER_BG,
-                            }}
-                            resizeMode="cover"
-                          />
-                        ) : (
-                          <View
-                            style={{
-                              width: cardWidth - CAROUSEL_GAP,
-                              height: imageHeight,
-                              borderRadius: 2,
-                              backgroundColor: IMAGE_PLACEHOLDER_BG,
-                              alignItems: 'center' as 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
-                              ✦
-                            </Text>
-                          </View>
-                        )}
-                        <Text
-                          style={{
-                            fontFamily: fonts.title,
-                            fontSize: 16,
-                            color: colors.textPrimary,
-                            marginTop: spacing.sm,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {item.title}
-                        </Text>
-                        {item.artist ? (
-                          <Text
-                            style={{
-                              fontFamily: fonts.regular,
-                              fontSize: 13,
-                              color: colors.textSecondary,
-                              marginTop: 2,
-                            }}
-                            numberOfLines={1}
-                          >
-                            {item.artist}
-                          </Text>
-                        ) : null}
-                      </Pressable>
-                    </Link>
-                  )}
-                />
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: spacing.sm,
-                    marginBottom: spacing.md,
-                  }}
-                >
-                  {randomSample.map((_, i) => (
-                    <View
-                      key={String(i)}
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: i === currentIndex ? '#7B3F3A' : '#CFC8BA',
-                      }}
-                    />
-                  ))}
-                </View>
+                <Carousel items={randomSample} />
 
                 {/* Regroupement par artiste */}
                 {groupByArtist(artworks).map((section) => (
                   <View key={section.artistKey} style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
                     {/* En-tête du groupe */}
-                    <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: spacing.sm }}>
-                      <Text
-                        style={{
-                          fontFamily: fonts.medium,
-                          fontSize: 11,
-                          letterSpacing: 2,
-                          color: LABEL,
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        {section.artist}
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 11, letterSpacing: 2, color: LABEL, textTransform: 'uppercase', marginBottom: spacing.sm }}>
+                      {section.artist}
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.textSecondary }}>
+                        {'  '}{section.count === 1 ? '1 œuvre' : `${section.count} œuvres`}
                       </Text>
-                      <Text
-                        style={{
-                          fontFamily: fonts.regular,
-                          fontSize: 11,
-                          color: colors.textSecondary,
-                          marginLeft: spacing.sm,
-                        }}
-                      >
-                        {section.count === 1 ? '1 œuvre' : `${section.count} œuvres`}
-                      </Text>
-                    </View>
+                    </Text>
 
                     {/* Grille 2 colonnes */}
-                    {section.data.reduce<Artwork[][]>((rows, art, i) => {
-                      if (i % 2 === 0) rows.push([art]);
-                      else rows[rows.length - 1].push(art);
-                      return rows;
-                    }, []).map((pair, rowIndex) => (
-                      <View
-                        key={String(rowIndex)}
-                        style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm }}
-                      >
-                        {pair.map((artwork) => (
-                          <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
-                            <Pressable
-                              style={{
-                                width: cellWidth,
-                                overflow: 'hidden',
-                              }}
-                            >
-                              <View
+                    {section.data.length === 1 ? (
+                      (() => { const artwork = section.data[0]; return (
+                        <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
+                          <Pressable style={{ width: cellWidth, alignSelf: 'center', overflow: 'hidden' }}>
+                            <View style={{ width: '100%', aspectRatio: 1, backgroundColor: IMAGE_PLACEHOLDER_BG, borderRadius: 2, overflow: 'hidden' }}>
+                              {artwork.imageUri ? (
+                                <Image source={{ uri: artwork.imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                              ) : (
+                                <View style={{ width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: IMAGE_PLACEHOLDER_BG }}>
+                                  <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>✦</Text>
+                                </View>
+                              )}
+                            </View>
+                            <View style={{ marginTop: spacing.sm }}>
+                              <Text numberOfLines={3} ellipsizeMode="tail" style={{ fontFamily: fonts.title, fontSize: 16, color: colors.textPrimary, textAlign: 'center' }}>
+                                {formatDisplayText(artwork.title)}
+                              </Text>
+                              {artwork.year ? (
+                                <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
+                                  {artwork.year}
+                                </Text>
+                              ) : null}
+                            </View>
+                          </Pressable>
+                        </Link>
+                      )})()
+                    ) : (
+                      section.data.reduce<Artwork[][]>((rows, art, i) => {
+                        if (i % 2 === 0) rows.push([art]);
+                        else rows[rows.length - 1].push(art);
+                        return rows;
+                      }, []).map((pair, rowIndex) => (
+                        <View
+                          key={String(rowIndex)}
+                          style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm }}
+                        >
+                          {pair.map((artwork) => (
+                            <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
+                              <Pressable
                                 style={{
-                                  width: '100%',
-                                  aspectRatio: 1,
-                                  backgroundColor: IMAGE_PLACEHOLDER_BG,
-                                  borderRadius: 2,
+                                  width: cellWidth,
                                   overflow: 'hidden',
                                 }}
                               >
-                                {artwork.imageUri ? (
-                                  <Image
-                                    source={{ uri: artwork.imageUri }}
-                                    style={{ width: '100%', height: '100%' }}
-                                    resizeMode="cover"
-                                  />
-                                ) : (
-                                  <View
-                                    style={{
-                                      width: '100%', height: '100%',
-                                      alignItems: 'center', justifyContent: 'center',
-                                      backgroundColor: IMAGE_PLACEHOLDER_BG,
-                                    }}
-                                  >
-                                    <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
-                                      ✦
-                                    </Text>
-                                  </View>
-                                )}
-                              </View>
-                              <View style={{ marginTop: spacing.sm }}>
-                                <Text
+                                <View
                                   style={{
-                                    fontFamily: fonts.title,
-                                    fontSize: 16,
-                                    color: colors.textPrimary,
+                                    width: '100%',
+                                    aspectRatio: 1,
+                                    backgroundColor: IMAGE_PLACEHOLDER_BG,
+                                    borderRadius: 2,
+                                    overflow: 'hidden',
                                   }}
-                                  numberOfLines={1}
                                 >
-                                  {artwork.title}
-                                </Text>
-                                {artwork.year ? (
+                                  {artwork.imageUri ? (
+                                    <Image
+                                      source={{ uri: artwork.imageUri }}
+                                      style={{ width: '100%', height: '100%' }}
+                                      resizeMode="cover"
+                                    />
+                                  ) : (
+                                    <View
+                                      style={{
+                                        width: '100%', height: '100%',
+                                        alignItems: 'center', justifyContent: 'center',
+                                        backgroundColor: IMAGE_PLACEHOLDER_BG,
+                                      }}
+                                    >
+                                      <Text style={{ fontSize: 36, color: colors.accent, opacity: 0.5 }}>
+                                        ✦
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                                <View style={{ marginTop: spacing.sm }}>
                                   <Text
+                                    numberOfLines={3}
+                                    ellipsizeMode="tail"
                                     style={{
-                                      fontFamily: fonts.regular,
-                                      fontSize: 13,
-                                      color: colors.textSecondary,
-                                      marginTop: 2,
+                                      fontFamily: fonts.title,
+                                      fontSize: 16,
+                                      color: colors.textPrimary,
                                     }}
-                                    numberOfLines={1}
                                   >
-                                    {artwork.year}
+                                    {formatDisplayText(artwork.title)}
                                   </Text>
-                                ) : null}
-                              </View>
-                            </Pressable>
-                          </Link>
-                        ))}
-                      </View>
-                    ))}
+                                  {artwork.year ? (
+                                    <Text
+                                      style={{
+                                        fontFamily: fonts.regular,
+                                        fontSize: 13,
+                                        color: colors.textSecondary,
+                                        marginTop: 2,
+                                      }}
+                                    >
+                                      {artwork.year}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              </Pressable>
+                            </Link>
+                          ))}
+                        </View>
+                      ))
+                    )}
                   </View>
                 ))}
               </>
@@ -433,7 +356,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.medium,
-    fontSize: 34,
+    fontSize: 32,
     color: colors.textPrimary,
   },
   emptyBody: {

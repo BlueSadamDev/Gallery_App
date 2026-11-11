@@ -72,28 +72,28 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 
 ### 3. Accueil
 
-En-tête : étiquette « Galerie personnelle », titre « Ma collection » (graisse Medium, 34 px). Pas de titre technique (« index »).
+En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et roue à droite (même ligne, alignés au centre vertical). En dessous, titre « Ma collection » (graisse Medium, 32 px) sur toute la largeur, sur une seule ligne (numberOfLines 1, adjustsFontSizeToFit). Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
 - Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
 - **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
-  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel aussi (première carte à 24 px du bord).
-  - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Chaque carte :
-    - Image (coins 2 px) occupant ≈ 80 % de la largeur de l'écran, hauteur 175 px.
-    - Espacement de 12 px entre les cartes.
-    - Image, titre et artiste alignés à gauche (bord gauche de l'image).
-    - Fond d'image en chargement ou absente : #E3DDD1.
-    - Hauteur totale de la carte (image + texte) : 220 px environ.
-    - Défilement carte par carte avec snap, sans boucle.
-    - Petits points de position (#CFC8BA inactif, #7B3F3A actif) sous le carrousel, centrés.
-    - Pas de défilement automatique.
+  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
+  - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Composant indépendant (`src/components/Carousel.tsx`). Chaque carte :
+    - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes (ItemSeparatorComponent).
+    - Image (coins 2 px) occupant 100 % de la largeur de la carte, hauteur 260 px, fond de chargement #E3DDD1.
+    - Pas de hauteur fixe sur la carte ni sur le conteneur du FlatList. Pas de pagingEnabled. SnapToInterval = cardWidth + 12, snapToAlignment start, decelerationRate fast, disableIntervalMomentum.
+    - Titre : numberOfLines 2, minHeight 48, lineHeight 24, marginTop 10, fontFamily title, fontSize 18, couleur texte principal.
+    - Artiste : numberOfLines 1, lineHeight 20, marginTop 4, fontSize 14, couleur texte secondaire.
+    - Les tirets et espaces spéciaux sont nettoyés à l'affichage (idem carrousel).
     - L'appui ouvre le détail de l'œuvre.
+    - Points de pagination sous la liste, dans le flux normal, marginTop 16 : point inactif 6 × 6 en #CFC8BA, point actif 16 × 6 (pastille) en #7B3F3A, 6 px d'espace entre les points.
   - **Regroupement par artiste** sous le carrousel :
-    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres.
-    - Grille de **2 colonnes** : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes), même s'il n'y a qu'une œuvre sur la ligne.
+    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres dans un **unique Text** (le compteur est un `<Text>` imbriqué). Pas de flexDirection row, pas de largeur fixe. Le retour à la ligne se fait naturellement. Marges latérales de 24 px.
+    - Grille de **2 colonnes** pour 2 œuvres ou plus : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes).
+    - **Groupe d'une seule œuvre** : l'image est centrée horizontalement (alignSelf center), à la même largeur qu'une colonne. Le titre et l'année sont centrés sous l'image (textAlign center).
     - Image carrée (coins 2 px), sans fond blanc ni cadre autour. Fond de chargement #E3DDD1.
-    - Titre et année alignés à gauche sous l'image.
+    - Titre (numberOfLines 3, ellipsizeMode tail) et année alignés à gauche sous l'image (sauf cas 1 œuvre → centré).
     - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
     - Œuvres d'un groupe triées par année croissante.
   - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
