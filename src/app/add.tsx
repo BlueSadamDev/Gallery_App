@@ -14,9 +14,11 @@ import { useNetworkState } from 'expo-network';
 import { addArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
 import { downloadImage } from '@/utils/artworkImageSearch';
+import { hasGeminiApiKey } from '@/config/settings';
 import {
   ArtworkSearchError,
   commonsImageUrl,
+  describeProposal,
   findProposals,
   listArtworkImages,
   type Proposal,
@@ -121,6 +123,10 @@ export default function AddScreen() {
   const [saving, setSaving] = useState(false);
   const selectedIdRef = useRef<string | null>(null);
 
+  // Description par l'IA (étape 3). La mention « À vérifier » n'est jamais stockée.
+  const [descriptionState, setDescriptionState] = useState<'idle' | 'loading' | 'ai'>('idle');
+  const descriptionRequestRef = useRef(0); // ignore les réponses devenues obsolètes
+
   // ----- Navigation interne (bouton retour d'Android) -----
   const goBack = useCallback((): boolean => {
     if (saving) return true;
@@ -201,8 +207,52 @@ export default function AddScreen() {
     registerMiss('Ajoutez l’artiste ou l’année, ou corrigez le titre, puis relancez.');
   }
 
+  // ----- Description -----
+  // `explicit` : appui sur « Régénérer » (on informe alors de l'échec éventuel).
+  async function generateDescription(proposal: Proposal, explicit: boolean) {
+    if (!(await hasGeminiApiKey())) {
+      if (explicit) Alert.alert('Clé manquante', 'Ajoutez votre clé Gemini dans les paramètres.');
+      return;
+    }
+    const request = ++descriptionRequestRef.current;
+    setDescriptionState('loading');
+    let text = '';
+    try {
+      text = await describeProposal(proposal, explicit);
+    } catch {
+      text = '';
+    }
+    // Réponse obsolète (autre œuvre ouverte, texte retouché entre-temps) : ignorée.
+    if (request !== descriptionRequestRef.current || selectedIdRef.current !== proposal.id) return;
+    if (text) {
+      setForm((f) => ({ ...f, description: text }));
+      setDescriptionState('ai');
+    } else {
+      setDescriptionState('idle');
+      if (explicit) {
+        Alert.alert('Description', 'Pas assez d’informations vérifiées pour rédiger une description.');
+      }
+    }
+  }
+
+  function handleFormChange(field: keyof SheetForm, value: string) {
+    if (field === 'description') {
+      descriptionRequestRef.current++; // une rédaction en cours n'écrasera pas votre texte
+      setDescriptionState('idle');
+    }
+    setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handleClearDescription() {
+    descriptionRequestRef.current++;
+    setDescriptionState('idle');
+    setForm((f) => ({ ...f, description: '' }));
+  }
+
   // ----- Fiche -----
   function openManual(from: Phase, image: SheetImage = null) {
+    descriptionRequestRef.current++;
+    setDescriptionState('idle');
     selectedIdRef.current = null;
     setSelected(null);
     setForm({ ...EMPTY_FORM, title: query.title, artist: query.artist, year: query.year });
@@ -228,6 +278,9 @@ export default function AddScreen() {
     setSheetImage(files[0] ? { kind: 'remote', url: commonsImageUrl(files[0], IMAGE_WIDTH) } : null);
     setSheetFrom('results');
     setPhase('sheet');
+
+    // Description rédigée à partir des faits trouvés (vide s'il en manque).
+    generateDescription(proposal, false);
 
     // Autres images de l'œuvre, chargées en arrière-plan.
     listArtworkImages(proposal)
@@ -269,6 +322,8 @@ export default function AddScreen() {
 
   async function handleSave() {
     if (!form.title.trim() || saving) return;
+    descriptionRequestRef.current++;
+    setDescriptionState('idle'); // la mention « À vérifier » disparaît à l'enregistrement
     setSaving(true);
     try {
       // L'image choisie est copiée dans le stockage de l'app : aucune adresse Internet n'est gardée.
@@ -381,7 +436,7 @@ export default function AddScreen() {
           {phase === 'sheet' ? (
             <ArtworkSheet
               form={form}
-              onChange={(field, value) => setForm((f) => ({ ...f, [field]: value }))}
+              onChange={handleFormChange}
               image={sheetImage}
               canNextImage={
                 imageFiles.length > 1 || (sheetImage?.kind !== 'remote' && imageFiles.length > 0)
@@ -391,6 +446,9 @@ export default function AddScreen() {
               onWrongArtwork={selected ? handleWrongArtwork : undefined}
               onSave={handleSave}
               saving={saving}
+              descriptionState={descriptionState}
+              onRegenerate={selected ? () => generateDescription(selected, true) : undefined}
+              onClearDescription={handleClearDescription}
             />
           ) : null}
         </ScrollView>

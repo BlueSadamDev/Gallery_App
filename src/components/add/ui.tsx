@@ -85,13 +85,17 @@ type FieldProps = {
   onChangeText: (text: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  hint?: string; // mention discrète à droite du libellé (ex. « À vérifier »)
 };
 
 // Champ de saisie souligné d'un trait fin.
-export function Field({ label, value, onChangeText, placeholder, multiline }: FieldProps) {
+export function Field({ label, value, onChangeText, placeholder, multiline, hint }: FieldProps) {
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.fieldHeader}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        {hint ? <Text style={styles.fieldHint}>{hint}</Text> : null}
+      </View>
       <TextInput
         style={[styles.input, multiline && styles.inputMultiline]}
         value={value}
@@ -165,12 +169,22 @@ const styles = StyleSheet.create({
   field: {
     marginBottom: 24,
   },
+  fieldHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 4,
+  },
   fieldLabel: {
     fontFamily: fonts.regular,
     fontSize: 12,
     letterSpacing: 0.6,
     color: palette.label,
-    marginBottom: 4,
+  },
+  fieldHint: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: palette.textSecondary,
   },
   input: {
     minHeight: 44,

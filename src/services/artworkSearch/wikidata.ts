@@ -440,6 +440,36 @@ export async function listArtworkImages(proposal: Proposal): Promise<string[]> {
   return files;
 }
 
+// Extrait d'une source (résumé Wikipédia de l'œuvre) avec son lien.
+export type SourceExtract = { text: string; url: string };
+const extractCache = new Map<string, SourceExtract | null>();
+
+// Résumé Wikipédia de l'œuvre : français en priorité, sinon anglais.
+// Renvoie null si l'œuvre n'a pas d'article ou si le service ne répond pas.
+export async function fetchSourceExtract(proposal: Proposal): Promise<SourceExtract | null> {
+  if (extractCache.has(proposal.id)) return extractCache.get(proposal.id) ?? null;
+  const pages: [string, string | null][] = [
+    ['fr', proposal.wikipediaFr],
+    ['en', proposal.wikipediaEn],
+  ];
+  let result: SourceExtract | null = null;
+  for (const [lang, title] of pages) {
+    if (!title || result) continue;
+    try {
+      const data = await fetchJson(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`
+      );
+      const text = String(data?.extract ?? '').trim();
+      const url = String(data?.content_urls?.desktop?.page ?? '');
+      if (data?.type === 'standard' && text.length > 40 && url) result = { text, url };
+    } catch {
+      // on essaie la langue suivante
+    }
+  }
+  extractCache.set(proposal.id, result);
+  return result;
+}
+
 // Cherche des œuvres et renvoie les propositions vérifiées.
 // `excludedIds` : œuvres refusées pendant la session, jamais reproposées.
 // Lève une ArtworkSearchError (hors ligne, service occupé…) en cas de problème.

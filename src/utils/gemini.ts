@@ -209,6 +209,65 @@ ${HINTS_FORMAT}`;
   return parseSearchHints(text);
 }
 
+// Faits vérifiés transmis à l'IA pour rédiger une description.
+export type DescriptionFacts = {
+  title: string;
+  artist: string;
+  year: string;
+  location: string;
+  sourceText: string; // extrait de la source
+  sourceUrl: string; // lien de la source
+};
+
+// Nettoie la description : sans adresse Internet ni espaces superflus.
+// (On ne coupe pas par phrases : « av. J.-C. » contient des points.)
+function tidyDescription(text: string): string {
+  return stripUrls(text).replace(/\s+/g, ' ').trim();
+}
+
+// Rédige 2 à 3 phrases en français UNIQUEMENT à partir des faits fournis.
+// Renvoie une chaîne vide si aucune clé n'est enregistrée, si l'extrait de source
+// manque, ou si l'IA estime que les faits ne suffisent pas.
+export async function writeDescription(
+  facts: DescriptionFacts,
+  variation = false
+): Promise<string> {
+  if (!facts.sourceText.trim()) return '';
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) return '';
+  const model = await getGeminiModel();
+  const prompt = `
+Rédige une courte description d'œuvre d'art en français, en 2 ou 3 phrases, au ton sobre de musée.
+Règle absolue : utilise UNIQUEMENT les faits ci-dessous. N'ajoute rien de ta mémoire :
+aucune date, aucun nom, aucun chiffre, aucune anecdote qui ne figure pas dans ces faits.
+Si ces faits ne suffisent pas pour écrire 2 phrases exactes, renvoie une description vide.
+
+Faits :
+- Titre : ${facts.title}
+- Artiste : ${facts.artist}
+- Année : ${facts.year}
+- Lieu de conservation : ${facts.location}
+- Extrait de la source (${facts.sourceUrl}) : « ${facts.sourceText} »
+
+Renvoie UNIQUEMENT un objet JSON : { "description": "..." }
+N'inclus aucune adresse Internet.`;
+  const text = await sendRequest(
+    apiKey,
+    model,
+    [{ text: prompt }],
+    { temperature: variation ? 0.7 : 0.2, maxOutputTokens: 2048 },
+    20000
+  );
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end <= start) return '';
+  try {
+    return tidyDescription(String(JSON.parse(text.substring(start, end + 1)).description ?? ''));
+  } catch {
+    return '';
+  }
+}
+
 // Envoie une requête très simple au modèle choisi pour vérifier qu'il fonctionne.
 // Renvoie un message lisible : succès, ou la cause de l'échec.
 export async function testGeminiModel(): Promise<string> {

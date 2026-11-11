@@ -29,6 +29,10 @@ type Props = {
   onWrongArtwork?: () => void;
   onSave: () => void;
   saving: boolean;
+  // Description rédigée par l'IA : 'loading' pendant la rédaction, 'ai' tant qu'elle n'est pas retouchée.
+  descriptionState: 'idle' | 'loading' | 'ai';
+  onRegenerate?: () => void;
+  onClearDescription?: () => void;
 };
 
 function imageKey(image: SheetImage): string {
@@ -95,9 +99,28 @@ export function ArtworkSheet(props: Props) {
         label="Description"
         value={form.description}
         onChangeText={(v) => onChange('description', v)}
-        placeholder="Quelques mots sur cette œuvre"
+        placeholder={
+          props.descriptionState === 'loading'
+            ? 'Rédaction de la description…'
+            : 'Quelques mots sur cette œuvre'
+        }
         multiline
+        hint={props.descriptionState === 'ai' ? 'À vérifier' : undefined}
       />
+      {props.onRegenerate ? (
+        <View style={styles.descriptionActions}>
+          <LinkButton
+            label="Régénérer"
+            onPress={props.onRegenerate}
+            disabled={props.descriptionState === 'loading' || saving}
+          />
+          <LinkButton
+            label="Effacer"
+            onPress={props.onClearDescription ?? (() => undefined)}
+            disabled={!form.description || saving}
+          />
+        </View>
+      ) : null}
 
       <PrimaryButton
         label={saving ? 'Enregistrement…' : 'Enregistrer'}
@@ -137,5 +160,12 @@ const styles = StyleSheet.create({
   },
   half: {
     flex: 1,
+  },
+  descriptionActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 24,
+    marginTop: -16,
+    marginBottom: 16,
   },
 });
