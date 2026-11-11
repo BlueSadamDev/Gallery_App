@@ -41,6 +41,19 @@ Lire [DESIGN.md](DESIGN.md) avant toute modification d'interface et le respecter
 - Ne jamais mettre de secrets dans le dépôt (clés API, mots de passe, fichiers de signature). Utiliser le fichier `.gitignore`.
 - Ne jamais faire de force push ni réécrire l'historique sans accord.
 
+## Travail en parallèle (plusieurs sessions)
+- Plusieurs sessions peuvent travailler en même temps sur le projet. Au début de chaque tâche, vérifier avec `git status` et `git worktree list` qu'aucune autre session n'utilise déjà le dossier courant.
+- Si le dossier principal est occupé par une autre session : ne jamais y changer de branche, y faire de commit ni y modifier de fichier. Travailler dans un **worktree** (copie de travail séparée, reliée au même dépôt Git).
+- Créer un worktree : `git worktree add .claude/worktrees/<nom> -b <branche> origin/main`, puis travailler uniquement dans ce dossier. Le lancement `claude --worktree <nom>` fait la même chose, mais peut échouer sous Windows (différence de majuscule `c:` / `C:` dans les chemins) : utiliser alors la commande Git.
+- Une branche par session, jamais la même branche dans deux sessions.
+- Une seule session à la fois modifie `package.json` et `package-lock.json` (ajout ou mise à jour de dépendances), car ce sont les fichiers qui créent le plus de conflits.
+- Répartir les sujets pour que deux sessions ne modifient pas les mêmes fichiers en même temps.
+- Si deux sessions lancent `npx expo start` en même temps, utiliser un port différent pour la seconde : `npx expo start --port 8082`.
+- `node_modules` d'un worktree : le dossier n'existe pas au départ. Ne lancer `npm ci` que si des vérifications ou un serveur Expo sont nécessaires, et le placer hors de OneDrive (jonction vers `C:\dev\gallery-app\node_modules-<nom>`, comme expliqué dans le README).
+- Avant de fusionner une branche, récupérer `main` (`git merge main`) pour intégrer le travail des autres sessions et relancer les vérifications.
+- À la fin : fusion après validation de l'utilisateur, puis `git worktree remove .claude/worktrees/<nom>` et suppression de la branche.
+- Ne jamais mettre dans un commit les fichiers temporaires d'une session (`run.log`, `node_modules_old/`, etc.). Ajouter les fichiers un par un, jamais `git add .` ni `git add -A`.
+
 ## Build de l'APK
 - Méthode unique : **GitHub Actions** (workflow `.github/workflows/build-apk.yml`). Déclenchement manuel depuis l'onglet Actions.
 - L'APK signé est publié comme artifact téléchargeable (`gallery-apk`).
