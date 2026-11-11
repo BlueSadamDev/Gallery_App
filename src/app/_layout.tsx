@@ -70,7 +70,10 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
         }}
-      />
+      >
+        {/* Groupe des onglets (Collection, Galerie vivante) : sans en-tête. */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
       <StatusBar style="dark" />
     </>
   );

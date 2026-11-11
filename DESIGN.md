@@ -6,7 +6,7 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 
 - Élégant et épuré, dans l'esprit d'une galerie ou d'un musée.
 - Les œuvres sont mises en valeur, avec beaucoup d'espace autour.
-- Aucune décoration inutile : pas d'ombres, pas de dégradés.
+- Aucune décoration inutile : pas d'ombres, pas de dégradés. **Seule exception** : l'écran « Galerie vivante » (dégradé du mur et ombres portées simulées, voir section 7).
 - Une seule couleur d'accent.
 - Version claire uniquement (pas de mode sombre dans la version 1).
 
@@ -97,7 +97,41 @@ En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et ro
     - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
     - Œuvres d'un groupe triées par année croissante.
   - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
-- Pas de barre de navigation en bas.
+- L'accueil est l'onglet « Collection » de la barre d'onglets (voir ci-dessous).
+
+### Barre d'onglets
+
+Barre en bas des écrans principaux, avec deux onglets : « Collection » (l'accueil) et « Galerie vivante ».
+
+- Fond #F6F2EA, trait fin (hairline) #E3DDD1 en haut, aucune ombre.
+- Icônes Feather fines : `grid` (Collection), `sun` (Galerie vivante), taille 20.
+- Onglet actif : icône et libellé en accent #7B3F3A. Inactif : texte secondaire #7A756B.
+- Libellés Satoshi Regular 12 px. Zone tactile d'au moins 48 px ; la barre s'ajoute à la zone sûre du bas.
+- Les autres écrans (ajout, détail, modification, paramètres, connexion) s'ouvrent par-dessus, sans barre d'onglets.
+
+### 7. Galerie vivante
+
+Les œuvres sont présentées comme dans une exposition, sur un mur continu.
+
+- En-tête : étiquette « EXPOSITION » (accent, 11 px, lettres espacées), titre « Galerie vivante » (Medium, 32 px).
+- Défilement vertical, une œuvre par travée, centrée, avec 48 px d'espace au-dessus et au-dessous.
+- Œuvre : 72 % de la largeur de l'écran au maximum, proportions d'origine respectées (jamais recadrée ; si l'image est très haute, elle est rétrécie). Cadre fin hairline #CFC8BA, coins 2 px. Fond de chargement #E3DDD1.
+- Cartel centré sous l'œuvre (20 px plus bas) : titre (Medium 20 px), puis « artiste, année » (Regular 13 px, texte secondaire).
+- L'appui ouvre le détail de l'œuvre.
+- Collection vide : même message d'invitation et même bouton « + » que l'accueil.
+- **Mur éclairé** : couche à part, placée sous les œuvres. Dégradé vertical (expo-linear-gradient) + voile de lumière de faible opacité. Les changements d'ambiance se font en fondu enchaîné de deux couches (environ 0,9 s).
+  - Matin : crème clair, voile doré léger, ombre longue vers la droite.
+  - Midi : presque blanc, ombre courte vers le bas.
+  - Heure dorée : beige chaud, voile orangé, ombre longue vers la gauche.
+  - Nuit : beige grisé tamisé, ombre courte vers le bas ; la météo n'y change rien.
+  - Nuages et pluie (le jour) : mur plus gris et plus froid, ombres plus courtes et plus pâles.
+- **Ombre portée** : une vue sombre (#1C1B19, opacité 0,05 à 0,13) décalée derrière le cadre selon l'heure, plus une pénombre plus pâle. Pas de `shadowColor` ni d'`elevation`.
+- **Règle absolue** : les images des œuvres ne sont jamais modifiées (aucune teinte, aucune opacité inférieure à 1, rien par-dessus, aucun filtre). Les effets ne touchent que le mur et l'espace autour du cadre.
+- **Barre de modes** (fixe en haut, sous la zone sûre, masquée si la collection est vide) : trois mots centrés « Auto », « Time-Travel », « Puriste », espacés de 24 px. Satoshi 13 px ; mode inactif en texte secondaire, mode actif en texte principal Medium, souligné d'un trait de 1 px #7B3F3A. Zone tactile 48 px.
+  - Auto : éclairage réel (heure et météo du lieu).
+  - Time-Travel : un curseur de 0 h à 24 h (pas de 15 min, piste active et poignée #7B3F3A, piste inactive #CFC8BA) simule l'heure ; la météo réelle est conservée. Libellé à droite : « 14 h », « 14 h 15 ».
+  - Puriste : aucun effet, mur neutre #F6F2EA, aucune ombre.
+  - Le mode revient à Auto à chaque ouverture de l'onglet ; rien n'est mémorisé.
 
 ### 4. Ajout d'une œuvre
 

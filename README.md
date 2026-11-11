@@ -9,17 +9,24 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 - 🧠 Remplissage automatique avec l'**IA Gemini** : dès qu'une photo est ajoutée, le nom, l'auteur, l'année, le style et la description sont complétés automatiquement. La recherche fonctionne aussi à partir d'un **titre** (« Chercher avec Gemini »). Le **modèle Gemini est choisi dans les réglages** (bouton « Tester la clé » pour vérifier qu'il fonctionne)
 - 🔐 Connexion / inscription protégée par mot de passe
 - 💾 Sauvegarde et restauration des données
+- 🗺️ Barre d'onglets en bas : **Collection** (l'accueil) et **Galerie vivante**
+- 🌤️ **Galerie vivante** : les œuvres sont présentées comme dans une exposition, sur un mur dont l'éclairage suit l'heure et la météo réelles (position approximative + météo gratuite Open-Meteo, sans clé). Trois modes : **Auto**, **Time-Travel** (curseur de 0 h à 24 h) et **Puriste** (mur neutre). Les images des œuvres ne sont jamais modifiées.
 
 ## Structure du projet
 
 - `src/app/` : les écrans de l'application (Expo Router)
-  - `index.tsx` : galerie principale
+  - `(tabs)/_layout.tsx` : barre d'onglets en bas
+  - `(tabs)/index.tsx` : onglet « Collection » (galerie principale)
+  - `(tabs)/galerie.tsx` : onglet « Galerie vivante »
   - `add.tsx` : ajout d'une photo
   - `detail/[id].tsx`, `edit/[id].tsx` : détail et édition d'une photo
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
+- `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante)
+- `src/services/` : position approximative et météo (Galerie vivante)
+- `src/hooks/` : `useGalleryEnvironment` (moment de la journée et météo)
 - `src/db/` : base de données SQLite
 - `src/auth/` : gestion de l'authentification
-- `src/utils/` : logique métier (images, sauvegarde, IA Gemini)
+- `src/utils/` : logique métier (images, sauvegarde, IA Gemini, ambiances lumineuses)
 - `src/theme/` : thème et couleurs
 - `src/config/` : réglages
 
@@ -37,6 +44,14 @@ npx expo start     # démarre le serveur de développement
 ```
 
 Puis scanne le QR code affiché avec l'app **Expo Go** sur ton téléphone.
+
+> **Projet dans OneDrive :** OneDrive marque les fichiers de `node_modules` d'une façon que le serveur Expo ne sait pas lire (erreur 500 en scannant le QR code). Sur ce PC, `node_modules` est donc un raccourci (jonction Windows) vers `C:\dev\gallery-app\node_modules`, hors de OneDrive. Le dossier cible doit s'appeler exactement `node_modules`. Pour le recréer sur un autre PC (PowerShell, dans le dossier du projet, `node_modules` absent) :
+>
+> ```powershell
+> New-Item -ItemType Directory -Force C:\dev\gallery-app\node_modules
+> New-Item -ItemType Junction -Path node_modules -Target C:\dev\gallery-app\node_modules
+> npm ci
+> ```
 
 ## Ajouter une dépendance Expo
 
@@ -62,7 +77,9 @@ L'APK est construit avec **GitHub Actions** (pas de build local nécessaire, pas
 1. Va sur **GitHub** → ton dépôt → onglet **Actions**
 2. Clique sur **Build APK Android** dans la colonne de gauche
 3. Clique sur le bouton **Run workflow** (dropdown à droite)
-4. Laisse la branche `main` et clique **Run workflow**
+4. Choisis la branche à construire (`main`, ou la branche à tester) et clique **Run workflow**
+
+> **Limite de minutes :** sur un dépôt privé, un compte gratuit dispose d'un nombre limité de minutes de build par mois. Une fois la limite atteinte, le build échoue au démarrage (« startup failure ») sans rien exécuter. Le dépôt est public depuis novembre 2026 : les builds y sont gratuits et illimités.
 5. Une fois le build terminé (case ✅), clique sur le run pour voir les détails
 6. Dans la section **Artifacts**, télécharge **gallery-apk** (fichier ZIP)
 7. Décompresse le ZIP sur ton téléphone et installe le `.apk` (accepte l'installation depuis une source inconnue si Android le demande)
