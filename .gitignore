@@ -57,3 +57,6 @@ Thumbs.db
 
 # APK de test téléchargés localement (EAS Build)
 *.apk
+
+# Worktrees de Claude Code (copies de travail parallèles)
+.claude/worktrees/
