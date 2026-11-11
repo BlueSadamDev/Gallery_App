@@ -2,14 +2,16 @@
 # Documentation : https://docs.github.com/en/code-security/dependabot
 version: 2
 updates:
-  # Surveille les dépendances npm (Expo, React, etc.)
+  # Dépendances npm (Expo, React, etc.) : leurs versions sont fixées par le SDK Expo
+  # (`npx expo install --fix`), pas par Dependabot. La limite à 0 désactive les PR
+  # de mise à jour de version, mais garde les PR de sécurité (si les alertes
+  # Dependabot sont activées dans les réglages GitHub du dépôt).
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    # Limite le nombre de PR ouvertes simultanément
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     # Étiquette des PR créées par Dependabot
     labels:
       - "dependencies"
