@@ -8,6 +8,7 @@
 
 ## Design
 Lire [DESIGN.md](DESIGN.md) avant toute modification d'interface et le respecter.
+Quand une modification change ce que décrit DESIGN.md (couleur, bouton, écran), vérifier que le README ne contredit pas la nouvelle version.
 
 ## Façon de travailler
 - Commencer toujours par un plan court et attendre la validation avant d'écrire du code.
@@ -21,6 +22,7 @@ Lire [DESIGN.md](DESIGN.md) avant toute modification d'interface et le respecter
 ## Dépendances
 - Pour ajouter un module Expo (camera, SQLite, etc.) : utiliser `npx expo install <nom>`, jamais `npm install`, afin de garantir la compatibilité avec le SDK.
 - Ne jamais ajouter manuellement `expo-modules-core` ni `expo-modules-autolinking` dans `package.json` : ce sont des dépendances internes gérées par Expo. Lancer `npx expo install --fix` si nécessaire.
+- **Dependabot** : ne jamais fusionner une PR Dependabot qui touche les dépendances npm (Dependabot ne connaît pas les versions attendues par le SDK Expo). À la place : `npx expo install --check`, puis `npx expo install --fix` sur une branche dédiée, et fermer la PR Dependabot avec une explication. Les PR Dependabot sur les actions GitHub (`.github/workflows`) peuvent être fusionnées après un build réussi.
 
 ## Qualité du code (avant chaque build ou grosse étape)
 - Exécuter systématiquement :
@@ -37,6 +39,9 @@ Lire [DESIGN.md](DESIGN.md) avant toute modification d'interface et le respecter
 - Créer une branche par fonctionnalité majeure (nom clair, par exemple `feature/ajout-saisie`).
 - Après chaque étape validée : commit, puis push de la branche sur GitHub.
 - Fusionner dans `main` uniquement après validation de l'utilisateur, quand l'APK de la branche a été testé.
+- Une fusion demande un accord explicite qui nomme la PR (par exemple « fusionne la #22 »). Un « ok » général ne suffit pas.
+- Dans chaque résumé, distinguer clairement « APK construit » (le build GitHub a réussi) et « APK testé » (installé et vérifié sur le téléphone par l'utilisateur).
+- Après une fusion qui a eu des conflits, relire le résultat sur `package.json` et `.github/workflows/` pour vérifier qu'aucune mise à jour n'a été annulée par erreur.
 - Après la fusion, expliquer ce qui a été fait et proposer de supprimer la branche.
 - Ne jamais mettre de secrets dans le dépôt (clés API, mots de passe, fichiers de signature). Utiliser le fichier `.gitignore`.
 - Ne jamais faire de force push ni réécrire l'historique sans accord.
@@ -64,6 +69,7 @@ Lire [DESIGN.md](DESIGN.md) avant toute modification d'interface et le respecter
   - Dans les blocs `signingConfigs`, utiliser `project.getProperty('KEY')` plutôt que la variable nue `KEY`.
 - Donner les commandes exactes à copier-coller pour lancer le workflow.
 - Expliquer comment télécharger et installer l'APK sur le téléphone (artifact → ZIP → `.apk`).
+- Un build dure 20 à 30 minutes : donner le lien du build à l'utilisateur. Si la session a redémarré pendant un build, revérifier son état avec `gh run view <ID>` avant de conclure.
 
 ## Gestion des erreurs natives (Gradle / Android)
 - Si une erreur Gradle survient en CI (GitHub Actions), diagnostiquer avec `gh run view <ID> --log`.

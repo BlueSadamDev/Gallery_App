@@ -60,3 +60,7 @@ Thumbs.db
 
 # Worktrees de Claude Code (copies de travail parallèles)
 .claude/worktrees/
+
+# Fichiers temporaires des sessions de travail
+run.log
+node_modules_old/
