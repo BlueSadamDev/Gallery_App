@@ -40,8 +40,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Autoriser Gallery App à accéder à vos photos pour enregistrer vos œuvres.",
-          "cameraPermission": "Autoriser Gallery App à utiliser la caméra pour photographier vos œuvres."
+          "photosPermission": "Autoriser X-Gallery à accéder à vos photos pour enregistrer vos œuvres.",
+          "cameraPermission": "Autoriser X-Gallery à utiliser la caméra pour photographier vos œuvres."
         }
       ],
       "expo-sharing",
@@ -50,7 +50,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Autoriser Gallery App à utiliser votre position approximative pour adapter l'éclairage de la galerie à la météo.",
+          "locationWhenInUsePermission": "Autoriser X-Gallery à utiliser votre position approximative pour adapter l'éclairage de la galerie à la météo.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false,
