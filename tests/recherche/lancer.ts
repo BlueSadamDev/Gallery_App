@@ -410,7 +410,7 @@ async function main() {
     console.log('Créez-la puis redémarrez le terminal (ou lancez avec SANS_IA=1 pour tester sans IA).');
     process.exit(1);
   }
-  const modele = process.env.GEMINI_MODEL?.trim() || 'gemini-2.5-flash';
+  const modele = process.env.GEMINI_MODEL?.trim() || 'gemini-3.1-flash-lite';
   console.log(`IA : ${iaActive ? `active (modèle ${modele})` : 'désactivée'}`);
 
   const passes = [];

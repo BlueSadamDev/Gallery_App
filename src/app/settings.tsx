@@ -81,7 +81,7 @@ export default function SettingsScreen() {
       } else {
         Alert.alert(
           'Test échoué',
-          `${result}\n\nEssayez un autre modèle dans la liste (par exemple Gemini 2.5 Flash ou Gemini 3.1 Flash-Lite).`
+          `${result}\n\nEssayez un autre modèle dans la liste (par exemple Gemini 3.1 Flash-Lite ou Gemini 3.8 Flash).`
         );
       }
     } catch (error) {
@@ -185,7 +185,7 @@ export default function SettingsScreen() {
           <Text style={styles.label}>Modèle Gemini</Text>
           <Text style={styles.fieldHint}>
             Choisissez le modèle autorisé par votre clé. En cas d’échec,
-            essayez Gemini 2.5 Flash ou Gemini 3.1 Flash-Lite.
+            essayez Gemini 3.1 Flash-Lite ou Gemini 3.8 Flash.
           </Text>
           <View style={styles.pickerWrapper}>
             <Picker

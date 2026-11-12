@@ -198,7 +198,9 @@ export default function AddScreen() {
       );
       if (result.proposals.length === 0) {
         registerMiss(
-          'Aucune œuvre trouvée. Ajoutez l’artiste ou l’année, ou corrigez le titre, puis relancez.'
+          result.aiFailed
+            ? 'Aucune œuvre trouvée. La correction automatique n’a pas pu être utilisée : vérifiez l’orthographe du titre, ou ajoutez l’artiste ou l’année.'
+            : 'Aucune œuvre trouvée. Ajoutez l’artiste ou l’année, ou corrigez le titre, puis relancez.'
         );
       } else if (result.tooManyHomonyms && !query.artist.trim() && !query.year.trim()) {
         setMessage('Ce titre correspond à de nombreuses œuvres. Précisez l’artiste ou l’année.');
