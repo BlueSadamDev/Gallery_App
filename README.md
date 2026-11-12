@@ -26,7 +26,8 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
 - `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
-- `scripts/` : test de la recherche d'œuvres (`cas-recherche.json` + `test-recherche.ts`)
+- `scripts/` : test rapide de la recherche d'œuvres, sans IA (`cas-recherche.json` + `test-recherche.ts`)
+- `tests/recherche/` : jeu de 42 cas sur le vrai service (IA + Wikidata), rapport et résultats
 - `src/hooks/` : `useGalleryEnvironment` (moment de la journée et météo)
 - `src/db/` : base de données SQLite
 - `src/auth/` : gestion de l'authentification
@@ -71,6 +72,12 @@ Interroge le vrai Wikidata (sans IA) avec les cas du fichier `scripts/cas-recher
 
 ```bash
 node scripts/test-recherche.ts
+```
+
+**Jeu complet de 42 cas (avec l'IA)** : exécute le vrai service de recherche (IA Gemini + Wikidata) sans l'interface, en deux passes (à froid puis avec cache), et écrit le détail dans `tests/recherche/resultats.json`. La clé Gemini est lue dans la variable d'environnement Windows `GEMINI_API_KEY` (à créer soi-même, jamais dans le dépôt) ; `GEMINI_MODEL` permet de changer de modèle. Durée : environ 15 minutes, environ 82 appels à l'IA. Le dernier rapport est dans `tests/recherche/rapport.md`.
+
+```bash
+npm run test:recherche
 ```
 
 ## Vérifications avant un build
