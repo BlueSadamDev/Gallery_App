@@ -1,4 +1,4 @@
-# Design de l'application « Ma galerie »
+# Design de l'application « X-Gallery »
 
 Ce document est la référence unique pour l'apparence de l'app. Respecte-le à la lettre. Ne change aucune couleur, police ou taille sans mon accord, et n'ajoute aucun écran ni aucune fonctionnalité qui n'y figure pas.
 
@@ -24,6 +24,12 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 | Alerte (à valider) | #A32D2D | Suppression et réinitialisation |
 
 Un seul bouton plein par écran, de couleur accent. Le texte sur l'accent est #F6F2EA.
+
+## Logo
+
+- Nom de l'app : **X-Gallery**.
+- Logo : un carré à trait fin et un X (une branche épaisse, une branche fine), en bordeaux #7B3F3A sur fond crème #F6F2EA.
+- Fichiers : `assets/icon.png` (icône complète), `assets/adaptive-icon.png` (logo seul, fond transparent, posé sur la couleur #F6F2EA), `assets/monochrome-icon.png` (version une couleur pour les icônes à thème d'Android).
 
 ## Typographie
 
@@ -64,7 +70,7 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 
 ### 2. Connexion
 
-- Bandeau visuel en haut, titre « Ma galerie ».
+- Bandeau visuel en haut, titre « X-Gallery ».
 - Champs : Identifiant, Mot de passe (avec œil).
 - Bouton « Se connecter ».
 - « Utiliser l'empreinte » une fois l'accès créé, si le téléphone le permet.
