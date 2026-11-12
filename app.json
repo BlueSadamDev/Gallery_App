@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Gallery App",
+    "name": "X-Gallery",
     "slug": "gallery-app",
     "scheme": "galleryapp",
     "version": "1.0.0",
@@ -13,10 +13,9 @@
     "android": {
       "package": "com.bluesadamdevsteam.galleryapp",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#F6F2EA",
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/monochrome-icon.png"
       },
       "softwareKeyboardLayoutMode": "pan",
       "predictiveBackGestureEnabled": false,

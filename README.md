@@ -1,4 +1,4 @@
-# Gallery App
+# X-Gallery
 
 Application Android de galerie photos créée avec **Expo** (React Native + TypeScript) et **Expo Router**.
 
