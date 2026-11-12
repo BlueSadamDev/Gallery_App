@@ -3,7 +3,7 @@
 // Sur le téléphone, la clé est rangée dans le stockage sécurisé ; ici, elle est lue
 // dans la variable d'environnement GEMINI_API_KEY. Elle n'est jamais affichée.
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 export async function getGeminiApiKey(): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY?.trim();

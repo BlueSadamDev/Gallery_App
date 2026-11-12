@@ -6,12 +6,12 @@ const GEMINI_API_KEY = 'gemini_api_key';
 const GEMINI_MODEL_KEY = 'gemini_model';
 
 // Modèle Gemini utilisé par défaut (léger et rapide, adapté au forfait gratuit).
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+// gemini-2.5-flash est refusé par Google pour les nouveaux utilisateurs (erreur 404).
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 // Modèles proposés à l'utilisateur dans les paramètres.
 export const GEMINI_MODELS = [
-  { label: 'Gemini 2.5 Flash (recommandé)', value: 'gemini-2.5-flash' },
-  { label: 'Gemini 3.1 Flash-Lite (léger)', value: 'gemini-3.1-flash-lite' },
+  { label: 'Gemini 3.1 Flash-Lite (recommandé)', value: 'gemini-3.1-flash-lite' },
   { label: 'Gemini 3.8 Flash', value: 'gemini-3.8-flash' },
   { label: 'Gemini 4 Argon', value: 'gemini-4-argon' },
 ] as const;
@@ -49,7 +49,10 @@ export async function saveGeminiModel(model: string): Promise<void> {
 }
 
 // Récupère le modèle Gemini choisi (ou le modèle par défaut).
+// Un modèle enregistré qui n'est plus dans la liste (retiré par Google) est remplacé
+// par le modèle par défaut, sans que l'utilisateur ait à retourner dans les paramètres.
 export async function getGeminiModel(): Promise<string> {
   const stored = await SecureStore.getItemAsync(GEMINI_MODEL_KEY);
-  return stored && stored.length > 0 ? stored : DEFAULT_GEMINI_MODEL;
+  const known = GEMINI_MODELS.some((item) => item.value === stored);
+  return stored && known ? stored : DEFAULT_GEMINI_MODEL;
 }

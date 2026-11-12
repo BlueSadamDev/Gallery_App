@@ -60,18 +60,22 @@ export async function describeProposal(proposal: Proposal, variation = false): P
   );
 }
 
+// aiFailed : vrai si une clé est enregistrée mais que l'IA n'a pas répondu
+// (modèle refusé, service surchargé, délai dépassé). Sans clé, il reste faux.
 export async function findProposals(
   input: SearchInput,
   excludedIds: string[] = []
-): Promise<SearchResult> {
+): Promise<SearchResult & { aiFailed: boolean }> {
   let hints: SearchHints | null = null;
+  let aiFailed = false;
   try {
     hints = await prepareSearch(input.title, input.artist, input.year);
   } catch {
     hints = null; // l'IA est facultative : on continue sans elle
+    aiFailed = true;
   }
   const usable = hints && hints.confidence !== 'faible' ? hints : null;
-  return searchArtworks(
+  const result = await searchArtworks(
     {
       title: input.title,
       artist: input.artist,
@@ -82,4 +86,5 @@ export async function findProposals(
     },
     excludedIds
   );
+  return { ...result, aiFailed };
 }
