@@ -26,12 +26,14 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
 - `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
+- `src/services/ai/` : point d'entrée unique de tous les appels à l'IA (fournisseur Gemini, classement des erreurs et messages)
+- `tests/ia/` : tests automatiques de la couche IA, avec des réponses de Google simulées (aucun appel réel)
 - `scripts/` : test rapide de la recherche d'œuvres, sans IA (`cas-recherche.json` + `test-recherche.ts`)
 - `tests/recherche/` : jeu de 42 cas sur le vrai service (IA + Wikidata), rapport et résultats
 - `src/hooks/` : `useGalleryEnvironment` (moment de la journée et météo)
 - `src/db/` : base de données SQLite
 - `src/auth/` : gestion de l'authentification
-- `src/utils/` : logique métier (images, sauvegarde, IA Gemini, ambiances lumineuses)
+- `src/utils/` : logique métier (images, sauvegarde, consignes envoyées à l'IA Gemini, ambiances lumineuses)
 - `src/theme/` : thème et couleurs
 - `src/config/` : réglages
 
@@ -64,6 +66,14 @@ Toujours utiliser `expo install` (et non `npm install`) pour obtenir des version
 
 ```bash
 npx expo install <nom-du-module>
+```
+
+## Tester la couche IA (sans clé ni Internet)
+
+Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue et que la clé ne sort jamais de l'en-tête :
+
+```bash
+npm run test:ia
 ```
 
 ## Tester la recherche d'œuvres

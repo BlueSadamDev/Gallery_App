@@ -79,10 +79,8 @@ export default function SettingsScreen() {
       if (result.endsWith(': OK')) {
         Alert.alert('Test réussi', result);
       } else {
-        Alert.alert(
-          'Test échoué',
-          `${result}\n\nEssayez un autre modèle dans la liste (par exemple Gemini 3.1 Flash-Lite ou Gemini 3.8 Flash).`
-        );
+        // Le message dit déjà la cause et quoi faire (clé, quota, modèle…).
+        Alert.alert('Test échoué', result);
       }
     } catch (error) {
       console.error('Erreur de test de la clé', error);
@@ -185,7 +183,7 @@ export default function SettingsScreen() {
           <Text style={styles.label}>Modèle Gemini</Text>
           <Text style={styles.fieldHint}>
             Choisissez le modèle autorisé par votre clé. En cas d’échec,
-            essayez Gemini 3.1 Flash-Lite ou Gemini 3.8 Flash.
+            essayez Gemini 3.5 Flash-Lite ou Gemini 3.1 Flash-Lite.
           </Text>
           <View style={styles.pickerWrapper}>
             <Picker

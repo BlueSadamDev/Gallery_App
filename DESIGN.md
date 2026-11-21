@@ -149,6 +149,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
    - Avant l'envoi, la photo et le cartel sont réduits à 1024 px sur le grand côté et réencodés en JPEG (`expo-image-manipulator`), ce qui supprime les métadonnées dont la position GPS. Le cartel n'est pas conservé dans l'app.
    - L'IA renvoie des pistes structurées (titres, artiste, année, confiance), en lisant le cartel s'il est fourni. Confiance faible : aucune piste, message et saisie manuelle. Sinon, les pistes alimentent la même liste de propositions (l'artiste reconnu remonte en tête, sans rien exclure) : vous confirmez toujours.
    - Ma photo reste l'image par défaut de la fiche ; « Image suivante » montre les images Wikimedia.
+   - Échec de l'IA : le message dit la cause et quoi faire (clé non reconnue, accès refusé, quota de la minute ou du jour, modèle indisponible, service surchargé, délai dépassé, hors ligne, réponse bloquée ou illisible). Textes dans `src/services/ai/errors.ts`.
 2. **Recherche** (« Rechercher ») : champs soulignés Titre * / Artiste (facultatif) / Année (facultatif), bouton plein « Rechercher ».
    - Trop d'homonymes et ni artiste ni année : « Ce titre correspond à de nombreuses œuvres. Précisez l'artiste ou l'année. » + « Afficher quand même ».
    - Aucun résultat : message pour ajouter l'artiste, l'année ou corriger le titre.
@@ -167,6 +168,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 - Plus de 5 artistes différents pour un titre, sans artiste saisi : l'app demande d'abord l'artiste ou l'année.
 - Requêtes une par une, délai de 5 s, mémoire de session ; l'app s'identifie auprès de Wikimedia avec l'adresse du dépôt GitHub.
 - La clé Gemini part dans un en-tête, jamais dans l'adresse.
+- Tous les appels à l'IA passent par `src/services/ai` (aucun écran n'appelle Google directement). Le réglage « temperature » n'est plus envoyé (ignoré par les modèles récents) ; « Régénérer » demande une autre formulation dans la consigne.
 
 ### 5. Détail d'une œuvre
 
@@ -177,6 +179,12 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 ### 6. Paramètres
 
 Contenu à définir ensemble. Ne crée rien dans cet écran sans ma validation.
+
+Contenu actuel :
+
+- **Intelligence artificielle** : clé Gemini (champ masqué, stockage sécurisé), choix du modèle, « Enregistrer la clé », « Tester la clé ». Modèles proposés : uniquement des modèles gratuits qui lisent les images — Gemini 3.5 Flash-Lite (recommandé, par défaut), 3.1 Flash-Lite, 3.6 Flash, 3.8 Flash. Le test affiche la cause d'un échec et l'action à faire.
+- **Sauvegarde et restauration** : exporter, importer.
+- **Se déconnecter**.
 
 ## Données d'une œuvre
 

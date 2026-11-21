@@ -18,6 +18,7 @@ import {
   takePhotoWithCamera,
   takeTemporaryPhoto,
 } from '@/utils/images';
+import { aiErrorMessage, isAiError } from '@/services/ai';
 import { suggestFromPhoto } from '@/utils/gemini';
 import { PhotoIdentify } from '@/components/add/PhotoIdentify';
 import { downloadImage } from '@/utils/artworkImageSearch';
@@ -199,7 +200,8 @@ export default function AddScreen() {
       if (result.proposals.length === 0) {
         registerMiss(
           result.aiFailed
-            ? 'Aucune œuvre trouvée. La correction automatique n’a pas pu être utilisée : vérifiez l’orthographe du titre, ou ajoutez l’artiste ou l’année.'
+            ? 'Aucune œuvre trouvée. La correction automatique n’a pas pu être utilisée : vérifiez l’orthographe du titre, ou ajoutez l’artiste ou l’année.' +
+                (result.aiError ? `\n${aiErrorMessage(result.aiError)}` : '')
             : 'Aucune œuvre trouvée. Ajoutez l’artiste ou l’année, ou corrigez le titre, puis relancez.'
         );
       } else if (result.tooManyHomonyms && !query.artist.trim() && !query.year.trim()) {
@@ -235,13 +237,21 @@ export default function AddScreen() {
     const request = ++descriptionRequestRef.current;
     setDescriptionState('loading');
     let text = '';
+    let failure: unknown = null;
     try {
       text = await describeProposal(proposal, explicit);
-    } catch {
+    } catch (error) {
       text = '';
+      failure = error;
     }
     // Réponse obsolète (autre œuvre ouverte, texte retouché entre-temps) : ignorée.
     if (request !== descriptionRequestRef.current || selectedIdRef.current !== proposal.id) return;
+    // Échec de l'IA sur « Régénérer » : on donne la vraie cause (quota, clé…).
+    if (failure && explicit && isAiError(failure)) {
+      setDescriptionState('idle');
+      Alert.alert('Description', aiErrorMessage(failure));
+      return;
+    }
     if (text) {
       setForm((f) => ({ ...f, description: text }));
       setDescriptionState('ai');
@@ -437,7 +447,9 @@ export default function AddScreen() {
       setMessage(
         error instanceof ArtworkSearchError
           ? errorMessage(error)
-          : 'L’identification n’a pas abouti. Vérifiez votre connexion ou saisissez l’œuvre à la main.'
+          : isAiError(error)
+            ? aiErrorMessage(error)
+            : 'L’identification n’a pas abouti. Vérifiez votre connexion ou saisissez l’œuvre à la main.'
       );
     } finally {
       setIdentifying(false);
