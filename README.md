@@ -90,6 +90,14 @@ node scripts/test-recherche.ts
 npm run test:recherche
 ```
 
+## Veille des nouveaux modèles Gemini (chaque dimanche)
+
+Le programme `.github/workflows/veille-modeles.yml` (script `scripts/veille-modeles.mjs`) demande chaque dimanche à Google la liste de ses modèles et la compare à ceux que l'app connaît. Les modèles Gemini nouveaux sont signalés dans la fiche GitHub « Veille des modèles Gemini » (onglet **Issues**) : création la première fois, puis un commentaire par nouveauté. L'app n'est pas modifiée.
+
+- Besoin, une seule fois : le secret `GEMINI_API_KEY` (dépôt GitHub → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**).
+- Lancement manuel : onglet **Actions** → « Veille des modèles Gemini » → **Run workflow**.
+- Avant d'ajouter un modèle signalé, vérifier dans Google AI Studio qu'il est gratuit, qu'il lit les images, et noter ses limites dans `src/services/ai/quotas.ts`.
+
 ## Vérifications avant un build
 
 ```bash
