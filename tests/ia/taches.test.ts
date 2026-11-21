@@ -5,7 +5,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setAiProvider } from '../../src/services/ai/index.ts';
+import { setAiProvider, setQuotaTracker } from '../../src/services/ai/index.ts';
+import { QuotaTracker, type DailyUsage } from '../../src/services/ai/quotas.ts';
 import { AiError, type AiProvider, type AiRequest } from '../../src/services/ai/types.ts';
 import { prepareSearch, suggestFromPhoto, testGeminiModel, writeDescription } from '../../src/utils/gemini.ts';
 
@@ -21,6 +22,9 @@ function fournisseur(reponse: (r: AiRequest) => string | AiError) {
     },
   };
   setAiProvider(p);
+  // Compteur de quota neuf pour chaque test (aucun reste d'un test précédent).
+  let usage: DailyUsage | null = null;
+  setQuotaTracker(new QuotaTracker({ load: async () => usage, save: async (u) => void (usage = u) }));
   return demandes;
 }
 

@@ -70,7 +70,7 @@ npx expo install <nom-du-module>
 
 ## Tester la couche IA (sans clé ni Internet)
 
-Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue et que la clé ne sort jamais de l'en-tête :
+Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue, que la clé ne sort jamais de l'en-tête, et que l'app passe au modèle suivant quand un quota est atteint (remise à zéro à minuit, heure du Pacifique) :
 
 ```bash
 npm run test:ia

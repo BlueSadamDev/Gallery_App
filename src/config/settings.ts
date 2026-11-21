@@ -59,3 +59,20 @@ export async function getGeminiModel(): Promise<string> {
   const known = GEMINI_MODELS.some((item) => item.value === stored);
   return stored && known ? stored : DEFAULT_GEMINI_MODEL;
 }
+
+// Compteur des demandes à l'IA du jour (heure du Pacifique), par modèle.
+// Il ne contient que des nombres : ni la clé, ni le texte ou la photo envoyés.
+const AI_QUOTA_USAGE_KEY = 'ai_quota_usage';
+
+export type AiDailyUsage = { day: string; counts: Record<string, number> };
+
+export async function loadAiDailyUsage(): Promise<AiDailyUsage | null> {
+  const raw = await SecureStore.getItemAsync(AI_QUOTA_USAGE_KEY);
+  if (!raw) return null;
+  const parsed = JSON.parse(raw) as AiDailyUsage;
+  return typeof parsed?.day === 'string' && parsed.counts ? parsed : null;
+}
+
+export async function saveAiDailyUsage(usage: AiDailyUsage): Promise<void> {
+  await SecureStore.setItemAsync(AI_QUOTA_USAGE_KEY, JSON.stringify(usage));
+}

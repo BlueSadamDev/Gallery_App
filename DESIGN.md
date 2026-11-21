@@ -145,7 +145,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 
 1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). La photo vient de l'appareil photo ou de la galerie et ouvre l'étape « Ma photo ».
    - **Ma photo** : la photo (320 px de haut, jamais recadrée), « Photographier le cartel » (contour, facultatif ; miniature 64 px + « Retirer » une fois pris), bouton plein « Identifier l'œuvre », aide en 12 px : « La photo est réduite et ses informations de lieu sont retirées avant l'envoi. », lien « Saisir l'œuvre à la main ».
-   - Rien ne part sans appui sur « Identifier l'œuvre » ; un seul appel par appui, sans relance automatique. Bouton grisé hors ligne.
+   - Rien ne part sans appui sur « Identifier l'œuvre » ; un seul appui suffit, sans relance automatique ; seul un quota atteint fait passer au modèle suivant (voir « Quota de l'IA »). Bouton grisé hors ligne.
    - Avant l'envoi, la photo et le cartel sont réduits à 1024 px sur le grand côté et réencodés en JPEG (`expo-image-manipulator`), ce qui supprime les métadonnées dont la position GPS. Le cartel n'est pas conservé dans l'app.
    - L'IA renvoie des pistes structurées (titres, artiste, année, confiance), en lisant le cartel s'il est fourni. Confiance faible : aucune piste, message et saisie manuelle. Sinon, les pistes alimentent la même liste de propositions (l'artiste reconnu remonte en tête, sans rien exclure) : vous confirmez toujours.
    - Ma photo reste l'image par défaut de la fiche ; « Image suivante » montre les images Wikimedia.
@@ -169,6 +169,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 - Requêtes une par une, délai de 5 s, mémoire de session ; l'app s'identifie auprès de Wikimedia avec l'adresse du dépôt GitHub.
 - La clé Gemini part dans un en-tête, jamais dans l'adresse.
 - Tous les appels à l'IA passent par `src/services/ai` (aucun écran n'appelle Google directement). Le réglage « temperature » n'est plus envoyé (ignoré par les modèles récents) ; « Régénérer » demande une autre formulation dans la consigne.
+- **Quota de l'IA** (limites gratuites relevées le 21/11/2026, dans `src/services/ai/quotas.ts`) : 3.5 et 3.1 Flash-Lite 15 par minute et 500 par jour ; 3.6 et 3.8 Flash 5 par minute et 20 par jour. Le compteur du jour revient à zéro à minuit, heure du Pacifique. L'app compte les demandes de chaque modèle ; si le modèle choisi a atteint sa limite, ou si Google répond « quota de la minute » ou « quota du jour », elle passe aussitôt au modèle suivant (le plus gros quota du jour d'abord). Toute autre erreur est affichée sans changer de modèle. Tous épuisés : message de quota. Le compteur ne contient que des nombres.
 
 ### 5. Détail d'une œuvre
 
@@ -182,7 +183,7 @@ Contenu à définir ensemble. Ne crée rien dans cet écran sans ma validation.
 
 Contenu actuel :
 
-- **Intelligence artificielle** : clé Gemini (champ masqué, stockage sécurisé), choix du modèle, « Enregistrer la clé », « Tester la clé ». Modèles proposés : uniquement des modèles gratuits qui lisent les images — Gemini 3.5 Flash-Lite (recommandé, par défaut), 3.1 Flash-Lite, 3.6 Flash, 3.8 Flash. Le test affiche la cause d'un échec et l'action à faire.
+- **Intelligence artificielle** : clé Gemini (champ masqué, stockage sécurisé), choix du modèle, « Enregistrer la clé », « Tester la clé ». Modèles proposés : uniquement des modèles gratuits qui lisent les images — Gemini 3.5 Flash-Lite (recommandé, par défaut), 3.1 Flash-Lite, 3.6 Flash, 3.8 Flash. Le test essaie seulement le modèle choisi et affiche la cause d'un échec et l'action à faire.
 - **Sauvegarde et restauration** : exporter, importer.
 - **Se déconnecter**.
 

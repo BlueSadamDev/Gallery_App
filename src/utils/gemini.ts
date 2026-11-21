@@ -157,6 +157,7 @@ export async function testGeminiModel(): Promise<string> {
     const answer = await callAi({
       parts: [{ kind: 'text', text: 'Réponds uniquement : ok' }],
       maxOutputTokens: 256,
+      rotate: false, // on teste le modèle choisi, pas un autre
     });
     if (!answer) return 'Aucune clé API enregistrée.';
     return `Modèle ${answer.model} : OK`;
