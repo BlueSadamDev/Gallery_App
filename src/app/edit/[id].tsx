@@ -215,7 +215,7 @@ export default function EditScreen() {
             setDescriptionFromAi(true);
             filled.push('description');
           } else {
-            note = '\nPas de résumé Wikipédia pour cette œuvre : la description reste vide.';
+            note = '\nAucun article Wikipédia trouvé pour cette œuvre : la description reste vide.';
           }
         } catch (error) {
           note = `\nDescription : ${aiErrorMessage(error)}`;
