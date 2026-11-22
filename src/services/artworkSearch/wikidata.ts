@@ -544,6 +544,23 @@ export async function fetchSourceExtract(proposal: Proposal): Promise<SourceExtr
   return result;
 }
 
+// Description de secours, sans IA, quand aucun résumé Wikipédia n'existe :
+// une ou deux phrases construites uniquement avec les faits de Wikidata.
+// « Œuvre de Jackson Pollock (1943). Lieu de conservation : Museum of Modern Art. »
+// Vide si Wikidata ne connaît ni l'artiste ni le lieu.
+export function factsDescription(proposal: Pick<Proposal, 'artist' | 'year' | 'location'>): string {
+  const artist = proposal.artist.trim();
+  const knownArtist = artist && !/inconnu|anonyme|unknown/i.test(artist) ? artist : '';
+  const year = proposal.year.trim();
+  const location = proposal.location.trim();
+  if (!knownArtist && !location) return '';
+  const sentences: string[] = [];
+  if (knownArtist) sentences.push(`Œuvre de ${knownArtist}${year ? ` (${year})` : ''}.`);
+  else sentences.push(`Œuvre d’un artiste inconnu${year ? ` (${year})` : ''}.`);
+  if (location) sentences.push(`Lieu de conservation : ${location}.`);
+  return sentences.join(' ');
+}
+
 // Cherche des œuvres et renvoie les propositions vérifiées.
 // `excludedIds` : œuvres refusées pendant la session, jamais reproposées.
 // Lève une ArtworkSearchError (hors ligne, service occupé…) en cas de problème.

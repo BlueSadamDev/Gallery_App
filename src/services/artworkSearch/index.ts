@@ -6,6 +6,7 @@
 import { isAiError, type AiError } from '@/services/ai';
 import { prepareSearch, writeDescription, type SearchHints } from '@/utils/gemini';
 import {
+  factsDescription,
   fetchSourceExtract,
   searchArtworks,
   type Proposal,
@@ -44,10 +45,11 @@ export async function findProposalsFromHints(
 }
 
 // Description d'une proposition, rédigée par l'IA à partir des seuls faits trouvés
-// (Wikidata + extrait Wikipédia). Vide s'il manque des faits ou une clé.
+// (Wikidata + extrait Wikipédia). Sans extrait Wikipédia : phrase construite sans IA
+// avec les faits de Wikidata (artiste, année, lieu), ou vide s'ils manquent.
 export async function describeProposal(proposal: Proposal, variation = false): Promise<string> {
   const extract = await fetchSourceExtract(proposal);
-  if (!extract) return '';
+  if (!extract) return factsDescription(proposal);
   return writeDescription(
     {
       title: proposal.title,

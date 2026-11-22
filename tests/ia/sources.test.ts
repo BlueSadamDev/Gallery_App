@@ -90,3 +90,17 @@ test('Rien de fiable : pas de résumé (description vide plutôt qu’inventée)
   });
   assert.equal(await fetchSourceExtract({ ...LOUVE, id: 'Q-test-rien' }), null);
 });
+
+test('Sans résumé Wikipédia : phrase construite avec les seuls faits de Wikidata', async () => {
+  const { factsDescription } = await import('../../src/services/artworkSearch/wikidata.ts');
+  assert.equal(
+    factsDescription(LOUVE),
+    'Œuvre de Jackson Pollock (1943). Lieu de conservation : Museum of Modern Art.'
+  );
+  assert.equal(factsDescription({ artist: 'Jackson Pollock', year: '', location: '' }), 'Œuvre de Jackson Pollock.');
+  assert.equal(
+    factsDescription({ artist: 'Artiste inconnu', year: 'XVIIIe siècle', location: 'église Saint-Jacques de Perpignan' }),
+    'Œuvre d’un artiste inconnu (XVIIIe siècle). Lieu de conservation : église Saint-Jacques de Perpignan.'
+  );
+  assert.equal(factsDescription({ artist: 'Artiste inconnu', year: '1700', location: '' }), '');
+});
