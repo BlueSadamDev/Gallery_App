@@ -15,6 +15,8 @@ type Props = {
   offline: boolean;
   message: string | null;
   onManual: () => void;
+  // Proposé quand l'identification n'a rien donné : garder la photo sans titre connu.
+  onKeepUnknown?: () => void;
 };
 
 export function PhotoIdentify(props: Props) {
@@ -43,6 +45,15 @@ export function PhotoIdentify(props: Props) {
         <Notice>Vous êtes hors ligne. L’identification n’est pas disponible.</Notice>
       ) : null}
       {props.message ? <Notice>{props.message}</Notice> : null}
+      {props.onKeepUnknown ? (
+        <View style={styles.keep}>
+          <SecondaryButton
+            label="Conserver comme œuvre inconnue"
+            onPress={props.onKeepUnknown}
+            disabled={props.identifying}
+          />
+        </View>
+      ) : null}
 
       <PrimaryButton
         label={props.identifying ? 'Identification…' : 'Identifier l’œuvre'}
@@ -68,6 +79,9 @@ const styles = StyleSheet.create({
     height: 320,
     borderRadius: 2,
     backgroundColor: palette.placeholder,
+  },
+  keep: {
+    marginBottom: 16,
   },
   spaced: {
     marginTop: 8,

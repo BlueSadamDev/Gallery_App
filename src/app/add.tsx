@@ -23,6 +23,7 @@ import { suggestFromPhoto } from '@/utils/gemini';
 import { PhotoIdentify } from '@/components/add/PhotoIdentify';
 import { downloadImage } from '@/utils/artworkImageSearch';
 import { hasGeminiApiKey } from '@/config/settings';
+import { UNKNOWN_ARTWORK_TITLE } from '@/utils/text';
 import {
   ArtworkSearchError,
   commonsImageUrl,
@@ -122,6 +123,9 @@ export default function AddScreen() {
   const [searching, setSearching] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [manualOffered, setManualOffered] = useState(false);
+  // Vrai quand l'identification de ma photo n'a rien donné : on propose de la garder
+  // comme « Œuvre inconnue ».
+  const [photoMissed, setPhotoMissed] = useState(false);
   const [homonyms, setHomonyms] = useState<Proposal[] | null>(null);
   const [misses, setMisses] = useState(0);
   const [excluded, setExcluded] = useState<string[]>([]);
@@ -224,6 +228,7 @@ export default function AddScreen() {
     const shown = proposals.slice(0, visibleCount).map((p) => p.id);
     setExcluded((list) => [...new Set([...list, ...shown])]);
     setPhase('search');
+    if (resultsFrom === 'photo') setPhotoMissed(true);
     registerMiss('Ajoutez l’artiste ou l’année, ou corrigez le titre, puis relancez.');
   }
 
@@ -290,6 +295,14 @@ export default function AddScreen() {
     setSheetImage(image ?? (photoUri ? { kind: 'local', uri: photoUri } : null));
     setSheetFrom(from);
     setPhase('sheet');
+  }
+
+  // Photo non identifiée : fiche préremplie « Œuvre inconnue » avec ma photo.
+  // Rien n'est enregistré sans « Enregistrer » ; le titre reste modifiable.
+  function keepAsUnknown() {
+    if (!photoUri) return;
+    openManual('photo', { kind: 'local', uri: photoUri });
+    setForm({ ...EMPTY_FORM, title: UNKNOWN_ARTWORK_TITLE });
   }
 
   function openProposal(proposal: Proposal) {
@@ -402,6 +415,7 @@ export default function AddScreen() {
     setCartelUri(null);
     setMessage(null);
     setManualOffered(false);
+    setPhotoMissed(false);
     setPhase('photo');
   }
 
@@ -428,6 +442,7 @@ export default function AddScreen() {
       const cartel = cartelUri ? await prepareForUpload(cartelUri) : null;
       const hints = await suggestFromPhoto(photo, cartel);
       if (!hints) {
+        setPhotoMissed(true);
         setMessage(
           'L’œuvre n’a pas pu être identifiée avec assez de certitude. Vous pouvez la saisir à la main' +
             (cartelUri ? '.' : ' ou photographier le cartel.')
@@ -438,12 +453,14 @@ export default function AddScreen() {
       setQuery({ title: hints.frenchTitle || hints.originalTitle, artist: '', year: '' });
       const result = await findProposalsFromHints(hints, excluded);
       if (result.proposals.length === 0) {
+        setPhotoMissed(true);
         setPhase('search');
         registerMiss('Aucune œuvre correspondante trouvée. Précisez l’artiste ou l’année, ou corrigez le titre.');
       } else {
         showProposals(result.proposals, 'photo');
       }
     } catch (error) {
+      setPhotoMissed(true);
       setMessage(
         error instanceof ArtworkSearchError
           ? errorMessage(error)
@@ -513,6 +530,7 @@ export default function AddScreen() {
               offline={offline}
               message={message}
               onManual={() => openManual('photo', { kind: 'local', uri: photoUri })}
+              onKeepUnknown={photoMissed ? keepAsUnknown : undefined}
             />
           ) : null}
 
@@ -528,6 +546,7 @@ export default function AddScreen() {
               message={message}
               onShowAnyway={homonyms ? () => showProposals(homonyms, 'search') : undefined}
               onManual={manualOffered || offline ? () => openManual('search') : undefined}
+              onKeepUnknown={photoUri && photoMissed ? keepAsUnknown : undefined}
             />
           ) : null}
 

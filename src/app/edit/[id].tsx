@@ -25,6 +25,7 @@ import {
 import { getArtwork, updateArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
 import { downloadImage } from '@/utils/artworkImageSearch';
+import { isUnknownArtworkTitle } from '@/utils/text';
 import { hasGeminiApiKey } from '@/config/settings';
 import { aiErrorMessage } from '@/services/ai';
 import {
@@ -148,6 +149,10 @@ export default function EditScreen() {
   async function handleComplete() {
     const t = title.trim();
     if (!t || completing) return;
+    if (isUnknownArtworkTitle(t)) {
+      setCompleteMessage('Donnez d’abord un titre à l’œuvre, puis relancez.');
+      return;
+    }
     if (offline) {
       setCompleteMessage('Vous êtes hors ligne. Vérifiez votre connexion.');
       return;

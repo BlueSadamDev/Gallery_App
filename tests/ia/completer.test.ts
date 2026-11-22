@@ -63,3 +63,10 @@ test('Wikidata ne connaît pas l’année ni l’image : rien n’est inventé',
   assert.equal(plan.imageUrl, undefined);
   assert.equal(plan.artist, 'Vincent van Gogh');
 });
+
+test('Œuvre inconnue : titre reconnu, quelle que soit l’écriture', async () => {
+  const { isUnknownArtworkTitle, UNKNOWN_ARTWORK_TITLE } = await import('../../src/utils/text.ts');
+  assert.equal(isUnknownArtworkTitle(UNKNOWN_ARTWORK_TITLE), true);
+  assert.equal(isUnknownArtworkTitle('  oeuvre INCONNUE '), true);
+  assert.equal(isUnknownArtworkTitle('Œuvre inconnue de Montserrat'), false);
+});
