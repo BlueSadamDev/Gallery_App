@@ -10,6 +10,7 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
   - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut.
   - L'**IA Gemini** ne fait que préparer la recherche (pistes) et rédiger une description à partir des seuls faits trouvés (mention « À vérifier »). La clé est saisie dans les réglages, rangée dans le stockage sécurisé du téléphone et envoyée dans un en-tête. Pensez à mettre une limite de dépense basse sur la clé.
+- ✨ **Compléter avec l'IA** (écran Modifier) : retrouve une œuvre déjà enregistrée dans Wikidata et remplit seulement les champs vides (auteur, année, description « À vérifier », image Wikimedia si l'œuvre n'en a pas). Une différence avec ce que vous avez saisi est signalée, jamais remplacée sans votre accord. Rien n'est enregistré sans « Enregistrer ».
 - 🔐 Connexion / inscription protégée par mot de passe
 - 💾 Sauvegarde et restauration des données
 - 🗺️ Barre d'onglets en bas : **Collection** (l'accueil) et **Galerie vivante**

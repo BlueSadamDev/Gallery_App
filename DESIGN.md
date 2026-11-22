@@ -177,6 +177,15 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 - Titre, puis artiste et année en légende, puis description.
 - Actions : modifier et supprimer (icônes fines). La suppression demande une confirmation.
 
+### 5 bis. Modification d'une œuvre
+
+- Image (Galerie, Caméra), puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Nom *, Auteur, Année, Style, Description et le bouton plein « Enregistrer ».
+- « Compléter avec l'IA » : même recherche vérifiée qu'à l'ajout (IA + Wikidata) à partir du titre, de l'auteur et de l'année enregistrés ; sans résultat, nouvelle recherche sur le titre seul. Une seule œuvre : « Œuvre trouvée : titre, artiste, année. Utiliser ces informations ? ». Plusieurs : liste de propositions (comme à l'ajout, « Voir 5 autres », « Aucune ne convient »). Nombreux homonymes sans auteur ni année : l'app demande de les ajouter.
+- Seuls les champs **vides** sont remplis : auteur, année, description (rédigée par l'IA à partir du résumé Wikipédia, mention « À vérifier » qui disparaît dès que vous modifiez le texte ou enregistrez) et image Wikimedia si l'œuvre n'a pas d'image. Le style n'est pas rempli (Wikidata ne le fournit pas).
+- Auteur ou année déjà saisis mais différents de Wikidata : fenêtre « Différences avec Wikidata » (« Année : « 1890 » ici, « 1889 » selon Wikidata ») avec « Garder les miennes » (par défaut) ou « Remplacer ».
+- Ligne d'information sous le bouton (12 px, texte secondaire) : ce qui a été complété, ou la cause d'un échec (clé manquante, quota, hors ligne, aucune œuvre trouvée). Bouton grisé hors ligne ou sans titre.
+- Rien n'est enregistré sans « Enregistrer ». L'image Wikimedia n'est copiée dans le stockage de l'app qu'à ce moment ; si la copie échoue, l'app propose d'enregistrer sans image.
+
 ### 6. Paramètres
 
 Contenu à définir ensemble. Ne crée rien dans cet écran sans ma validation.
