@@ -53,7 +53,7 @@ test('Auteur ou année différents : signalés, pas remplacés', () => {
   );
   assert.equal(
     describeDifferences(plan.differences),
-    'Auteur : « Paul Gauguin » ici, « Vincent van Gogh » selon Wikidata\nAnnée : « 1890 » ici, « 1889 » selon Wikidata'
+    'Artiste : « Paul Gauguin » ici, « Vincent van Gogh » selon Wikidata\nAnnée : « 1890 » ici, « 1889 » selon Wikidata'
   );
 });
 

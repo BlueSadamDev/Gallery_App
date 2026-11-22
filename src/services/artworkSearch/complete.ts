@@ -38,7 +38,7 @@ export function planCompletion(current: CurrentFields, proposal: Proposal): Comp
   if (proposal.artist) {
     if (!artist) plan.artist = proposal.artist;
     else if (!sameArtist(artist, proposal.artist)) {
-      plan.differences.push({ field: 'artist', label: 'Auteur', yours: artist, found: proposal.artist });
+      plan.differences.push({ field: 'artist', label: 'Artiste', yours: artist, found: proposal.artist });
     }
   }
   if (proposal.year) {

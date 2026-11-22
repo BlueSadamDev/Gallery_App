@@ -9,12 +9,19 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useNetworkState } from 'expo-network';
-import { colors, fonts, spacing, radius } from '@/theme';
+import { fonts } from '@/theme';
+import {
+  Eyebrow,
+  Field,
+  palette,
+  PrimaryButton,
+  ScreenTitle,
+  SecondaryButton,
+} from '@/components/add/ui';
 import { getArtwork, updateArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
 import { downloadImage } from '@/utils/artworkImageSearch';
@@ -33,8 +40,8 @@ import { ProposalList } from '@/components/add/ProposalList';
 function SettingsButton() {
   return (
     <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton}>
-        <Text style={styles.settingsIcon}>⚙️</Text>
+      <Pressable style={styles.settingsButton} accessibilityLabel="Paramètres">
+        <Feather name="settings" size={22} color={palette.textSecondary} />
       </Pressable>
     </Link>
   );
@@ -155,7 +162,7 @@ export default function EditScreen() {
     setChoices(null);
     try {
       let result = await findProposals({ title: t, artist: artist.trim(), year: year.trim() });
-      // Rien avec l'auteur ou l'année saisis : on cherche sur le titre seul,
+      // Rien avec l'artiste ou l'année saisis : on cherche sur le titre seul,
       // pour pouvoir signaler une différence avec Wikidata.
       if (result.proposals.length === 0 && (artist.trim() || year.trim())) {
         result = await findProposals({ title: t });
@@ -166,7 +173,7 @@ export default function EditScreen() {
             (result.aiError ? `\n${aiErrorMessage(result.aiError)}` : '')
         );
       } else if (result.tooManyHomonyms && !artist.trim() && !year.trim()) {
-        setCompleteMessage('Ce titre correspond à de nombreuses œuvres. Ajoutez l’auteur ou l’année, puis relancez.');
+        setCompleteMessage('Ce titre correspond à de nombreuses œuvres. Ajoutez l’artiste ou l’année, puis relancez.');
       } else if (result.proposals.length === 1) {
         const p = result.proposals[0];
         const use = await ask(
@@ -196,7 +203,7 @@ export default function EditScreen() {
       const filled: string[] = [];
       if (plan.artist) {
         setArtist(plan.artist);
-        filled.push('auteur');
+        filled.push('artiste');
       }
       if (plan.year) {
         setYear(plan.year);
@@ -248,7 +255,7 @@ export default function EditScreen() {
   // « Aucune ne convient » : on ferme la liste et on demande de préciser.
   function handleNoneMatches() {
     setChoices(null);
-    setCompleteMessage('Ajoutez ou corrigez l’auteur ou l’année, puis relancez.');
+    setCompleteMessage('Ajoutez ou corrigez l’artiste ou l’année, puis relancez.');
   }
 
   async function handleSave() {
@@ -294,77 +301,41 @@ export default function EditScreen() {
     <>
       <Stack.Screen
         options={{
+          title: '',
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
           headerRight: () => <SettingsButton />,
         }}
       />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior="padding"
-      >
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
           style={styles.flex}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View>
-          <View style={styles.imageSection}>
-            {remoteImageUrl ? (
-              <Image
-                source={{ uri: remoteImageUrl, headers: { 'User-Agent': USER_AGENT } }}
-                style={styles.preview}
-                resizeMode="contain"
-              />
-            ) : imageUri ? (
-              <Image
-                source={{ uri: imageUri }}
-                style={styles.preview}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.preview, styles.previewPlaceholder]}>
-                <Text style={styles.previewIcon}>✦</Text>
-                <Text style={styles.previewText}>Aucune photo</Text>
-              </View>
-            )}
-            <View style={styles.imageButtonsRow}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.imageButton,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={handlePickFromGallery}
-              >
-                <Text style={styles.imageButtonText}>Galerie</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.imageButton,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={handleTakePhoto}
-              >
-                <Text style={styles.imageButtonText}>Caméra</Text>
-              </Pressable>
+          <Eyebrow>MODIFICATION</Eyebrow>
+          <ScreenTitle>Modifier l’œuvre</ScreenTitle>
+
+          <Visual key={remoteImageUrl ?? imageUri ?? 'vide'} remoteUrl={remoteImageUrl} localUri={imageUri} />
+          <View style={styles.imageActions}>
+            <View style={styles.half}>
+              <SecondaryButton label="Galerie" onPress={handlePickFromGallery} disabled={saving} />
+            </View>
+            <View style={styles.half}>
+              <SecondaryButton label="Caméra" onPress={handleTakePhoto} disabled={saving} />
             </View>
           </View>
 
           <View style={styles.completeSection}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.completeButton,
-                !canComplete && styles.saveButtonDisabled,
-                pressed && canComplete && styles.buttonPressed,
-              ]}
+            <SecondaryButton
+              label={completing ? 'Recherche…' : 'Compléter avec l’IA'}
               onPress={handleComplete}
               disabled={!canComplete}
-            >
-              <Text style={styles.imageButtonText}>
-                {completing ? 'Recherche…' : 'Compléter avec l’IA'}
-              </Text>
-            </Pressable>
+              loading={completing}
+            />
             {completeMessage ? <Text style={styles.completeMessage}>{completeMessage}</Text> : null}
             {choices ? (
               <ProposalList
@@ -377,223 +348,103 @@ export default function EditScreen() {
             ) : null}
           </View>
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Nom de l’œuvre *</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Ex. La Joconde"
-              placeholderTextColor={colors.textSecondary}
-            />
-          </View>
+          <Field label="Titre *" value={title} onChangeText={setTitle} />
+          <Field label="Artiste" value={artist} onChangeText={setArtist} />
+          <Field label="Année" value={year} onChangeText={setYear} />
+          <Field label="Style" value={style} onChangeText={setStyle} placeholder="Ex. Impressionnisme" />
+          <Field
+            label="Description"
+            value={description}
+            onChangeText={(text) => {
+              setDescription(text);
+              setDescriptionFromAi(false);
+            }}
+            placeholder="Quelques mots sur cette œuvre"
+            multiline
+            hint={descriptionFromAi ? 'À vérifier' : undefined}
+          />
 
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Auteur</Text>
-            <TextInput
-              style={styles.input}
-              value={artist}
-              onChangeText={setArtist}
-              placeholder="Ex. Léonard de Vinci"
-              placeholderTextColor={colors.textSecondary}
-            />
-          </View>
-
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Année</Text>
-            <TextInput
-              style={styles.input}
-              value={year}
-              onChangeText={setYear}
-              placeholder="Ex. 1503"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-            />
-          </View>
-
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Style</Text>
-            <TextInput
-              style={styles.input}
-              value={style}
-              onChangeText={setStyle}
-              placeholder="Ex. Renaissance, Impressionnisme…"
-              placeholderTextColor={colors.textSecondary}
-            />
-          </View>
-
-          <View style={styles.fieldGroup}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Description</Text>
-              {descriptionFromAi ? <Text style={styles.toCheck}>À vérifier</Text> : null}
-            </View>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={(text) => {
-                setDescription(text);
-                setDescriptionFromAi(false);
-              }}
-              placeholder="Quelques mots sur cette œuvre…"
-              placeholderTextColor={colors.textSecondary}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.saveButton,
-              !canSave && styles.saveButtonDisabled,
-              pressed && canSave && styles.buttonPressed,
-            ]}
+          <PrimaryButton
+            label={loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}
             onPress={handleSave}
             disabled={!canSave || loading}
-          >
-            <Text style={styles.saveButtonText}>
-              {loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}
-            </Text>
-          </Pressable>
-          </View>
-          </TouchableWithoutFeedback>
+            loading={saving}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </>
   );
 }
 
+// Image de l'œuvre : jamais recadrée ; fond de chargement #E3DDD1.
+function Visual({ remoteUrl, localUri }: { remoteUrl: string | null; localUri: string | null }) {
+  const [failed, setFailed] = useState(false);
+  const source = remoteUrl
+    ? { uri: remoteUrl, headers: { 'User-Agent': USER_AGENT } }
+    : localUri
+      ? { uri: localUri }
+      : null;
+  if (!source || failed) {
+    return (
+      <View style={[styles.visual, styles.visualEmpty]}>
+        <Feather name="image" size={28} color={palette.textSecondary} />
+        <Text style={styles.visualText}>{failed ? 'Image indisponible' : 'Aucune image'}</Text>
+      </View>
+    );
+  }
+  return <Image source={source} style={styles.visual} resizeMode="contain" onError={() => setFailed(true)} />;
+}
+
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: palette.background,
   },
   content: {
     flexGrow: 1,
-    padding: spacing.lg,
-    paddingBottom: 180,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 120,
   },
-  imageSection: {
-    marginBottom: spacing.lg,
-  },
-  preview: {
+  visual: {
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: radius.lg,
-    backgroundColor: colors.background,
+    height: 320,
+    borderRadius: 2,
+    backgroundColor: palette.placeholder,
+    marginTop: 24,
   },
-  previewPlaceholder: {
-    borderWidth: 1,
-    borderColor: colors.border,
+  visualEmpty: {
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
-  previewIcon: {
-    fontSize: 40,
-    color: colors.accent,
-    opacity: 0.5,
-  },
-  previewText: {
+  visualText: {
     fontFamily: fonts.regular,
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
+    fontSize: 13,
+    color: palette.textSecondary,
   },
-  imageButtonsRow: {
+  imageActions: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.sm,
+    gap: 8,
+    marginTop: 8,
   },
-  imageButton: {
+  half: {
     flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  imageButtonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 15,
-    color: colors.accent,
-  },
-  fieldGroup: {
-    marginBottom: spacing.lg,
   },
   completeSection: {
-    marginBottom: spacing.lg,
-  },
-  completeButton: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    minHeight: 48,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 16,
+    marginBottom: 32,
   },
   completeMessage: {
     fontFamily: fonts.regular,
     fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: spacing.sm,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  toCheck: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  label: {
-    fontFamily: fonts.semibold,
-    fontSize: 14,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    backgroundColor: colors.inputBackground,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.textPrimary,
-    fontFamily: fonts.regular,
-  },
-  textArea: {
-    minHeight: 100,
-  },
-  saveButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 15,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 16,
-    color: colors.onAccent,
-  },
-  buttonPressed: {
-    opacity: 0.85,
+    color: palette.textSecondary,
+    marginTop: 8,
   },
   settingsButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  settingsIcon: {
-    fontSize: 22,
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
-
