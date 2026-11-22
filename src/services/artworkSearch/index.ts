@@ -3,6 +3,7 @@
 // 2. Wikidata fournit les propositions, vérifiées sur l'artiste et l'année saisis.
 // Sans clé, ou si l'IA ne répond pas, la recherche se fait avec la seule saisie.
 
+import { isAiError, type AiError } from '@/services/ai';
 import { prepareSearch, writeDescription, type SearchHints } from '@/utils/gemini';
 import {
   fetchSourceExtract,
@@ -62,17 +63,20 @@ export async function describeProposal(proposal: Proposal, variation = false): P
 
 // aiFailed : vrai si une clé est enregistrée mais que l'IA n'a pas répondu
 // (modèle refusé, service surchargé, délai dépassé). Sans clé, il reste faux.
+// aiError : la cause classée (quota, clé, etc.), pour un message précis.
 export async function findProposals(
   input: SearchInput,
   excludedIds: string[] = []
-): Promise<SearchResult & { aiFailed: boolean }> {
+): Promise<SearchResult & { aiFailed: boolean; aiError: AiError | null }> {
   let hints: SearchHints | null = null;
   let aiFailed = false;
+  let aiError: AiError | null = null;
   try {
     hints = await prepareSearch(input.title, input.artist, input.year);
-  } catch {
+  } catch (error) {
     hints = null; // l'IA est facultative : on continue sans elle
     aiFailed = true;
+    aiError = isAiError(error) ? error : null;
   }
   const usable = hints && hints.confidence !== 'faible' ? hints : null;
   const result = await searchArtworks(
@@ -86,5 +90,5 @@ export async function findProposals(
     },
     excludedIds
   );
-  return { ...result, aiFailed };
+  return { ...result, aiFailed, aiError };
 }

@@ -47,7 +47,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test:recherche": "node --import ./tests/recherche/chargeur.ts tests/recherche/lancer.ts"
+    "test:recherche": "node --import ./tests/recherche/chargeur.ts tests/recherche/lancer.ts",
+    "test:ia": "node --import ./tests/recherche/chargeur.ts --test \"tests/ia/*.test.ts\""
   },
   "private": true
 }

@@ -26,12 +26,14 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
 - `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
+- `src/services/ai/` : point d'entrée unique de tous les appels à l'IA (fournisseur Gemini, classement des erreurs et messages)
+- `tests/ia/` : tests automatiques de la couche IA, avec des réponses de Google simulées (aucun appel réel)
 - `scripts/` : test rapide de la recherche d'œuvres, sans IA (`cas-recherche.json` + `test-recherche.ts`)
 - `tests/recherche/` : jeu de 42 cas sur le vrai service (IA + Wikidata), rapport et résultats
 - `src/hooks/` : `useGalleryEnvironment` (moment de la journée et météo)
 - `src/db/` : base de données SQLite
 - `src/auth/` : gestion de l'authentification
-- `src/utils/` : logique métier (images, sauvegarde, IA Gemini, ambiances lumineuses)
+- `src/utils/` : logique métier (images, sauvegarde, consignes envoyées à l'IA Gemini, ambiances lumineuses)
 - `src/theme/` : thème et couleurs
 - `src/config/` : réglages
 
@@ -66,6 +68,14 @@ Toujours utiliser `expo install` (et non `npm install`) pour obtenir des version
 npx expo install <nom-du-module>
 ```
 
+## Tester la couche IA (sans clé ni Internet)
+
+Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue, que la clé ne sort jamais de l'en-tête, et que l'app passe au modèle suivant quand un quota est atteint (remise à zéro à minuit, heure du Pacifique) :
+
+```bash
+npm run test:ia
+```
+
 ## Tester la recherche d'œuvres
 
 Interroge le vrai Wikidata (sans IA) avec les cas du fichier `scripts/cas-recherche.json` et affiche OK ou ÉCHEC pour chacun (Node 22.18 ou plus récent, qui lit le TypeScript directement) :
@@ -79,6 +89,14 @@ node scripts/test-recherche.ts
 ```bash
 npm run test:recherche
 ```
+
+## Veille des nouveaux modèles Gemini (chaque dimanche)
+
+Le programme `.github/workflows/veille-modeles.yml` (script `scripts/veille-modeles.mjs`) demande chaque dimanche à Google la liste de ses modèles et la compare à ceux que l'app connaît. Les modèles Gemini nouveaux sont signalés dans la fiche GitHub « Veille des modèles Gemini » (onglet **Issues**) : création la première fois, puis un commentaire par nouveauté. L'app n'est pas modifiée.
+
+- Besoin, une seule fois : le secret `GEMINI_API_KEY` (dépôt GitHub → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**).
+- Lancement manuel : onglet **Actions** → « Veille des modèles Gemini » → **Run workflow**.
+- Avant d'ajouter un modèle signalé, vérifier dans Google AI Studio qu'il est gratuit, qu'il lit les images, et noter ses limites dans `src/services/ai/quotas.ts`.
 
 ## Vérifications avant un build
 

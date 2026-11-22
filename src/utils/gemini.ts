@@ -1,67 +1,6 @@
-import { getGeminiApiKey, getGeminiModel } from '@/config/settings';
-
-// Construit l'adresse de l'API pour le modèle Gemini choisi dans les paramètres.
-// gemini-1.5-flash a été retiré par Google ; on utilise des modèles actuels.
-function getEndpoint(model: string): string {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-}
-
-// Envoie une requête au modèle Gemini et renvoie le texte brut de la réponse.
-async function sendRequest(
-  apiKey: string,
-  model: string,
-  parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[],
-  config?: { temperature?: number; maxOutputTokens?: number },
-  timeoutMs = 45000
-): Promise<string> {
-  const requestBody: Record<string, unknown> = {
-    contents: [
-      {
-        parts,
-      },
-    ],
-    generationConfig: {
-      responseMimeType: 'application/json',
-      ...(config ?? {}),
-    },
-  };
-
-  // Timeout de sécurité : si Gemini ne répond pas à temps (45 s par défaut), on interrompt
-  // (un modèle trop lent ou non autorisé échoue alors rapidement).
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  let response: Response;
-  try {
-    // La clé part dans un en-tête, jamais dans l'adresse (qui peut finir dans des journaux).
-    response = await fetch(getEndpoint(model), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!response.ok) {
-    throw new Error(`Erreur Gemini (${response.status})`);
-  }
-
-  const data = await response.json();
-  const partsList = data?.candidates?.[0]?.content?.parts ?? [];
-
-  // Les modèles récents (Gemini 3.x) peuvent renvoyer plusieurs parties :
-  // la réflexion interne d'abord, la réponse finale ensuite.
-  // On prend la DERNIÈRE partie contenant du texte, c'est la réponse exploitable.
-  let text = '';
-  for (const part of partsList) {
-    if (part?.text) {
-      text = String(part.text);
-    }
-  }
-  return text;
-}
+// Consignes envoyées à l'IA et lecture de ses réponses.
+// Aucun appel réseau ici : tout passe par le point d'entrée unique src/services/ai.
+import { AiError, aiErrorMessage, callAi, type AiPart } from '@/services/ai';
 
 // Pistes de recherche préparées par l'IA. Elles servent uniquement à interroger
 // Wikidata : l'IA ne fournit ni image, ni adresse, ni description.
@@ -122,15 +61,13 @@ N'inclus aucune adresse Internet, aucune image, aucune description.
 Si tu n'es pas sûr, laisse le champ vide et mets "confiance": "faible".`;
 
 // Demande à l'IA de préparer la recherche à partir de la saisie de l'utilisateur.
-// Renvoie null si aucune clé n'est enregistrée ou si la réponse est inexploitable.
+// Renvoie null si aucune clé n'est enregistrée. Lève une AiError en cas d'échec
+// (dont RÉPONSE_INVALIDE si la réponse n'est pas le JSON attendu).
 export async function prepareSearch(
   title: string,
   artist?: string,
   year?: string
 ): Promise<SearchHints | null> {
-  const apiKey = await getGeminiApiKey();
-  if (!apiKey) return null;
-  const model = await getGeminiModel();
   const prompt = `
 Tu aides à rechercher une œuvre d'art dans Wikidata. Voici ce que la personne a saisi :
 - titre : « ${title} »
@@ -140,14 +77,16 @@ Complète les pistes de recherche (titres possibles, artiste, année). Ne contre
 ni l'année saisis s'ils sont présents.
 ${HINTS_FORMAT}`;
   // Délai court : l'IA est facultative, la recherche ne doit pas attendre longtemps.
-  const text = await sendRequest(
-    apiKey,
-    model,
-    [{ text: prompt }],
-    { temperature: 0, maxOutputTokens: 2048 },
-    10000
-  );
-  return parseSearchHints(text);
+  const answer = await callAi({
+    parts: [{ kind: 'text', text: prompt }],
+    json: true,
+    maxOutputTokens: 2048,
+    timeoutMs: 10000,
+  });
+  if (!answer) return null;
+  const hints = parseSearchHints(answer.text);
+  if (!hints) throw new AiError('RÉPONSE_INVALIDE', answer.model);
+  return hints;
 }
 
 // Faits vérifiés transmis à l'IA pour rédiger une description.
@@ -168,20 +107,21 @@ function tidyDescription(text: string): string {
 
 // Rédige 2 à 3 phrases en français UNIQUEMENT à partir des faits fournis.
 // Renvoie une chaîne vide si aucune clé n'est enregistrée, si l'extrait de source
-// manque, ou si l'IA estime que les faits ne suffisent pas.
+// manque, ou si l'IA estime que les faits ne suffisent pas. Lève une AiError en cas d'échec.
+// `variation` : demande une autre formulation (« Régénérer »). Les modèles récents
+// ignorent le réglage « temperature », la consigne le remplace.
 export async function writeDescription(
   facts: DescriptionFacts,
   variation = false
 ): Promise<string> {
   if (!facts.sourceText.trim()) return '';
-  const apiKey = await getGeminiApiKey();
-  if (!apiKey) return '';
-  const model = await getGeminiModel();
   const prompt = `
 Rédige une courte description d'œuvre d'art en français, en 2 ou 3 phrases, au ton sobre de musée.
 Règle absolue : utilise UNIQUEMENT les faits ci-dessous. N'ajoute rien de ta mémoire :
 aucune date, aucun nom, aucun chiffre, aucune anecdote qui ne figure pas dans ces faits.
-Si ces faits ne suffisent pas pour écrire 2 phrases exactes, renvoie une description vide.
+Si ces faits ne suffisent pas pour écrire 2 phrases exactes, renvoie une description vide.${
+    variation ? '\nPropose une formulation différente de la plus évidente.' : ''
+  }
 
 Faits :
 - Titre : ${facts.title}
@@ -192,54 +132,50 @@ Faits :
 
 Renvoie UNIQUEMENT un objet JSON : { "description": "..." }
 N'inclus aucune adresse Internet.`;
-  const text = await sendRequest(
-    apiKey,
-    model,
-    [{ text: prompt }],
-    { temperature: variation ? 0.7 : 0.2, maxOutputTokens: 2048 },
-    20000
-  );
+  const answer = await callAi({
+    parts: [{ kind: 'text', text: prompt }],
+    json: true,
+    maxOutputTokens: 2048,
+    timeoutMs: 20000,
+  });
+  if (!answer) return '';
+  const text = answer.text;
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
-  if (start === -1 || end <= start) return '';
+  if (start === -1 || end <= start) throw new AiError('RÉPONSE_INVALIDE', answer.model);
   try {
     return tidyDescription(String(JSON.parse(text.substring(start, end + 1)).description ?? ''));
   } catch {
-    return '';
+    throw new AiError('RÉPONSE_INVALIDE', answer.model);
   }
 }
 
 // Envoie une requête très simple au modèle choisi pour vérifier qu'il fonctionne.
-// Renvoie un message lisible : succès, ou la cause de l'échec.
+// Renvoie un message lisible : succès, ou la cause de l'échec avec l'action à faire.
 export async function testGeminiModel(): Promise<string> {
-  const apiKey = await getGeminiApiKey();
-  if (!apiKey) {
-    return 'Aucune clé API enregistrée.';
-  }
-  const model = await getGeminiModel();
   try {
-    await sendRequest(apiKey, model, [{ text: 'Réponds uniquement : ok' }], {
-      temperature: 0,
+    const answer = await callAi({
+      parts: [{ kind: 'text', text: 'Réponds uniquement : ok' }],
       maxOutputTokens: 256,
+      rotate: false, // on teste le modèle choisi, pas un autre
     });
-    return `Modèle ${model} : OK`;
+    if (!answer) return 'Aucune clé API enregistrée.';
+    return `Modèle ${answer.model} : OK`;
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    return `Modèle ${model} : échec (${detail})`;
+    const model = error instanceof AiError ? error.model : 'choisi';
+    return `Modèle ${model} : échec. ${aiErrorMessage(error)}`;
   }
 }
 
 // Identifie une œuvre à partir de photos déjà préparées (réduites, sans métadonnées).
 // `photo` : l'œuvre ; `cartel` : la petite étiquette du musée, facultative.
 // Un seul appel, sans relance automatique. Renvoie des pistes de recherche
-// (jamais d'image, d'adresse ni de description), ou null si la confiance est faible.
+// (jamais d'image, d'adresse ni de description), ou null si la confiance est faible
+// ou si aucune clé n'est enregistrée. Lève une AiError en cas d'échec.
 export async function suggestFromPhoto(
   photoBase64: string,
   cartelBase64?: string | null
 ): Promise<SearchHints | null> {
-  const apiKey = await getGeminiApiKey();
-  if (!apiKey) return null;
-  const model = await getGeminiModel();
   const prompt = `
 Tu aides à identifier une œuvre d'art photographiée dans un musée ou une exposition.
 La première image est l'œuvre.${
@@ -250,14 +186,16 @@ La première image est l'œuvre.${
 Propose des pistes de recherche. Si tu ne reconnais pas l'œuvre avec certitude et qu'aucun
 cartel lisible ne l'indique, mets "confiance": "faible".
 ${HINTS_FORMAT}`;
-  const parts: ({ text: string } | { inline_data: { mime_type: string; data: string } })[] = [
-    { text: prompt },
-    { inline_data: { mime_type: 'image/jpeg', data: photoBase64 } },
+  const parts: AiPart[] = [
+    { kind: 'text', text: prompt },
+    { kind: 'image', mimeType: 'image/jpeg', base64: photoBase64 },
   ];
-  if (cartelBase64) parts.push({ inline_data: { mime_type: 'image/jpeg', data: cartelBase64 } });
-  const text = await sendRequest(apiKey, model, parts, { temperature: 0, maxOutputTokens: 2048 }, 30000);
-  const hints = parseSearchHints(text);
-  if (!hints || hints.confidence === 'faible') return null;
+  if (cartelBase64) parts.push({ kind: 'image', mimeType: 'image/jpeg', base64: cartelBase64 });
+  const answer = await callAi({ parts, json: true, maxOutputTokens: 2048, timeoutMs: 30000 });
+  if (!answer) return null;
+  const hints = parseSearchHints(answer.text);
+  if (!hints) throw new AiError('RÉPONSE_INVALIDE', answer.model);
+  if (hints.confidence === 'faible') return null;
   if (!hints.frenchTitle && !hints.originalTitle) return null;
   return hints;
 }

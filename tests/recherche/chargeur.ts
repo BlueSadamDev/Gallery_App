@@ -19,6 +19,7 @@ registerHooks({
     if (specifier.startsWith('@/')) {
       let file = path.join(root, 'src', specifier.slice(2));
       if (!path.extname(file) && existsSync(`${file}.ts`)) file = `${file}.ts`;
+      else if (!path.extname(file) && existsSync(path.join(file, 'index.ts'))) file = path.join(file, 'index.ts');
       return nextResolve(pathToFileURL(file).href, context);
     }
     return nextResolve(specifier, context);

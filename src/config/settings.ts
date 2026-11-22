@@ -5,15 +5,18 @@ const GEMINI_API_KEY = 'gemini_api_key';
 // Clé sous laquelle est stocké le modèle Gemini choisi par l'utilisateur.
 const GEMINI_MODEL_KEY = 'gemini_model';
 
-// Modèle Gemini utilisé par défaut (léger et rapide, adapté au forfait gratuit).
-// gemini-2.5-flash est refusé par Google pour les nouveaux utilisateurs (erreur 404).
-export const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
+// Modèle Gemini utilisé par défaut : gratuit, lit les images, 15 appels par minute
+// et 500 par jour (relevé dans Google AI Studio le 21/11/2026), sans date de fermeture.
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
-// Modèles proposés à l'utilisateur dans les paramètres.
+// Modèles proposés à l'utilisateur dans les paramètres : uniquement des modèles
+// gratuits qui lisent les images (documentation Google lue le 21/11/2026).
+// gemini-4-argon a été retiré : il n'est pas disponible en offre gratuite.
 export const GEMINI_MODELS = [
-  { label: 'Gemini 3.1 Flash-Lite (recommandé)', value: 'gemini-3.1-flash-lite' },
+  { label: 'Gemini 3.5 Flash-Lite (recommandé)', value: 'gemini-3.5-flash-lite' },
+  { label: 'Gemini 3.1 Flash-Lite', value: 'gemini-3.1-flash-lite' },
+  { label: 'Gemini 3.6 Flash', value: 'gemini-3.6-flash' },
   { label: 'Gemini 3.8 Flash', value: 'gemini-3.8-flash' },
-  { label: 'Gemini 4 Argon', value: 'gemini-4-argon' },
 ] as const;
 
 // Enregistre la clé API Gemini de manière sécurisée sur le téléphone.
@@ -55,4 +58,21 @@ export async function getGeminiModel(): Promise<string> {
   const stored = await SecureStore.getItemAsync(GEMINI_MODEL_KEY);
   const known = GEMINI_MODELS.some((item) => item.value === stored);
   return stored && known ? stored : DEFAULT_GEMINI_MODEL;
+}
+
+// Compteur des demandes à l'IA du jour (heure du Pacifique), par modèle.
+// Il ne contient que des nombres : ni la clé, ni le texte ou la photo envoyés.
+const AI_QUOTA_USAGE_KEY = 'ai_quota_usage';
+
+export type AiDailyUsage = { day: string; counts: Record<string, number> };
+
+export async function loadAiDailyUsage(): Promise<AiDailyUsage | null> {
+  const raw = await SecureStore.getItemAsync(AI_QUOTA_USAGE_KEY);
+  if (!raw) return null;
+  const parsed = JSON.parse(raw) as AiDailyUsage;
+  return typeof parsed?.day === 'string' && parsed.counts ? parsed : null;
+}
+
+export async function saveAiDailyUsage(usage: AiDailyUsage): Promise<void> {
+  await SecureStore.setItemAsync(AI_QUOTA_USAGE_KEY, JSON.stringify(usage));
 }
