@@ -10,11 +10,12 @@ import {
   saveAiDailyUsage,
 } from '@/config/settings';
 import { createGeminiProvider } from './gemini.ts';
-import { QuotaTracker, rotationOrder, runWithRotation } from './quotas.ts';
+import { QuotaTracker, rotationOrder, runWithRotation, type AiUsageStatus } from './quotas.ts';
 import type { AiPart, AiProvider } from './types.ts';
 
 export { AI_ERROR_MESSAGES, aiErrorMessage } from './errors.ts';
 export { AiError, isAiError, type AiErrorCategory, type AiPart } from './types.ts';
+export type { AiUsageStatus, ModelStatus } from './quotas.ts';
 
 let provider: AiProvider = createGeminiProvider();
 let tracker = new QuotaTracker({ load: loadAiDailyUsage, save: saveAiDailyUsage });
@@ -48,21 +49,32 @@ export async function callAi(call: AiCall): Promise<AiAnswer | null> {
   const apiKey = await getGeminiApiKey();
   if (!apiKey) return null;
   const chosen = call.model ?? (await getGeminiModel());
-  const models =
-    call.model || call.rotate === false
-      ? [chosen]
-      : rotationOrder(
-          chosen,
-          GEMINI_MODELS.map((m) => m.value)
-        );
-  const { result, model } = await runWithRotation(tracker, models, (m) =>
-    provider.generate(apiKey, {
-      model: m,
-      parts: call.parts,
-      json: call.json,
-      maxOutputTokens: call.maxOutputTokens,
-      timeoutMs: call.timeoutMs,
-    })
+  const single = Boolean(call.model) || call.rotate === false;
+  const models = single
+    ? [chosen]
+    : rotationOrder(
+        chosen,
+        GEMINI_MODELS.map((m) => m.value)
+      );
+  const { result, model } = await runWithRotation(
+    tracker,
+    models,
+    (m) =>
+      provider.generate(apiKey, {
+        model: m,
+        parts: call.parts,
+        json: call.json,
+        maxOutputTokens: call.maxOutputTokens,
+        timeoutMs: call.timeoutMs,
+      }),
+    // Un modèle précis (test de la clé) est essayé même s'il a été mis de côté après une panne.
+    { respectSideline: !single }
   );
   return { text: result, model };
+}
+
+// État du quota de chaque modèle proposé, pour l'écran Paramètres.
+// Ne contacte pas Google : ce sont les comptes de l'app et les refus déjà reçus.
+export function getAiUsage(): Promise<AiUsageStatus> {
+  return tracker.status(GEMINI_MODELS.map((m) => m.value));
 }

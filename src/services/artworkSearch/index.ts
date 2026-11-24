@@ -5,6 +5,7 @@
 
 import { isAiError, type AiError } from '@/services/ai';
 import { prepareSearch, writeDescription, type SearchHints } from '@/utils/gemini';
+import { isProposable, scoreCandidate } from './confidence.ts';
 import {
   fetchSourceExtract,
   searchArtworks,
@@ -26,14 +27,18 @@ export {
 export type SearchInput = { title: string; artist?: string; year?: string };
 
 // Propositions à partir des pistes tirées d'une photo (étape 4).
-// L'artiste lu ou reconnu par l'IA sert à classer (il remonte en tête) mais
-// n'exclut rien : c'est vous qui confirmez dans la liste.
+// Chaque œuvre trouvée dans Wikidata reçoit un score de confiance calculé par l'app
+// (src/services/artworkSearch/confidence.ts). Seules les œuvres dont le titre est confirmé
+// (Wikidata ou cartel photographié) et dont le score atteint le seuil sont proposées,
+// la plus sûre en tête. Liste vide : aucune œuvre identifiée avec certitude.
+// `cartelText` : texte lu sur le cartel, vide si vous ne l'avez pas photographié.
 export async function findProposalsFromHints(
   hints: SearchHints,
-  excludedIds: string[] = []
+  excludedIds: string[] = [],
+  cartelText = ''
 ): Promise<SearchResult> {
   const title = hints.frenchTitle || hints.originalTitle;
-  return searchArtworks(
+  const result = await searchArtworks(
     {
       title,
       altTitles: [hints.originalTitle, ...hints.altTitles],
@@ -41,6 +46,20 @@ export async function findProposalsFromHints(
     },
     excludedIds
   );
+  const evidence = {
+    titles: [hints.frenchTitle, hints.originalTitle, ...hints.altTitles],
+    artist: hints.artist,
+    aiLevel: hints.confidence,
+    cartelText,
+  };
+  const scored = result.proposals
+    .map((proposal, index) => ({ proposal, index, confidence: scoreCandidate(evidence, proposal) }))
+    .filter(({ confidence }) => isProposable(confidence))
+    .sort((a, b) => b.confidence.score - a.confidence.score || a.index - b.index);
+  return {
+    proposals: scored.map(({ proposal, confidence }) => ({ ...proposal, confidence: confidence.score })),
+    tooManyHomonyms: false,
+  };
 }
 
 // Description d'une proposition, rédigée par l'IA à partir des seuls faits trouvés

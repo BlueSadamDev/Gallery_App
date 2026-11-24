@@ -4,10 +4,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { callAi, setAiProvider, setQuotaTracker } from '../../src/services/ai/index.ts';
+import { callAi, getAiUsage, setAiProvider, setQuotaTracker } from '../../src/services/ai/index.ts';
 import {
   MODEL_LIMITS,
+  OVERLOAD_SIDELINE_MS,
   QuotaTracker,
+  nextPacificReset,
   pacificDay,
   rotationOrder,
   type DailyUsage,
@@ -169,6 +171,93 @@ test('Tout épuisé mais un modèle se libère dans la minute → QUOTA_MINUTE a
     (e: unknown) => e instanceof AiError && e.category === 'QUOTA_MINUTE' && e.retryAfterMs === 12_000
   );
   assert.equal(appels.length, 4);
+});
+
+test('Prochaine remise à zéro : minuit heure du Pacifique, changements d’heure compris', () => {
+  // Hiver : minuit en Californie = 8 h UTC.
+  assert.equal(nextPacificReset(DEBUT), Date.UTC(2026, 10, 22, 8, 0));
+  // Été : minuit = 7 h UTC.
+  assert.equal(nextPacificReset(Date.UTC(2026, 6, 14, 12)), Date.UTC(2026, 6, 15, 7));
+  // Veille du passage à l'heure d'été (8 mars 2026, à 2 h) : minuit est encore en heure d'hiver.
+  assert.equal(nextPacificReset(Date.UTC(2026, 2, 7, 20)), Date.UTC(2026, 2, 8, 8));
+  // Le 8 mars après 2 h : le minuit suivant est en heure d'été.
+  assert.equal(nextPacificReset(Date.UTC(2026, 2, 8, 12)), Date.UTC(2026, 2, 9, 7));
+  // Passage à l'heure d'hiver (1er novembre 2026) : minuit du 1er encore en heure d'été.
+  assert.equal(nextPacificReset(Date.UTC(2026, 9, 31, 20)), Date.UTC(2026, 10, 1, 7));
+  assert.equal(nextPacificReset(Date.UTC(2026, 10, 1, 12)), Date.UTC(2026, 10, 2, 8));
+});
+
+test('Surcharge (503) → modèle suivant, et le modèle surchargé est mis de côté 5 minutes', async () => {
+  let surcharge = true;
+  const { appels, horloge } = preparer((m) =>
+    surcharge && m === 'gemini-3.5-flash-lite' ? new AiError('SURCHARGE', m, { httpStatus: 503 }) : 'ok'
+  );
+  assert.equal((await demande())?.model, 'gemini-3.1-flash-lite');
+  surcharge = false;
+  assert.equal((await demande())?.model, 'gemini-3.1-flash-lite'); // encore de côté
+  horloge.t += OVERLOAD_SIDELINE_MS;
+  assert.equal((await demande())?.model, 'gemini-3.5-flash-lite'); // revenu
+  assert.deepEqual(appels, ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite']);
+});
+
+test('Modèle introuvable ou quota gratuit à zéro → modèle suivant, mis de côté jusqu’à minuit', async () => {
+  const { appels, horloge } = preparer((m) =>
+    m === 'gemini-3.5-flash-lite' ? new AiError('MODÈLE_INTROUVABLE', m, { httpStatus: 429 }) : 'ok'
+  );
+  assert.equal((await demande())?.model, 'gemini-3.1-flash-lite');
+  horloge.t += 3 * 3_600_000;
+  assert.equal((await demande())?.model, 'gemini-3.1-flash-lite');
+  assert.deepEqual(appels, ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.1-flash-lite']);
+  horloge.t = Date.UTC(2026, 10, 22, 8, 0);
+  await demande();
+  // Après minuit, 3.5 est de nouveau essayé (puis 3.1, puisqu'il échoue encore).
+  assert.deepEqual(appels.slice(-2), ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite']);
+});
+
+test('Tous surchargés → message « surchargé », pas « quota du jour »', async () => {
+  const { appels } = preparer((m) => new AiError('SURCHARGE', m, { httpStatus: 503 }));
+  await assert.rejects(demande(), (e: unknown) => e instanceof AiError && e.category === 'SURCHARGE');
+  assert.equal(appels.length, 4);
+  // Juste après, tous sont de côté : aucun appel, même message.
+  await assert.rejects(demande(), (e: unknown) => e instanceof AiError && e.category === 'SURCHARGE');
+  assert.equal(appels.length, 4);
+});
+
+test('Surcharge et quota du jour mélangés → « surchargé » (un modèle revient dans 5 min)', async () => {
+  preparer((m) => (m === 'gemini-3.1-flash-lite' ? new AiError('SURCHARGE', m) : new AiError('QUOTA_JOUR', m)));
+  await assert.rejects(demande(), (e: unknown) => e instanceof AiError && e.category === 'SURCHARGE');
+});
+
+test('Délai dépassé : pas de changement de modèle (l’attente serait doublée)', async () => {
+  const { appels } = preparer((m) => new AiError('DÉLAI_DÉPASSÉ', m));
+  await assert.rejects(demande(), (e: unknown) => e instanceof AiError && e.category === 'DÉLAI_DÉPASSÉ');
+  assert.deepEqual(appels, ['gemini-3.5-flash-lite']);
+});
+
+test('Test de la clé : un modèle mis de côté est quand même essayé', async () => {
+  let surcharge = true;
+  const { appels } = preparer((m) => (surcharge && m === 'gemini-3.5-flash-lite' ? new AiError('SURCHARGE', m) : 'ok'));
+  await demande(); // 3.5 mis de côté
+  surcharge = false;
+  assert.match(await testGeminiModel(), /gemini-3\.5-flash-lite : OK/);
+  assert.equal(appels.at(-1), 'gemini-3.5-flash-lite');
+});
+
+test('État pour les paramètres : appels du jour, modèle épuisé, surchargé, dernier utilisé', async () => {
+  const { horloge } = preparer((m) =>
+    m === 'gemini-3.5-flash-lite' ? new AiError('QUOTA_JOUR', m) : m === 'gemini-3.1-flash-lite' ? new AiError('SURCHARGE', m) : 'ok'
+  );
+  await demande();
+  const etat = await getAiUsage();
+  const parModele = Object.fromEntries(etat.models.map((m) => [m.model, m]));
+  assert.equal(parModele['gemini-3.5-flash-lite'].state, 'jour');
+  assert.equal(parModele['gemini-3.5-flash-lite'].used, 500);
+  assert.equal(parModele['gemini-3.5-flash-lite'].until, Date.UTC(2026, 10, 22, 8, 0));
+  assert.equal(parModele['gemini-3.1-flash-lite'].state, 'surcharge');
+  assert.equal(parModele['gemini-3.6-flash'].state, 'disponible');
+  assert.equal(parModele['gemini-3.6-flash'].used, 1);
+  assert.deepEqual(etat.lastUsed, { model: 'gemini-3.6-flash', at: horloge.t });
+  assert.equal(etat.resetAt, Date.UTC(2026, 10, 22, 8, 0));
 });
 
 test('Une autre erreur (clé invalide) ne fait pas changer de modèle', async () => {

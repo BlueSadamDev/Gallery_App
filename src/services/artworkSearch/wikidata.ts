@@ -36,6 +36,11 @@ export type Proposal = {
   commonsCategory: string | null;
   wikipediaFr: string | null; // titre de l'article Wikipédia français
   wikipediaEn: string | null;
+  // Pour le score de confiance des photos : autres noms de l'œuvre (toutes langues lues)
+  // et noms connus de ses créateurs, attributions comprises.
+  names: string[];
+  creatorNames: string[];
+  confidence?: number; // score de 0 à 1, seulement pour les propositions tirées d'une photo
 };
 
 export type SearchQuery = {
@@ -181,8 +186,8 @@ async function getEntities(ids: string[]): Promise<void> {
       apiUrl({
         action: 'wbgetentities',
         ids: chunk.join('|'),
-        props: 'labels|claims|sitelinks',
-        languages: 'fr|en',
+        props: 'labels|aliases|claims|sitelinks',
+        languages: 'fr|en|de|it|es|nl',
         sitefilter: 'frwiki|enwiki',
       })
     );
@@ -308,6 +313,19 @@ function label(entity: any): string {
   return entity?.labels?.fr?.value ?? entity?.labels?.en?.value ?? '';
 }
 
+// Tous les noms d'une œuvre : libellés et alias, sans doublon.
+function workNames(entity: any): string[] {
+  const names: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value === 'string' && value && !names.includes(value)) names.push(value);
+  };
+  for (const item of Object.values<any>(entity?.labels ?? {})) push(item?.value);
+  for (const list of Object.values<any>(entity?.aliases ?? {})) {
+    for (const alias of list ?? []) push(alias?.value);
+  }
+  return names;
+}
+
 function firstName(id: string | null): string {
   if (!id) return '';
   return namesCache.get(id)?.[0] ?? '';
@@ -399,6 +417,8 @@ async function runSearch(query: SearchQuery): Promise<SearchResult> {
       commonsCategory: claimValues(entity, 'P373')[0]?.mainsnak?.datavalue?.value ?? null,
       wikipediaFr: entity?.sitelinks?.frwiki?.title ?? null,
       wikipediaEn: entity?.sitelinks?.enwiki?.title ?? null,
+      names: workNames(entity),
+      creatorNames: allCreatorNames(entity),
     };
   });
 

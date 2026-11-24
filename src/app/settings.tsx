@@ -1,6 +1,6 @@
 import { Picker } from '@react-native-picker/picker';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,13 +23,38 @@ import {
 } from '@/config/settings';
 import { logoutUser } from '@/auth/auth';
 import { exportBackup, importBackup } from '@/utils/backup';
-import { testGeminiModel } from '@/utils/gemini';
+import { testAllGeminiModels, testGeminiModel } from '@/utils/gemini';
+import { getAiUsage, type AiUsageStatus } from '@/services/ai';
+import {
+  formatHour,
+  GOOGLE_FREE_TIER_NOTICE,
+  usageCountText,
+  usageStateText,
+} from '@/services/ai/usage';
+
+// Nom lisible d'un modèle (« Gemini 3.5 Flash-Lite »).
+function modelLabel(value: string): string {
+  const item = GEMINI_MODELS.find((m) => m.value === value);
+  return item ? item.label.replace(' (recommandé)', '') : value;
+}
 
 export default function SettingsScreen() {
   const [apiKey, setApiKey] = useState('');
   const [hasSavedKey, setHasSavedKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [model, setModel] = useState<string>(DEFAULT_GEMINI_MODEL);
+  // Utilisation de l'IA du jour, comptée par l'app (sans contacter Google).
+  const [usage, setUsage] = useState<AiUsageStatus | null>(null);
+  const [testingAll, setTestingAll] = useState(false);
+
+  const refreshUsage = useCallback(() => {
+    getAiUsage()
+      .then(setUsage)
+      .catch(() => setUsage(null));
+  }, []);
+
+  // Relue à chaque retour sur l'écran (après une recherche ou une identification).
+  useFocusEffect(refreshUsage);
 
   // Au chargement, récupère la clé déjà enregistrée (masquée) et le modèle choisi.
   useEffect(() => {
@@ -87,6 +112,31 @@ export default function SettingsScreen() {
       Alert.alert('Erreur', 'Impossible de joindre Gemini. Vérifiez votre connexion.');
     } finally {
       setSaving(false);
+      refreshUsage();
+    }
+  }
+
+  // Teste les 4 modèles l'un après l'autre : une demande très courte par modèle.
+  async function handleTestAll() {
+    const key = apiKey.trim();
+    if (key.length === 0) {
+      Alert.alert('Clé manquante', 'Saisissez d’abord votre clé API Gemini.');
+      return;
+    }
+    setSaving(true);
+    setTestingAll(true);
+    try {
+      await saveGeminiApiKey(key);
+      setHasSavedKey(true);
+      const lines = await testAllGeminiModels();
+      Alert.alert('Test des modèles', lines.join('\n\n'));
+    } catch (error) {
+      console.error('Erreur de test des modèles', error);
+      Alert.alert('Erreur', 'Impossible de joindre Gemini. Vérifiez votre connexion.');
+    } finally {
+      setSaving(false);
+      setTestingAll(false);
+      refreshUsage();
     }
   }
 
@@ -159,7 +209,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Intelligence artificielle</Text>
         <Text style={styles.sectionHint}>
           Pour identifier automatiquement une œuvre à partir d’une photo,
-          saisissez votre clé API Google Gemini.
+          saisissez votre clé API Google Gemini. {GOOGLE_FREE_TIER_NOTICE}
         </Text>
 
         <View style={styles.fieldGroup}>
@@ -227,6 +277,53 @@ export default function SettingsScreen() {
         >
           <Text style={styles.testButtonText}>Tester la clé</Text>
         </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.testButton,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleTestAll}
+          disabled={saving}
+        >
+          <Text style={styles.testButtonText}>
+            {testingAll ? 'Test en cours…' : 'Tester tous les modèles'}
+          </Text>
+        </Pressable>
+        <Text style={styles.fieldHint}>
+          Une demande très courte par modèle, comptée dans le quota du jour.
+        </Text>
+
+        <View style={styles.usageBlock}>
+          <Text style={styles.label}>Utilisation de l’IA aujourd’hui</Text>
+          {usage ? (
+            <>
+              {usage.models.map((item) => (
+                <View key={item.model} style={styles.usageRow}>
+                  <View style={styles.usageHead}>
+                    <Text style={styles.usageModel}>{modelLabel(item.model)}</Text>
+                    <Text style={styles.usageCount}>{usageCountText(item)}</Text>
+                  </View>
+                  <Text
+                    style={[styles.usageState, item.state !== 'disponible' && styles.usageStateAlert]}
+                  >
+                    {usageStateText(item)}
+                  </Text>
+                </View>
+              ))}
+              <Text style={styles.fieldHint}>
+                {usage.lastUsed
+                  ? `Dernier modèle utilisé : ${modelLabel(usage.lastUsed.model)}, à ${formatHour(usage.lastUsed.at)}. `
+                  : ''}
+                Les compteurs reviennent à zéro chaque jour à {formatHour(usage.resetAt)} (minuit
+                en Californie). Ce sont les demandes comptées par l’app sur ce téléphone. Si un
+                modèle ne répond pas, l’app passe au suivant.
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.fieldHint}>Compteurs indisponibles pour le moment.</Text>
+          )}
+        </View>
 
         <Text style={styles.sectionTitle}>Sauvegarde et restauration</Text>
         <Text style={styles.sectionHint}>
@@ -366,6 +463,40 @@ const styles = StyleSheet.create({
   testButtonText: {
     fontFamily: fonts.semibold,
     fontSize: 16,
+    color: colors.accent,
+  },
+  usageBlock: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  usageRow: {
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  usageHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  usageModel: {
+    flex: 1,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  usageCount: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  usageState: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  usageStateAlert: {
     color: colors.accent,
   },
   privacyNote: {
