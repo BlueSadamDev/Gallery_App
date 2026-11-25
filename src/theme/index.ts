@@ -1,27 +1,26 @@
-// Thème central de l'application "Gallery App"
-// Design inspiré d'un musée / d'une galerie d'art : sobre et élégant.
+// Thème central de X-Gallery, aligné sur DESIGN.md (référence unique).
 
 export const colors = {
-  // Fond principal : blanc cassé très clair
-  background: '#FAFAFA',
-  // Fond des cartes et formulaires : blanc pur
-  card: '#FFFFFF',
-  // Texte principal : presque noir
-  textPrimary: '#1A1A1A',
-  // Texte secondaire : gris moyen, discret
-  textSecondary: '#6B7280',
-  // Seule couleur d'accent : brun doré discret (cadres de musée)
-  accent: '#8B6F47',
-  // Couleur d'action (ex. bouton de création d'une œuvre) : bleu, bien visible
-  action: '#2563EB',
-  // Séparateurs et bordures très légères
-  border: '#E8E8E8',
-  // Couleur des champs de saisie
-  inputBackground: '#FFFFFF',
-  // Couleur du texte sur l'accent (boutons)
-  onAccent: '#FFFFFF',
-  // Danger (suppression) : rouge discret
-  danger: '#9E2B25',
+  // Palette de DESIGN.md : un seul fond pour tous les écrans.
+  background: '#F6F2EA',
+  // Cartes et formulaires : même fond que l'écran (pas de blanc pur).
+  card: '#F6F2EA',
+  // Texte principal
+  textPrimary: '#1C1B19',
+  // Texte secondaire : légendes, aides, icônes
+  textSecondary: '#7A756B',
+  // Seule couleur d'accent : bouton « + », boutons principaux, liens
+  accent: '#7B3F3A',
+  // Ancienne couleur d'action (bleue) : alignée sur l'accent
+  action: '#7B3F3A',
+  // Traits fins et contours
+  border: '#E3DDD1',
+  // Fond des champs de saisie : celui de l'écran
+  inputBackground: '#F6F2EA',
+  // Texte sur l'accent
+  onAccent: '#F6F2EA',
+  // Suppression et réinitialisation
+  danger: '#A32D2D',
 } as const;
 
 export const fonts = {
@@ -43,8 +42,9 @@ export const spacing = {
   xxl: 48,
 } as const;
 
+// Coins : 2 px partout (images, champs, boutons), comme le prévoit DESIGN.md.
 export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 14,
+  sm: 2,
+  md: 2,
+  lg: 2,
 } as const;

@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
-import { colors } from '@/theme';
+import { colors, fonts } from '@/theme';
 import { initDatabase } from '@/db/database';
 import { isLoggedIn, isUserRegistered } from '@/auth/auth';
 
@@ -66,13 +66,15 @@ export default function RootLayout() {
         screenOptions={{
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.textPrimary,
-          headerTitleStyle: { fontWeight: '600' },
+          headerTitleStyle: { fontFamily: fonts.medium },
           contentStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
         }}
       >
         {/* Groupe des onglets (Collection, Galerie vivante) : sans en-tête. */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        {/* Sans titre explicite, l'en-tête affichait le nom technique « settings ». */}
+        <Stack.Screen name="settings" options={{ title: 'Paramètres' }} />
       </Stack>
       <StatusBar style="dark" />
     </>

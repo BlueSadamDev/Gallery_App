@@ -327,10 +327,10 @@ export default function EditScreen() {
           <Visual key={remoteImageUrl ?? imageUri ?? 'vide'} remoteUrl={remoteImageUrl} localUri={imageUri} />
           <View style={styles.imageActions}>
             <View style={styles.half}>
-              <SecondaryButton label="Galerie" onPress={handlePickFromGallery} disabled={saving} />
+              <SecondaryButton label="Appareil photo" onPress={handleTakePhoto} disabled={saving} />
             </View>
             <View style={styles.half}>
-              <SecondaryButton label="Caméra" onPress={handleTakePhoto} disabled={saving} />
+              <SecondaryButton label="Galerie" onPress={handlePickFromGallery} disabled={saving} />
             </View>
           </View>
 

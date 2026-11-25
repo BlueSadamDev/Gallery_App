@@ -76,23 +76,15 @@ function errorMessage(error: unknown): string {
   return 'La recherche n’a pas abouti. Réessayez ou saisissez l’œuvre à la main.';
 }
 
-// Propose l'appareil photo ou la galerie ; renvoie le chemin de la copie locale.
-function askForPhoto(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const run = async (pick: () => Promise<string | null>) => {
-      try {
-        resolve(await pick());
-      } catch {
-        Alert.alert('Photo', 'Impossible d’ouvrir la photo.');
-        resolve(null);
-      }
-    };
-    Alert.alert('Ajouter ma photo', 'D’où vient la photo ?', [
-      { text: 'Appareil photo', onPress: () => run(takePhotoWithCamera) },
-      { text: 'Galerie', onPress: () => run(pickImageFromGallery) },
-      { text: 'Annuler', style: 'cancel', onPress: () => resolve(null) },
-    ], { cancelable: true, onDismiss: () => resolve(null) });
-  });
+// Ouvre l'appareil photo ou la galerie ; renvoie le chemin de la copie locale.
+// Le choix se fait avec deux boutons dans l'écran « Ma photo », pas dans une fenêtre Android.
+async function getPhoto(source: 'camera' | 'gallery'): Promise<string | null> {
+  try {
+    return source === 'camera' ? await takePhotoWithCamera() : await pickImageFromGallery();
+  } catch {
+    Alert.alert('Photo', 'Impossible d’ouvrir la photo.');
+    return null;
+  }
 }
 
 // Demande une confirmation oui / non.
@@ -347,8 +339,8 @@ export default function AddScreen() {
     setSheetImage({ kind: 'remote', url: commonsImageUrl(imageFiles[next], IMAGE_WIDTH) });
   }
 
-  async function handleUseMyPhoto() {
-    const uri = await askForPhoto();
+  async function handleUseMyPhoto(source: 'camera' | 'gallery') {
+    const uri = await getPhoto(source);
     if (uri) setSheetImage({ kind: 'local', uri });
   }
 
@@ -410,8 +402,18 @@ export default function AddScreen() {
   }
 
   // ----- Ma photo (étape 4) -----
-  async function handleAddPhoto() {
-    const uri = await askForPhoto();
+  // « Ajouter ma photo » : ouvre l'écran « Ma photo » avec ses deux boutons.
+  function handleAddPhoto() {
+    setMessage(null);
+    setPhotoUri(null);
+    setCartelUri(null);
+    setReadText(null);
+    setPhotoMissed(false);
+    setPhase('photo');
+  }
+
+  async function handlePickPhoto(source: 'camera' | 'gallery') {
+    const uri = await getPhoto(source);
     if (!uri) return;
     setPhotoUri(uri);
     setCartelUri(null);
@@ -538,6 +540,20 @@ export default function AddScreen() {
             </View>
           ) : null}
 
+          {phase === 'photo' && !photoUri ? (
+            <View style={styles.choice}>
+              <Notice>Photographiez l’œuvre, ou choisissez une photo déjà prise.</Notice>
+              <View style={styles.sourceRow}>
+                <View style={styles.sourceHalf}>
+                  <SecondaryButton label="Appareil photo" onPress={() => handlePickPhoto('camera')} />
+                </View>
+                <View style={styles.sourceHalf}>
+                  <SecondaryButton label="Galerie" onPress={() => handlePickPhoto('gallery')} />
+                </View>
+              </View>
+            </View>
+          ) : null}
+
           {phase === 'photo' && photoUri ? (
             <PhotoIdentify
               photoUri={photoUri}
@@ -618,6 +634,13 @@ const styles = StyleSheet.create({
   },
   choice: {
     gap: 12,
+  },
+  sourceRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  sourceHalf: {
+    flex: 1,
   },
   settingsButton: {
     minWidth: 48,

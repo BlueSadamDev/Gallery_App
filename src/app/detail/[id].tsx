@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   editButton: {
     backgroundColor: colors.accent,
     paddingVertical: 14,
-    borderRadius: 30,
+    borderRadius: 2,
     alignItems: 'center',
     marginTop: spacing.xl,
   },
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.danger,
     paddingVertical: 14,
-    borderRadius: 30,
+    borderRadius: 2,
     alignItems: 'center',
     marginTop: spacing.md,
   },
