@@ -1,17 +1,32 @@
-import Feather from '@expo/vector-icons/Feather';
 import { Tabs } from 'expo-router/js-tabs';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts } from '@/theme';
+import { colors, fonts } from '@/theme';
 
-// Couleurs de la charte DESIGN.md pour la barre d'onglets.
-const BACKGROUND = '#F6F2EA';
-const HAIRLINE = '#E3DDD1';
-const ACCENT = '#7B3F3A';
-const ICON_GRAY = '#7A756B';
+// Barre d'onglets « magazine » (DESIGN.md) : libellés en capitales, sans icônes,
+// filet fin gris très foncé en haut.
 
 // Hauteur utile de la barre (hors zone sûre du bas) : zone tactile ≥ 48 px.
 const BAR_HEIGHT = 56;
+
+// Libellé d'onglet : Medium et texte principal si l'onglet est ouvert, sinon Regular et gris.
+function tabLabel(text: string) {
+  function TabLabel({ focused }: { focused: boolean }) {
+    return (
+      <Text
+        style={{
+          fontFamily: focused ? fonts.medium : fonts.regular,
+          fontSize: 11,
+          letterSpacing: 2,
+          color: focused ? colors.textPrimary : colors.textSecondary,
+        }}
+      >
+        {text}
+      </Text>
+    );
+  }
+  return TabLabel;
+}
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
@@ -20,38 +35,28 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: ACCENT,
-        tabBarInactiveTintColor: ICON_GRAY,
         tabBarStyle: {
-          backgroundColor: BACKGROUND,
+          backgroundColor: colors.background,
           borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: HAIRLINE,
+          borderTopColor: colors.textPrimary,
           elevation: 0,
           height: BAR_HEIGHT + insets.bottom,
           paddingBottom: insets.bottom,
         },
-        tabBarItemStyle: { minHeight: 48 },
-        tabBarLabelStyle: { fontFamily: fonts.regular, fontSize: 12 },
-        sceneStyle: { backgroundColor: BACKGROUND },
+        tabBarItemStyle: { minHeight: 48, justifyContent: 'center' },
+        // Aucune icône : seul le libellé en capitales reste.
+        tabBarIcon: () => null,
+        tabBarIconStyle: { display: 'none' },
+        sceneStyle: { backgroundColor: colors.background },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{
-          title: 'Collection',
-          tabBarIcon: ({ focused }) => (
-            <Feather name="grid" size={20} color={focused ? ACCENT : ICON_GRAY} />
-          ),
-        }}
+        options={{ title: 'Collection', tabBarLabel: tabLabel('COLLECTION') }}
       />
       <Tabs.Screen
         name="galerie"
-        options={{
-          title: 'Galerie vivante',
-          tabBarIcon: ({ focused }) => (
-            <Feather name="sun" size={20} color={focused ? ACCENT : ICON_GRAY} />
-          ),
-        }}
+        options={{ title: 'Galerie vivante', tabBarLabel: tabLabel('GALERIE VIVANTE') }}
       />
     </Tabs>
   );

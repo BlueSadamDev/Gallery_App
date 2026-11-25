@@ -6,8 +6,9 @@ import { fonts } from '@/theme';
 
 export const palette = {
   background: '#F6F2EA',
-  text: '#1C1B19',
-  textSecondary: '#7A756B',
+  // Mêmes couleurs de texte que le thème central (src/theme).
+  text: '#2B2926',
+  textSecondary: '#6B665C',
   hairline: '#E3DDD1',
   field: '#CFC8BA',
   accent: '#7B3F3A',

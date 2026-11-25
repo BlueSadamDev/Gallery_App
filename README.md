@@ -4,7 +4,8 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 
 ## Fonctionnalités
 
-- 📷 Galerie photo : ajout, détail, édition, suppression (bouton « + » rond marron avec contour fin beige clair : centré quand la collection est vide, sinon en haut à droite à gauche de la roue)
+- 📷 Galerie photo : ajout, détail, édition, suppression (bouton « + » carré bordeaux : grand et centré quand la collection est vide, sinon petit en haut à droite, à gauche du menu des paramètres)
+- 📰 **Accueil « magazine »** : une œuvre à la une qui change chaque jour, un sommaire « Dans votre collection » calculé sur le téléphone sans IA (artiste, siècle, fiche à compléter), puis toutes les œuvres sur deux colonnes
 - 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description)
 - 🔎 **Recherche d'œuvre fiable** (écran d'ajout) :
   - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
@@ -25,7 +26,7 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `add.tsx` : ajout d'une œuvre (choix, ma photo, recherche, propositions, fiche)
   - `detail/[id].tsx`, `edit/[id].tsx` : détail et édition d'une photo
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
-- `src/components/` : composants réutilisables (`Carousel.tsx`, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout)
+- `src/components/` : composants réutilisables (`home/` pour l'accueil, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout ; `Carousel.tsx` n'est plus utilisé depuis l'accueil magazine)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
 - `src/services/ai/` : point d'entrée unique de tous les appels à l'IA (fournisseur Gemini, classement des erreurs et messages)
 - `tests/ia/` : tests automatiques de la couche IA, avec des réponses de Google simulées (aucun appel réel)
@@ -75,6 +76,14 @@ Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invali
 
 ```bash
 npm run test:ia
+```
+
+## Tester l'accueil magazine
+
+Vérifie le choix de l'œuvre à la une (la même toute la journée, une autre le lendemain) et le sommaire « Dans votre collection » (artiste, siècle, fiche à compléter) :
+
+```bash
+npm run test:accueil
 ```
 
 ## Tester la recherche d'œuvres
