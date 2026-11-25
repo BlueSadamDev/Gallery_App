@@ -1,7 +1,8 @@
 // Animation de démarrage : le logo X-Gallery se dessine, puis le nom apparaît.
 // 1. le cadre se trace (haut, droite, bas, gauche) ;
 // 2. le trait épais du X, puis le trait fin ;
-// 3. « X-GALLERY » apparaît ; puis tout s'efface en fondu sur l'écran suivant.
+// 3. « X-GALLERY » apparaît ; puis le logo s'efface et l'écran suivant s'affiche.
+// C'est un écran à part entière : l'accueil n'est affiché qu'après (voir _layout.tsx).
 // Dessiné avec de simples vues animées : aucune bibliothèque ajoutée.
 // Si le téléphone demande de réduire les animations, le logo s'affiche tel quel.
 
@@ -10,9 +11,9 @@ import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-nat
 import { colors, fonts } from '@/theme';
 
 // Durées (millisecondes).
-const DRAW_MS = 1100; // dessin complet du logo et apparition du nom
+const DRAW_MS = 1000; // dessin complet du logo et apparition du nom
 const HOLD_MS = 250; // pause sur le logo terminé
-const FADE_MS = 300; // fondu de sortie
+const FADE_MS = 250; // le logo s'efface (le fond reste)
 
 // Géométrie du logo (mêmes proportions que l'icône) : un carré de 46 unités,
 // trait de 2,5 ; diagonales de 26 unités de côté, traits de 7 et 2,2.
@@ -64,7 +65,7 @@ export default function StartupAnimation({ ready, fontsLoaded, onDone }: Props) 
     };
   }, [progress]);
 
-  // Logo dessiné et app prête : fondu de sortie.
+  // Logo dessiné et app prête : le logo s'efface, puis l'écran suivant prend la place.
   useEffect(() => {
     if (!drawn || !ready) return;
     const animation = Animated.timing(fade, {
@@ -90,32 +91,29 @@ export default function StartupAnimation({ ready, fontsLoaded, onDone }: Props) 
   const wordShift = progress.interpolate({ inputRange: [0, 0.72, 1], outputRange: [8, 8, 0] });
 
   return (
-    <Animated.View
-      style={[styles.overlay, { opacity: fade }]}
-      pointerEvents={drawn && ready ? 'none' : 'auto'}
-      accessible
-      accessibilityLabel="X-Gallery"
-    >
-      <View style={styles.logo}>
-        {/* Cadre : chaque bord grandit depuis le coin où le précédent s'arrête. */}
-        <Animated.View style={[styles.edge, { top: 0, left: 0, height: EDGE, width: step(0, 0.1, BOX) }]} />
-        <Animated.View style={[styles.edge, { top: 0, right: 0, width: EDGE, height: step(0.1, 0.2, BOX) }]} />
-        <Animated.View style={[styles.edge, { bottom: 0, right: 0, height: EDGE, width: step(0.2, 0.3, BOX) }]} />
-        <Animated.View style={[styles.edge, { bottom: 0, left: 0, width: EDGE, height: step(0.3, 0.4, BOX) }]} />
-        {/* Diagonales : un rail tourné, dans lequel le trait grandit depuis son extrémité. */}
-        <Diagonal thickness={7 * S} angle="45deg" length={step(0.42, 0.56, DIAG)} />
-        <Diagonal thickness={2.2 * S} angle="135deg" length={step(0.56, 0.68, DIAG)} />
-      </View>
-      <Animated.Text
-        style={[
-          styles.word,
-          fontsLoaded ? { fontFamily: fonts.medium } : null,
-          { opacity: wordOpacity, transform: [{ translateY: wordShift }] },
-        ]}
-      >
-        X-GALLERY
-      </Animated.Text>
-    </Animated.View>
+    <View style={styles.screen} accessible accessibilityLabel="X-Gallery">
+      <Animated.View style={[styles.content, { opacity: fade }]}>
+        <View style={styles.logo}>
+          {/* Cadre : chaque bord grandit depuis le coin où le précédent s'arrête. */}
+          <Animated.View style={[styles.edge, { top: 0, left: 0, height: EDGE, width: step(0, 0.1, BOX) }]} />
+          <Animated.View style={[styles.edge, { top: 0, right: 0, width: EDGE, height: step(0.1, 0.2, BOX) }]} />
+          <Animated.View style={[styles.edge, { bottom: 0, right: 0, height: EDGE, width: step(0.2, 0.3, BOX) }]} />
+          <Animated.View style={[styles.edge, { bottom: 0, left: 0, width: EDGE, height: step(0.3, 0.4, BOX) }]} />
+          {/* Diagonales : un rail tourné, dans lequel le trait grandit depuis son extrémité. */}
+          <Diagonal thickness={7 * S} angle="45deg" length={step(0.42, 0.56, DIAG)} />
+          <Diagonal thickness={2.2 * S} angle="135deg" length={step(0.56, 0.68, DIAG)} />
+        </View>
+        <Animated.Text
+          style={[
+            styles.word,
+            fontsLoaded ? { fontFamily: fonts.medium } : null,
+            { opacity: wordOpacity, transform: [{ translateY: wordShift }] },
+          ]}
+        >
+          X-GALLERY
+        </Animated.Text>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -147,12 +145,14 @@ function Diagonal({
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 10,
+  screen: {
+    flex: 1,
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  content: {
+    alignItems: 'center',
   },
   logo: {
     width: BOX,

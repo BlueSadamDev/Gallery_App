@@ -65,9 +65,9 @@ Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé
 1. Le cadre du logo se trace dans le sens des aiguilles d'une montre (haut, droite, bas, gauche), couleur accent.
 2. Le trait épais du X, puis le trait fin.
 3. « X-GALLERY » (Medium, 22 px, lettres espacées de 6 px, texte principal) apparaît en remontant de 8 px.
-4. Courte pause, puis fondu de 0,3 s sur le premier écran (accueil ou connexion).
+4. Courte pause, puis le logo s'efface (0,25 s) et le premier écran (accueil ou connexion) s'affiche.
 
-Durée : environ 1,6 s. Elle joue pendant le chargement de l'app (polices, base, connexion) et ne s'efface qu'une fois l'app prête. Si le téléphone demande de réduire les animations, le logo s'affiche directement. Dessinée avec des vues animées simples : aucune bibliothèque ajoutée.
+C'est un écran à part entière : l'accueil n'est pas chargé derrière. Durée : environ 1,5 s. Elle joue pendant le chargement de l'app (polices, base, connexion) et ne s'efface qu'une fois l'app prête. Si le téléphone demande de réduire les animations, le logo s'affiche directement. Dessinée avec des vues animées simples : aucune bibliothèque ajoutée.
 
 ## Écrans
 

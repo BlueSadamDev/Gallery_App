@@ -47,13 +47,14 @@ export default function RootLayout() {
   }, [dbReady]);
 
   const ready = fontsLoaded && dbReady && authChecked;
-  // L'animation de démarrage joue pendant le chargement, puis s'efface sur le premier écran.
+  // L'animation de démarrage a son propre écran : elle joue pendant le chargement, et le
+  // premier écran (accueil ou connexion) ne s'affiche qu'une fois qu'elle est terminée.
   const [introDone, setIntroDone] = useState(false);
   const finishIntro = useCallback(() => setIntroDone(true), []);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {ready ? (
+      {ready && introDone ? (
         <>
           <Stack
             screenOptions={{
