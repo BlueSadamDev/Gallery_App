@@ -9,14 +9,16 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors, fonts, spacing, radius } from '@/theme';
+import { palette } from '@/components/add/ui';
 import { Artwork, deleteArtwork, getArtwork } from '@/db/database';
 
 function SettingsButton() {
   return (
     <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton}>
-        <Text style={styles.settingsIcon}>⚙️</Text>
+      <Pressable style={styles.settingsButton} accessibilityLabel="Paramètres">
+        <Feather name="settings" size={22} color={palette.textSecondary} />
       </Pressable>
     </Link>
   );
@@ -77,6 +79,10 @@ export default function DetailScreen() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
+          title: '',
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: palette.background },
+          headerTintColor: palette.text,
           headerRight: () => <SettingsButton />,
         }}
       />
@@ -256,11 +262,10 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   settingsButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  settingsIcon: {
-    fontSize: 22,
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
