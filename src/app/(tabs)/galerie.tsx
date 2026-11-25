@@ -25,7 +25,6 @@ const TEXT_PRIMARY = '#1C1B19';
 const TEXT_SECONDARY = '#7A756B';
 const ACCENT = '#7B3F3A';
 const ON_ACCENT = '#F6F2EA';
-const FIELD_LINE = '#CFC8BA';
 
 // Part de la largeur d'écran occupée au maximum par une œuvre.
 const ARTWORK_WIDTH_RATIO = 0.72;
@@ -111,7 +110,7 @@ export default function LivingGalleryScreen() {
               accessibilityLabel="Ajouter une œuvre"
               style={({ pressed }) => [styles.bigAddButton, pressed && styles.pressed]}
             >
-              <Feather name="plus" size={48} color={ON_ACCENT} />
+              <Feather name="plus" size={40} color={ON_ACCENT} />
             </Pressable>
           </Link>
         </View>
@@ -199,11 +198,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   bigAddButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: FIELD_LINE,
+    width: 96,
+    height: 96,
+    borderRadius: 2,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',

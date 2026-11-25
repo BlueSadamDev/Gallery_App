@@ -47,7 +47,7 @@ Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé
 
 ## Forme et espacement
 
-- Coins : 2 px pour les images, champs et boutons rectangulaires. Le bouton « + » est un cercle.
+- Coins : 2 px pour les images, champs et boutons, bouton « + » compris (un carré, comme le logo).
 - Traits très fins (épaisseur hairline), jamais épais.
 - Unité d'espacement : 8 px. Marges latérales d'écran : 20 à 24 px.
 - Zone tactile d'au moins 48 px pour chaque bouton.
@@ -57,6 +57,17 @@ Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé
 
 - Vouvoiement dans toute l'app (comme dans l'écran d'accueil actuel).
 - Phrases courtes, majuscule seulement au début de la phrase, pas de point d'exclamation, pas de jargon.
+
+## Animation de démarrage
+
+À chaque ouverture de l'app, après l'écran de démarrage d'Android (icône fixe sur le fond #F6F2EA) : le logo se dessine au centre, sur le fond #F6F2EA (`src/components/StartupAnimation.tsx`).
+
+1. Le cadre du logo se trace dans le sens des aiguilles d'une montre (haut, droite, bas, gauche), couleur accent.
+2. Le trait épais du X, puis le trait fin.
+3. « X-GALLERY » (Medium, 22 px, lettres espacées de 6 px, texte principal) apparaît en remontant de 8 px.
+4. Courte pause, puis fondu de 0,3 s sur le premier écran (accueil ou connexion).
+
+Durée : environ 1,6 s. Elle joue pendant le chargement de l'app (polices, base, connexion) et ne s'efface qu'une fois l'app prête. Si le téléphone demande de réduire les animations, le logo s'affiche directement. Dessinée avec des vues animées simples : aucune bibliothèque ajoutée.
 
 ## Écrans
 
@@ -83,8 +94,8 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et roue à droite (même ligne, alignés au centre vertical). En dessous, titre « Ma collection » (graisse Medium, 32 px) sur toute la largeur, sur une seule ligne (numberOfLines 1, adjustsFontSizeToFit). Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
-- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
-- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
+- Bouton « + » **carré**, coins 2 px, fond plein #7B3F3A, icône Feather « plus » #F6F2EA, sans contour (direction « Le carré » des maquettes). Petit : 44 × 44 px, icône 22 px, en haut à droite (à gauche de la roue). Grand : 96 × 96 px, icône 40 px, centré si la collection est vide.
+- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le grand bouton « + » carré, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
   - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Composant indépendant (`src/components/Carousel.tsx`). Chaque carte :

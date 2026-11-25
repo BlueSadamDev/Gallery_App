@@ -1,11 +1,12 @@
 import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
-import { ActivityIndicator, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { colors, fonts } from '@/theme';
 import { initDatabase } from '@/db/database';
 import { isLoggedIn, isUserRegistered } from '@/auth/auth';
+import StartupAnimation from '@/components/StartupAnimation';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -45,39 +46,36 @@ export default function RootLayout() {
     })();
   }, [dbReady]);
 
-  if (!fontsLoaded || !dbReady || !authChecked) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: colors.background,
-        }}
-      >
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
+  const ready = fontsLoaded && dbReady && authChecked;
+  // L'animation de démarrage joue pendant le chargement, puis s'efface sur le premier écran.
+  const [introDone, setIntroDone] = useState(false);
+  const finishIntro = useCallback(() => setIntroDone(true), []);
 
   return (
-    <>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.textPrimary,
-          headerTitleStyle: { fontFamily: fonts.medium },
-          contentStyle: { backgroundColor: colors.background },
-          headerShadowVisible: false,
-        }}
-      >
-        {/* Groupe des onglets (Collection, Galerie vivante) : sans en-tête. */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        {/* Sans titre explicite, l'en-tête affichait le nom technique « settings ». */}
-        <Stack.Screen name="settings" options={{ title: 'Paramètres' }} />
-      </Stack>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      {ready ? (
+        <>
+          <Stack
+            screenOptions={{
+              headerStyle: { backgroundColor: colors.background },
+              headerTintColor: colors.textPrimary,
+              headerTitleStyle: { fontFamily: fonts.medium },
+              contentStyle: { backgroundColor: colors.background },
+              headerShadowVisible: false,
+            }}
+          >
+            {/* Groupe des onglets (Collection, Galerie vivante) : sans en-tête. */}
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            {/* Sans titre explicite, l'en-tête affichait le nom technique « settings ». */}
+            <Stack.Screen name="settings" options={{ title: 'Paramètres' }} />
+          </Stack>
+        </>
+      ) : null}
       <StatusBar style="dark" />
-    </>
+      {!introDone ? (
+        <StartupAnimation ready={ready} fontsLoaded={fontsLoaded} onDone={finishIntro} />
+      ) : null}
+    </View>
   );
 }
 
