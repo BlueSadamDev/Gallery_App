@@ -16,6 +16,7 @@ type Props = {
   onShowAnyway?: () => void;
   // Proposer la saisie manuelle (hors ligne, panne, ou après 2 relances sans succès).
   onManual?: () => void;
+  onKeepUnknown?: () => void; // photo non identifiée : la garder comme œuvre inconnue
 };
 
 export function SearchForm(props: Props) {
@@ -57,6 +58,9 @@ export function SearchForm(props: Props) {
           <SecondaryButton label="Afficher quand même" onPress={props.onShowAnyway} />
         ) : null}
         {props.onManual ? <LinkButton label="Saisir l’œuvre à la main" onPress={props.onManual} /> : null}
+        {props.onKeepUnknown ? (
+          <LinkButton label="Conserver ma photo comme œuvre inconnue" onPress={props.onKeepUnknown} />
+        ) : null}
       </View>
     </View>
   );

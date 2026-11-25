@@ -3,6 +3,7 @@
 
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { fonts } from '@/theme';
+import { GOOGLE_FREE_TIER_NOTICE } from '@/services/ai/usage';
 import { LinkButton, Notice, palette, PrimaryButton, SecondaryButton } from './ui';
 
 type Props = {
@@ -14,7 +15,13 @@ type Props = {
   identifying: boolean;
   offline: boolean;
   message: string | null;
+  // Texte lu sur la photo (cartel, plaque, inscription) : montré comme une lecture, jamais
+  // comme un titre. « Chercher avec ce texte » le reprend dans la recherche, modifiable.
+  readText: string | null;
+  onUseReadText: () => void;
   onManual: () => void;
+  // Proposé quand l'identification n'a rien donné : garder la photo sans titre connu.
+  onKeepUnknown?: () => void;
 };
 
 export function PhotoIdentify(props: Props) {
@@ -43,6 +50,27 @@ export function PhotoIdentify(props: Props) {
         <Notice>Vous êtes hors ligne. L’identification n’est pas disponible.</Notice>
       ) : null}
       {props.message ? <Notice>{props.message}</Notice> : null}
+      {props.onKeepUnknown ? (
+        <View style={styles.keep}>
+          <SecondaryButton
+            label="Conserver comme œuvre inconnue"
+            onPress={props.onKeepUnknown}
+            disabled={props.identifying}
+          />
+        </View>
+      ) : null}
+
+      {props.readText ? (
+        <View style={styles.readBlock}>
+          <Text style={styles.readLabel}>Inscription lue</Text>
+          <Text style={styles.readText}>« {props.readText} »</Text>
+          <LinkButton
+            label="Chercher avec ce texte"
+            onPress={props.onUseReadText}
+            disabled={props.identifying}
+          />
+        </View>
+      ) : null}
 
       <PrimaryButton
         label={props.identifying ? 'Identification…' : 'Identifier l’œuvre'}
@@ -51,7 +79,8 @@ export function PhotoIdentify(props: Props) {
         loading={props.identifying}
       />
       <Text style={styles.help}>
-        La photo est réduite et ses informations de lieu sont retirées avant l’envoi.
+        La photo est réduite et ses informations de lieu sont retirées avant l’envoi.{' '}
+        {GOOGLE_FREE_TIER_NOTICE}
       </Text>
       <LinkButton
         label="Saisir l’œuvre à la main"
@@ -68,6 +97,9 @@ const styles = StyleSheet.create({
     height: 320,
     borderRadius: 2,
     backgroundColor: palette.placeholder,
+  },
+  keep: {
+    marginBottom: 16,
   },
   spaced: {
     marginTop: 8,
@@ -91,6 +123,22 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 13,
     color: palette.textSecondary,
+  },
+  readBlock: {
+    marginBottom: 16,
+  },
+  readLabel: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    color: palette.label,
+    marginBottom: 4,
+  },
+  readText: {
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: palette.text,
   },
   help: {
     fontFamily: fonts.regular,

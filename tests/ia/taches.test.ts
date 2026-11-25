@@ -78,7 +78,30 @@ test('Photo : image envoyée, un seul appel ; réponse illisible → RÉPONSE_IN
 test('Photo : confiance faible → aucune piste, pas d’erreur', async () => {
   process.env.GEMINI_API_KEY = 'cle-fictive';
   fournisseur(() => JSON.stringify({ titreFrancais: 'X', confiance: 'faible' }));
-  assert.equal(await suggestFromPhoto('AAAA'), null);
+  const lecture = await suggestFromPhoto('AAAA');
+  assert.equal(lecture?.hints, null);
+  assert.equal(lecture?.model, 'gemini-3.5-flash-lite');
+});
+
+test('Photo (Montserrat) : l’inscription est gardée comme lecture, jamais comme titre', async () => {
+  process.env.GEMINI_API_KEY = 'cle-fictive';
+  const demandes = fournisseur(() =>
+    JSON.stringify({ texteLu: 'DOMINGO DE GUZMAN\n1170   1970', titreFrancais: '', confiance: 'faible' })
+  );
+  const lecture = await suggestFromPhoto('AAAA');
+  assert.equal(lecture?.hints, null);
+  assert.equal(lecture?.readText, 'DOMINGO DE GUZMAN 1170 1970');
+  const consigne = demandes[0].parts[0].kind === 'text' ? demandes[0].parts[0].text : '';
+  assert.match(consigne, /N'invente jamais de titre/);
+  assert.match(consigne, /n'est pas un titre/);
+});
+
+test('Photo : un titre sans confiance faible donne des pistes à vérifier dans Wikidata', async () => {
+  process.env.GEMINI_API_KEY = 'cle-fictive';
+  fournisseur(() => PISTES);
+  const lecture = await suggestFromPhoto('AAAA');
+  assert.equal(lecture?.hints?.frenchTitle, 'La Joconde');
+  assert.equal(lecture?.readText, '');
 });
 
 test('Une erreur classée remonte telle quelle (ex. quota du jour)', async () => {

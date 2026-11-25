@@ -36,6 +36,13 @@ export type Proposal = {
   commonsCategory: string | null;
   wikipediaFr: string | null; // titre de l'article Wikipédia français
   wikipediaEn: string | null;
+  // Pour le score de confiance des photos : autres noms de l'œuvre (toutes langues lues)
+  // et noms connus de ses créateurs, attributions comprises.
+  names: string[];
+  creatorNames: string[];
+  confidence?: number; // score de 0 à 1, seulement pour les propositions tirées d'une photo
+  // Articles de la même œuvre dans d'autres langues (source de secours).
+  wikipediaOther?: { lang: string; title: string }[];
 };
 
 export type SearchQuery = {
@@ -181,8 +188,8 @@ async function getEntities(ids: string[]): Promise<void> {
       apiUrl({
         action: 'wbgetentities',
         ids: chunk.join('|'),
-        props: 'labels|claims|sitelinks',
-        languages: 'fr|en',
+        props: 'labels|aliases|claims|sitelinks',
+        languages: 'fr|en|de|it|es|nl',
         sitefilter: 'frwiki|enwiki',
       })
     );
@@ -308,6 +315,19 @@ function label(entity: any): string {
   return entity?.labels?.fr?.value ?? entity?.labels?.en?.value ?? '';
 }
 
+// Tous les noms d'une œuvre : libellés et alias, sans doublon.
+function workNames(entity: any): string[] {
+  const names: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value === 'string' && value && !names.includes(value)) names.push(value);
+  };
+  for (const item of Object.values<any>(entity?.labels ?? {})) push(item?.value);
+  for (const list of Object.values<any>(entity?.aliases ?? {})) {
+    for (const alias of list ?? []) push(alias?.value);
+  }
+  return names;
+}
+
 function firstName(id: string | null): string {
   if (!id) return '';
   return namesCache.get(id)?.[0] ?? '';
@@ -399,6 +419,12 @@ async function runSearch(query: SearchQuery): Promise<SearchResult> {
       commonsCategory: claimValues(entity, 'P373')[0]?.mainsnak?.datavalue?.value ?? null,
       wikipediaFr: entity?.sitelinks?.frwiki?.title ?? null,
       wikipediaEn: entity?.sitelinks?.enwiki?.title ?? null,
+      names: workNames(entity),
+      creatorNames: allCreatorNames(entity),
+      wikipediaOther: OTHER_WIKI_LANGS.flatMap((lang) => {
+        const title = entity?.sitelinks?.[`${lang}wiki`]?.title;
+        return title ? [{ lang, title }] : [];
+      }),
     };
   });
 
@@ -444,30 +470,115 @@ export async function listArtworkImages(proposal: Proposal): Promise<string[]> {
 export type SourceExtract = { text: string; url: string };
 const extractCache = new Map<string, SourceExtract | null>();
 
-// Résumé Wikipédia de l'œuvre : français en priorité, sinon anglais.
-// Renvoie null si l'œuvre n'a pas d'article ou si le service ne répond pas.
+// Autres langues de Wikipédia essayées si l'œuvre n'a pas d'article en français ou en anglais.
+export const OTHER_WIKI_LANGS = ['es', 'it', 'de', 'ca', 'nl', 'pt'];
+
+// Mots trop courants pour identifier un titre.
+const TITLE_STOPWORDS = new Set([
+  'the', 'and', 'les', 'des', 'une', 'aux', 'del', 'der', 'die', 'das', 'with', 'avec', 'sur', 'dans', 'pour',
+]);
+
+function words(text: string): string[] {
+  return normalize(text).split(' ').filter((w) => w.length >= 3 && !TITLE_STOPWORDS.has(w));
+}
+
+// Nom de famille de l'artiste (dernier mot significatif), ou null si l'artiste est inconnu.
+export function artistKeyword(artist: string): string | null {
+  const cleaned = artist.replace(/\([^)]*\)/g, ' ');
+  if (!cleaned.trim() || /inconnu|anonyme|unknown/i.test(cleaned)) return null;
+  const list = words(cleaned);
+  return list.length > 0 ? list[list.length - 1] : null;
+}
+
+// Vrai si un résumé trouvé par recherche parle bien de cette œuvre :
+// il cite l'artiste (nom de famille) et au moins la moitié des mots du titre.
+export function extractMatchesArtwork(text: string, proposal: Pick<Proposal, 'title' | 'artist'>): boolean {
+  const keyword = artistKeyword(proposal.artist);
+  const titleWords = words(proposal.title);
+  if (!keyword || titleWords.length === 0) return false;
+  const found = new Set(normalize(text).split(' '));
+  if (!found.has(keyword)) return false;
+  const present = titleWords.filter((w) => found.has(w)).length;
+  return present >= Math.ceil(titleWords.length / 2);
+}
+
+// Résumé d'un article (null si absent, page d'homonymie ou trop court).
+async function fetchSummary(lang: string, title: string): Promise<SourceExtract | null> {
+  try {
+    const data = await fetchJson(
+      `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`
+    );
+    const text = String(data?.extract ?? '').trim();
+    const url = String(data?.content_urls?.desktop?.page ?? '');
+    return data?.type === 'standard' && text.length > 40 && url ? { text, url } : null;
+  } catch {
+    return null; // on essaie la source suivante
+  }
+}
+
+// Recherche d'un article par titre et artiste, quand Wikidata ne relie l'œuvre à aucun article.
+// Seul un résumé qui cite l'artiste et le titre est retenu.
+async function searchSummary(lang: string, proposal: Proposal): Promise<SourceExtract | null> {
+  const keyword = artistKeyword(proposal.artist);
+  if (!keyword) return null;
+  let titles: string[] = [];
+  try {
+    const data = await fetchJson(
+      `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&format=json&utf8=1&srlimit=${SEARCH_RESULTS}` +
+        `&srsearch=${encodeURIComponent(`${proposal.title} ${proposal.artist}`)}`
+    );
+    titles = (data?.query?.search ?? []).map((r: { title?: string }) => String(r.title ?? '')).filter(Boolean);
+  } catch {
+    return null;
+  }
+  for (const title of titles) {
+    const summary = await fetchSummary(lang, title);
+    if (summary && extractMatchesArtwork(summary.text, proposal)) return summary;
+  }
+  return null;
+}
+
+const SEARCH_RESULTS = 3;
+
+// Résumé de l'œuvre, de la source la plus sûre à la moins sûre :
+// 1. article Wikipédia relié à l'œuvre dans Wikidata : français, anglais, puis autres langues ;
+// 2. recherche dans Wikipédia (français puis anglais) par titre et artiste, avec vérification.
+// Renvoie null si aucune source ne parle de l'œuvre.
 export async function fetchSourceExtract(proposal: Proposal): Promise<SourceExtract | null> {
   if (extractCache.has(proposal.id)) return extractCache.get(proposal.id) ?? null;
-  const pages: [string, string | null][] = [
+  const linked: [string, string | null][] = [
     ['fr', proposal.wikipediaFr],
     ['en', proposal.wikipediaEn],
+    ...(proposal.wikipediaOther ?? []).map((o): [string, string] => [o.lang, o.title]),
   ];
   let result: SourceExtract | null = null;
-  for (const [lang, title] of pages) {
+  for (const [lang, title] of linked) {
     if (!title || result) continue;
-    try {
-      const data = await fetchJson(
-        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, '_'))}`
-      );
-      const text = String(data?.extract ?? '').trim();
-      const url = String(data?.content_urls?.desktop?.page ?? '');
-      if (data?.type === 'standard' && text.length > 40 && url) result = { text, url };
-    } catch {
-      // on essaie la langue suivante
-    }
+    result = await fetchSummary(lang, title);
+  }
+  for (const lang of ['fr', 'en']) {
+    if (result) break;
+    result = await searchSummary(lang, proposal);
   }
   extractCache.set(proposal.id, result);
   return result;
+}
+
+// Description de secours, sans IA, quand aucun résumé Wikipédia n'existe :
+// une ou deux phrases construites uniquement avec les faits de Wikidata.
+// « Œuvre de Jackson Pollock (1943). Lieu de conservation : Museum of Modern Art. »
+// Vide si Wikidata ne connaît ni l'artiste ni le lieu.
+export function factsDescription(proposal: Pick<Proposal, 'artist' | 'year' | 'location'>): string {
+  const artist = proposal.artist.trim();
+  const knownArtist = artist && !/inconnu|anonyme|unknown/i.test(artist) ? artist : '';
+  const year = proposal.year.trim();
+  const location = proposal.location.trim();
+  if (!knownArtist && !location) return '';
+  const sentences: string[] = [];
+  if (knownArtist) sentences.push(`Œuvre de ${knownArtist}${year ? ` (${year})` : ''}.`);
+  else sentences.push(`Œuvre d’un artiste inconnu${year ? ` (${year})` : ''}.`);
+  if (location) sentences.push(`Lieu de conservation : ${location}.`);
+  return sentences.join(' ');
 }
 
 // Cherche des œuvres et renvoie les propositions vérifiées.

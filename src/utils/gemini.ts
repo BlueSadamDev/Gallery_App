@@ -1,5 +1,6 @@
 // Consignes envoyées à l'IA et lecture de ses réponses.
 // Aucun appel réseau ici : tout passe par le point d'entrée unique src/services/ai.
+import { GEMINI_MODELS } from '@/config/settings';
 import { AiError, aiErrorMessage, callAi, type AiPart } from '@/services/ai';
 
 // Pistes de recherche préparées par l'IA. Elles servent uniquement à interroger
@@ -167,17 +168,81 @@ export async function testGeminiModel(): Promise<string> {
   }
 }
 
+// Teste chaque modèle proposé, l'un après l'autre (une demande très courte par modèle).
+// Un modèle dont le quota du jour est déjà atteint d'après le compteur n'est pas appelé.
+// Renvoie une ligne par modèle : « OK » ou la cause de l'échec avec l'action à faire.
+export async function testAllGeminiModels(): Promise<string[]> {
+  const lines: string[] = [];
+  for (const { label, value } of GEMINI_MODELS) {
+    const name = label.replace(' (recommandé)', '');
+    try {
+      const answer = await callAi({
+        parts: [{ kind: 'text', text: 'Réponds uniquement : ok' }],
+        maxOutputTokens: 256,
+        model: value,
+      });
+      if (!answer) return ['Aucune clé API enregistrée.'];
+      lines.push(`${name} : OK`);
+    } catch (error) {
+      lines.push(`${name} : ${aiErrorMessage(error)}`);
+    }
+  }
+  return lines;
+}
+
+// Longueur maximale gardée du texte lu sur l'image (cartel, plaque, inscription).
+const MAX_READ_TEXT = 200;
+
+// Ce que l'IA a tiré d'une photo.
+// - hints : pistes de recherche, ou null si l'IA ne reconnaît aucune œuvre existante
+//   (confiance faible ou aucun titre). Les titres sont ensuite vérifiés dans Wikidata.
+// - readText : texte visible sur les images, recopié tel quel. C'est une lecture, jamais un titre.
+// - model : modèle qui a répondu.
+export type PhotoReading = { hints: SearchHints | null; readText: string; model: string };
+
+// Lit le texte visible renvoyé par l'IA (sans adresse Internet, sur une seule ligne).
+export function parseReadText(raw: string): string {
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start === -1 || end <= start) return '';
+  try {
+    const parsed = JSON.parse(raw.substring(start, end + 1));
+    return stripUrls(parsed.texteLu).replace(/\s+/g, ' ').trim().slice(0, MAX_READ_TEXT);
+  } catch {
+    return '';
+  }
+}
+
+// Consigne propre aux photos : la lecture du texte et la reconnaissance sont séparées,
+// et l'IA ne doit jamais composer un titre (cas du monolithe de Montserrat).
+const PHOTO_FORMAT = `
+Renvoie UNIQUEMENT un objet JSON, sans texte autour :
+{
+  "texteLu": "texte visible sur les images, recopié tel quel (cartel, plaque, inscription, signature), sinon vide",
+  "titreOriginal": "titre dans la langue d'origine de l'œuvre",
+  "titreFrancais": "titre usuel en français",
+  "titresAlternatifs": ["autres titres connus, au plus 3"],
+  "artiste": "nom complet de l'artiste",
+  "annee": "année ou période de création",
+  "confiance": "haute | moyenne | faible"
+}
+Règles :
+- Remplis les titres seulement si tu reconnais une œuvre existante, connue sous ce titre, ou si un cartel indique son titre.
+- N'invente jamais de titre. Ne compose pas un nom à partir d'une inscription, du sujet représenté ou de la forme de l'objet. Dans ce cas, laisse les titres vides et mets "confiance": "faible".
+- Une inscription gravée ou peinte sur l'œuvre (nom, dates, dédicace) n'est pas un titre : recopie-la seulement dans "texteLu".
+- N'inclus aucune adresse Internet, aucune image, aucune description.`;
+
 // Identifie une œuvre à partir de photos déjà préparées (réduites, sans métadonnées).
 // `photo` : l'œuvre ; `cartel` : la petite étiquette du musée, facultative.
-// Un seul appel, sans relance automatique. Renvoie des pistes de recherche
-// (jamais d'image, d'adresse ni de description), ou null si la confiance est faible
-// ou si aucune clé n'est enregistrée. Lève une AiError en cas d'échec.
+// Un seul appel, sans relance automatique. Ne renvoie jamais d'image, d'adresse ni de
+// description. Renvoie null seulement si aucune clé n'est enregistrée.
+// Lève une AiError en cas d'échec.
 export async function suggestFromPhoto(
   photoBase64: string,
   cartelBase64?: string | null
-): Promise<SearchHints | null> {
+): Promise<PhotoReading | null> {
   const prompt = `
-Tu aides à identifier une œuvre d'art photographiée dans un musée ou une exposition.
+Tu aides à identifier une œuvre d'art photographiée dans un musée, une exposition ou dans la rue.
 La première image est l'œuvre.${
     cartelBase64
       ? ' La seconde image est son cartel (étiquette) : lis-le attentivement, il fait foi pour le titre, l\'artiste et l\'année.'
@@ -185,7 +250,7 @@ La première image est l'œuvre.${
   }
 Propose des pistes de recherche. Si tu ne reconnais pas l'œuvre avec certitude et qu'aucun
 cartel lisible ne l'indique, mets "confiance": "faible".
-${HINTS_FORMAT}`;
+${PHOTO_FORMAT}`;
   const parts: AiPart[] = [
     { kind: 'text', text: prompt },
     { kind: 'image', mimeType: 'image/jpeg', base64: photoBase64 },
@@ -195,7 +260,7 @@ ${HINTS_FORMAT}`;
   if (!answer) return null;
   const hints = parseSearchHints(answer.text);
   if (!hints) throw new AiError('RÉPONSE_INVALIDE', answer.model);
-  if (hints.confidence === 'faible') return null;
-  if (!hints.frenchTitle && !hints.originalTitle) return null;
-  return hints;
+  const readText = parseReadText(answer.text);
+  const recognized = hints.confidence !== 'faible' && Boolean(hints.frenchTitle || hints.originalTitle);
+  return { hints: recognized ? hints : null, readText, model: answer.model };
 }

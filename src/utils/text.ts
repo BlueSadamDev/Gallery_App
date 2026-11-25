@@ -9,3 +9,11 @@ export function formatDisplayText(text: string): string {
     .replace(/ /g, ' '); // espace insécable → espace normale
   return cleaned.replace(/-(?!​| |$)/g, '-​');
 }
+
+// Titre donné à une photo gardée sans identification (« Conserver comme œuvre inconnue »).
+export const UNKNOWN_ARTWORK_TITLE = 'Œuvre inconnue';
+
+// Vrai si le titre est celui d'une œuvre non identifiée (inutile pour une recherche).
+export function isUnknownArtworkTitle(title: string): boolean {
+  return title.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/œ/gi, 'oe').trim().toLowerCase() === 'oeuvre inconnue';
+}

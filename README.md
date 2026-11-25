@@ -8,8 +8,9 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 - 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description)
 - 🔎 **Recherche d'œuvre fiable** (écran d'ajout) :
   - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
-  - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut.
+  - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut. Si rien n'est trouvé, l'app propose de la **conserver comme œuvre inconnue**.
   - L'**IA Gemini** ne fait que préparer la recherche (pistes) et rédiger une description à partir des seuls faits trouvés (mention « À vérifier »). La clé est saisie dans les réglages, rangée dans le stockage sécurisé du téléphone et envoyée dans un en-tête. Pensez à mettre une limite de dépense basse sur la clé.
+- ✨ **Compléter avec l'IA** (écran Modifier) : retrouve une œuvre déjà enregistrée dans Wikidata et remplit seulement les champs vides (artiste, année, description « À vérifier », image Wikimedia si l'œuvre n'en a pas). Une différence avec ce que vous avez saisi est signalée, jamais remplacée sans votre accord. Rien n'est enregistré sans « Enregistrer ».
 - 🔐 Connexion / inscription protégée par mot de passe
 - 💾 Sauvegarde et restauration des données
 - 🗺️ Barre d'onglets en bas : **Collection** (l'accueil) et **Galerie vivante**
@@ -70,7 +71,7 @@ npx expo install <nom-du-module>
 
 ## Tester la couche IA (sans clé ni Internet)
 
-Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue, que la clé ne sort jamais de l'en-tête, et que l'app passe au modèle suivant quand un quota est atteint (remise à zéro à minuit, heure du Pacifique) :
+Vérifie, avec des réponses de Google simulées, que chaque erreur (clé invalide, quota, modèle absent, surcharge…) est bien reconnue, que la clé ne sort jamais de l'en-tête, que l'app passe au modèle suivant quand un quota est atteint ou qu'un modèle est en panne (remise à zéro à minuit, heure du Pacifique), et que le score de confiance des photos n'accepte aucun titre inventé (cas du monolithe de Montserrat) :
 
 ```bash
 npm run test:ia
