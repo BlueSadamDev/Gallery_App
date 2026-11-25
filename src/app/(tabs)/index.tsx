@@ -93,13 +93,16 @@ function AddButton() {
   return (
     <Link href="/add" asChild>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Ajouter une œuvre"
         hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}
         style={({ pressed }) => [
           { opacity: pressed ? 0.85 : 1 },
         ]}
       >
-        <View style={styles.addButtonCircle}>
-          <Feather name="plus" size={22} color={ACCENT} />
+        {/* Carré bordeaux plein, coins de 2 px (direction 3 « Le carré », en haut à droite). */}
+        <View style={styles.addButtonSquare}>
+          <Feather name="plus" size={22} color={ON_ACCENT} />
         </View>
       </Pressable>
     </Link>
@@ -178,7 +181,7 @@ export default function HomeScreen() {
                 pressed && styles.buttonPressed,
               ]}
             >
-              <Feather name="plus" size={48} color={ON_ACCENT} />
+              <Feather name="plus" size={40} color={ON_ACCENT} />
             </Pressable>
           </Link>
         </View>
@@ -382,11 +385,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   bigAddButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: '#CFC8BA',
+    width: 96,
+    height: 96,
+    borderRadius: 2,
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -396,12 +397,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.md,
   },
-  addButtonCircle: {
+  addButtonSquare: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: ACCENT,
+    borderRadius: 2,
+    backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -25,6 +25,8 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 
 Un seul bouton plein par écran, de couleur accent. Le texte sur l'accent est #F6F2EA.
 
+Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé par l'accueil, le détail, la modification, les paramètres et la connexion : aucun écran ne garde l'ancien fond blanc #FAFAFA ni l'accent doré. Tous les boutons sont rectangulaires, coins de 2 px (aucune pilule).
+
 ## Logo
 
 - Nom de l'app : **X-Gallery**.
@@ -45,7 +47,7 @@ Un seul bouton plein par écran, de couleur accent. Le texte sur l'accent est #F
 
 ## Forme et espacement
 
-- Coins : 2 px pour les images, champs et boutons rectangulaires. Le bouton « + » est un cercle.
+- Coins : 2 px pour les images, champs et boutons, bouton « + » compris (un carré, comme le logo).
 - Traits très fins (épaisseur hairline), jamais épais.
 - Unité d'espacement : 8 px. Marges latérales d'écran : 20 à 24 px.
 - Zone tactile d'au moins 48 px pour chaque bouton.
@@ -55,6 +57,17 @@ Un seul bouton plein par écran, de couleur accent. Le texte sur l'accent est #F
 
 - Vouvoiement dans toute l'app (comme dans l'écran d'accueil actuel).
 - Phrases courtes, majuscule seulement au début de la phrase, pas de point d'exclamation, pas de jargon.
+
+## Animation de démarrage
+
+À chaque ouverture de l'app, après l'écran de démarrage d'Android (icône fixe sur le fond #F6F2EA) : le logo se dessine au centre, sur le fond #F6F2EA (`src/components/StartupAnimation.tsx`).
+
+1. Le cadre du logo se trace dans le sens des aiguilles d'une montre (haut, droite, bas, gauche), couleur accent.
+2. Le trait épais du X, puis le trait fin.
+3. « X-GALLERY » (Medium, 22 px, lettres espacées de 6 px, texte principal) apparaît en remontant de 8 px.
+4. Courte pause, puis le logo s'efface (0,25 s) et le premier écran (accueil ou connexion) s'affiche.
+
+C'est un écran à part entière : l'accueil n'est pas chargé derrière. Durée : environ 1,5 s. Elle joue pendant le chargement de l'app (polices, base, connexion) et ne s'efface qu'une fois l'app prête. Si le téléphone demande de réduire les animations, le logo s'affiche directement. Dessinée avec des vues animées simples : aucune bibliothèque ajoutée.
 
 ## Écrans
 
@@ -81,16 +94,17 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et roue à droite (même ligne, alignés au centre vertical). En dessous, titre « Ma collection » (graisse Medium, 32 px) sur toute la largeur, sur une seule ligne (numberOfLines 1, adjustsFontSizeToFit). Pas de titre technique (« index »).
 
 - Roue des paramètres : toujours en haut à droite.
-- Bouton « + » rond, fond plein #7B3F3A, icône Feather « plus » blanche (#F6F2EA), contour très fin 1 px #CFC8BA. Zone tactile 56 × 56 px (petit) / 120 × 120 px (grand). Centré si la collection est vide, en haut à droite (à gauche de la roue) sinon.
-- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le bouton « + » rond, centré sous le message.
+- Bouton « + » **carré**, coins 2 px, fond plein #7B3F3A, icône Feather « plus » #F6F2EA, sans contour (direction « Le carré » des maquettes). Petit : 44 × 44 px, icône 22 px, en haut à droite (à gauche de la roue). Grand : 96 × 96 px, icône 40 px, centré si la collection est vide.
+- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le grand bouton « + » carré, centré sous le message.
 - **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
   - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
   - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Composant indépendant (`src/components/Carousel.tsx`). Chaque carte :
     - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes (ItemSeparatorComponent).
-    - Image (coins 2 px) occupant 100 % de la largeur de la carte, hauteur 260 px, fond de chargement #E3DDD1.
+    - Image (coins 2 px) dans un emplacement de la largeur de la carte, hauteur 260 px, jamais recadrée : **aucun fond autour de l'image** (l'œuvre seule sur le fond de l'écran). Le fond #E3DDD1 ne sert qu'aux œuvres sans image.
     - Pas de hauteur fixe sur la carte ni sur le conteneur du FlatList. Pas de pagingEnabled. SnapToInterval = cardWidth + 12, snapToAlignment start, decelerationRate fast, disableIntervalMomentum.
-    - Titre : numberOfLines 2, minHeight 48, lineHeight 24, marginTop 10, fontFamily title, fontSize 18, couleur texte principal.
-    - Artiste : numberOfLines 1, lineHeight 20, marginTop 4, fontSize 14, couleur texte secondaire.
+    - Titre centré : numberOfLines 2, sans hauteur minimale (l'artiste suit directement), lineHeight 24, marginTop 12, fontFamily title, fontSize 18, couleur texte principal.
+    - Artiste centré : numberOfLines 1, lineHeight 20, marginTop 4, fontSize 14, couleur texte secondaire.
+    - Points de pagination : 16 px sous la légende, puis 32 px d'espace avant le premier groupe.
     - Les tirets et espaces spéciaux sont nettoyés à l'affichage (idem carrousel).
     - L'appui ouvre le détail de l'œuvre.
     - Points de pagination sous la liste, dans le flux normal, marginTop 16 : point inactif 6 × 6 en #CFC8BA, point actif 16 × 6 (pastille) en #7B3F3A, 6 px d'espace entre les points.
@@ -143,7 +157,7 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 
 Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE », titre d'étape (Medium, 32 px), roue des paramètres (icône Feather fine, texte secondaire). Couleurs de ce document (pas le fichier de thème). Le bouton retour d'Android revient à l'étape précédente sans rien perdre.
 
-1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). La photo vient de l'appareil photo ou de la galerie et ouvre l'étape « Ma photo ».
+1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). « Ajouter ma photo » ouvre l'étape « Ma photo », qui propose deux boutons à contour côte à côte, « Appareil photo » et « Galerie » (aucune fenêtre Android).
    - **Ma photo** : la photo (320 px de haut, jamais recadrée), « Photographier le cartel » (contour, facultatif ; miniature 64 px + « Retirer » une fois pris), bouton plein « Identifier l'œuvre », aide en 12 px : « La photo est réduite et ses informations de lieu sont retirées avant l'envoi. En offre gratuite, Google peut utiliser les photos envoyées pour améliorer ses produits. », lien « Saisir l'œuvre à la main ».
    - Rien ne part sans appui sur « Identifier l'œuvre » ; un seul appui suffit, sans relance automatique ; seuls un quota atteint ou une panne du modèle (surcharge, modèle introuvable) font passer au modèle suivant (voir « Quota de l'IA »). Bouton grisé hors ligne.
    - Avant l'envoi, la photo et le cartel sont réduits à 1024 px sur le grand côté et réencodés en JPEG (`expo-image-manipulator`), ce qui supprime les métadonnées dont la position GPS. Le cartel n'est pas conservé dans l'app.
@@ -158,7 +172,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
    - Aucun résultat : message pour ajouter l'artiste, l'année ou corriger le titre.
    - Hors ligne (bouton grisé), service occupé ou en panne : message simple + lien « Saisir l'œuvre à la main ».
 3. **Propositions** : lignes séparées d'un trait fin : miniature 64 px (coins 2 px, fond #E3DDD1), titre (Medium 16 px), « artiste, année » et lieu (13 px, texte secondaire). « Voir 5 autres » (contour) et lien « Aucune ne convient » : les œuvres montrées sont exclues et l'app demande de préciser. Après la recherche initiale + 2 relances sans succès, le lien « Saisir l'œuvre à la main » apparaît.
-4. **Fiche** (« Vérifier la fiche ») : image (320 px de haut, jamais recadrée), « Image suivante » et « Utiliser ma photo » ; champs Titre *, Artiste, Année, Style, Description, préremplis et modifiables ; bouton plein « Enregistrer » ; lien « Pas la bonne œuvre » (retour à la liste, œuvre exclue).
+4. **Fiche** (« Vérifier la fiche ») : image (320 px de haut, jamais recadrée), « Image suivante » et « Utiliser ma photo » (qui déplie deux liens, « Appareil photo » et « Galerie ») ; champs Titre *, Artiste, Année, Style, Description, préremplis et modifiables ; bouton plein « Enregistrer » ; lien « Pas la bonne œuvre » (retour à la liste, œuvre exclue).
    - **Description par l'IA** : rédigée à l'ouverture d'une proposition (si une clé Gemini est enregistrée), en 2 à 3 phrases, uniquement à partir des faits trouvés : titre, artiste, année, lieu et extrait du résumé Wikipédia de l'œuvre avec son lien. Sources du résumé, dans l'ordre : article relié à l'œuvre dans Wikidata (français, anglais, puis espagnol, italien, allemand, catalan, néerlandais, portugais) ; à défaut, recherche dans Wikipédia (français puis anglais) par titre et artiste, retenue seulement si le résumé cite le nom de l'artiste et la moitié au moins des mots du titre (jamais pour un artiste inconnu). Sans extrait, l'app écrit sans IA une phrase avec les seuls faits de Wikidata : « Œuvre de Jackson Pollock (1943). Lieu de conservation : Museum of Modern Art. » (« Œuvre d'un artiste inconnu » si l'artiste n'est pas connu). Sans artiste connu ni lieu, la description reste vide. Mention discrète « À vérifier » (12 px, Regular, texte secondaire) à droite du libellé ; elle disparaît dès que vous modifiez le texte ou enregistrez, et n'est jamais stockée. Liens « Régénérer » et « Effacer » sous le champ.
    - Rien n'est enregistré sans « Enregistrer ». L'image Wikimedia est alors téléchargée et copiée dans le stockage de l'app ; aucune adresse Internet n'est conservée. Si la copie échoue, l'app propose d'enregistrer sans image.
 
@@ -183,7 +197,7 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 ### 5 bis. Modification d'une œuvre
 
 - En-tête sans titre technique, roue Feather fine (texte secondaire) ; étiquette « MODIFICATION » et titre « Modifier l'œuvre » (Medium 32 px). Couleurs et composants de l'écran d'ajout (fond #F6F2EA, champs soulignés, boutons coins 2 px).
-- Image (320 px de haut, jamais recadrée, fond #E3DDD1), boutons à contour « Galerie » et « Caméra », puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Titre *, Artiste, Année, Style, Description et le bouton plein « Enregistrer ».
+- Image (320 px de haut, jamais recadrée, fond #E3DDD1), boutons à contour « Appareil photo » et « Galerie », puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Titre *, Artiste, Année, Style, Description et le bouton plein « Enregistrer ».
 - « Compléter avec l'IA » : même recherche vérifiée qu'à l'ajout (IA + Wikidata) à partir du titre, de l'artiste et de l'année enregistrés ; sans résultat, nouvelle recherche sur le titre seul. Une seule œuvre : « Œuvre trouvée : titre, artiste, année. Utiliser ces informations ? ». Plusieurs : liste de propositions (comme à l'ajout, « Voir 5 autres », « Aucune ne convient »). Nombreux homonymes sans artiste ni année : l'app demande de les ajouter.
 - Seuls les champs **vides** sont remplis : artiste, année, description (rédigée par l'IA à partir du résumé Wikipédia, mention « À vérifier » qui disparaît dès que vous modifiez le texte ou enregistrez) et image Wikimedia si l'œuvre n'a pas d'image. Le style n'est pas rempli (Wikidata ne le fournit pas).
 - Artiste ou année déjà saisis mais différents de Wikidata : fenêtre « Différences avec Wikidata » (« Année : « 1890 » ici, « 1889 » selon Wikidata ») avec « Garder les miennes » (par défaut) ou « Remplacer ».
@@ -191,6 +205,8 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 - Rien n'est enregistré sans « Enregistrer ». L'image Wikimedia n'est copiée dans le stockage de l'app qu'à ce moment ; si la copie échoue, l'app propose d'enregistrer sans image.
 
 ### 6. Paramètres
+
+En-tête : titre « Paramètres » (jamais le nom technique de l'écran).
 
 Contenu à définir ensemble. Ne crée rien dans cet écran sans ma validation.
 

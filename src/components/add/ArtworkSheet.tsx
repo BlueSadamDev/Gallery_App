@@ -24,7 +24,8 @@ type Props = {
   image: SheetImage;
   canNextImage: boolean;
   onNextImage: () => void;
-  onUseMyPhoto: () => void;
+  // Ma photo à la place de l'image proposée : appareil photo ou galerie.
+  onUseMyPhoto: (source: 'camera' | 'gallery') => void;
   // Absent en saisie manuelle (aucune œuvre proposée à refuser).
   onWrongArtwork?: () => void;
   onSave: () => void;
@@ -69,6 +70,8 @@ function Visual({ image }: { image: SheetImage }) {
 export function ArtworkSheet(props: Props) {
   const { form, onChange, image, canNextImage, saving } = props;
   const canSave = form.title.trim().length > 0 && !saving;
+  // « Utiliser ma photo » déplie deux choix dans l'écran (pas de fenêtre Android).
+  const [choosingSource, setChoosingSource] = useState(false);
 
   return (
     <View>
@@ -82,9 +85,31 @@ export function ArtworkSheet(props: Props) {
           />
         </View>
         <View style={styles.half}>
-          <SecondaryButton label="Utiliser ma photo" onPress={props.onUseMyPhoto} />
+          <SecondaryButton label="Utiliser ma photo" onPress={() => setChoosingSource((v) => !v)} />
         </View>
       </View>
+      {choosingSource ? (
+        <View style={styles.sourceRow}>
+          <View style={styles.half}>
+            <LinkButton
+              label="Appareil photo"
+              onPress={() => {
+                setChoosingSource(false);
+                props.onUseMyPhoto('camera');
+              }}
+            />
+          </View>
+          <View style={styles.half}>
+            <LinkButton
+              label="Galerie"
+              onPress={() => {
+                setChoosingSource(false);
+                props.onUseMyPhoto('gallery');
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
 
       <Field label="Titre *" value={form.title} onChangeText={(v) => onChange('title', v)} />
       <Field label="Artiste" value={form.artist} onChangeText={(v) => onChange('artist', v)} />
@@ -160,6 +185,12 @@ const styles = StyleSheet.create({
   },
   half: {
     flex: 1,
+  },
+  sourceRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: -8,
+    marginBottom: 8,
   },
   descriptionActions: {
     flexDirection: 'row',

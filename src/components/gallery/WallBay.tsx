@@ -80,6 +80,9 @@ export default function WallBay({
                   source={{ uri: artwork.imageUri }}
                   style={styles.image}
                   resizeMode="cover"
+                  // Android fait apparaître chaque image en fondu : pendant le défilement,
+                  // l'œuvre semblait délavée. Affichage direct, couleurs intactes.
+                  fadeDuration={0}
                 />
               ) : (
                 <View style={styles.placeholder}>

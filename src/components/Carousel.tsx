@@ -54,12 +54,15 @@ export default function Carousel({ items }: CarouselProps) {
         renderItem={({ item }: { item: Artwork }) => (
           <Link href={`/detail/${item.id}`} asChild>
             <Pressable style={{ width: cardW }}>
+              {/* L'œuvre seule : aucune couleur de fond autour de l'image, qui garde
+                  ses proportions (jamais recadrée). Le fond beige ne sert qu'aux œuvres
+                  sans image. */}
               <View
                 style={{
                   height: 260,
                   borderRadius: 2,
                   overflow: 'hidden',
-                  backgroundColor: PLACEHOLDER_BG,
+                  backgroundColor: item.imageUri ? 'transparent' : PLACEHOLDER_BG,
                 }}
               >
                 {item.imageUri ? (
@@ -85,8 +88,8 @@ export default function Carousel({ items }: CarouselProps) {
               <Text
                 numberOfLines={2}
                 style={{
-                  marginTop: 10,
-                  minHeight: 48,
+                  marginTop: 12,
+                  textAlign: 'center',
                   fontFamily: fonts.title,
                   fontSize: 18,
                   lineHeight: 24,
@@ -100,6 +103,7 @@ export default function Carousel({ items }: CarouselProps) {
                   numberOfLines={1}
                   style={{
                     marginTop: 4,
+                    textAlign: 'center',
                     fontSize: 14,
                     lineHeight: 20,
                     fontFamily: fonts.regular,
@@ -121,6 +125,8 @@ export default function Carousel({ items }: CarouselProps) {
           alignItems: 'center',
           gap: 6,
           marginTop: 16,
+          // Espace franc avant le premier groupe d'artistes.
+          marginBottom: 32,
         }}
       >
         {items.map((_, i) => (
