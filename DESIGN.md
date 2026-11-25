@@ -15,10 +15,10 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 | Rôle | Valeur | Usage |
 | --- | --- | --- |
 | Fond | #F6F2EA | Fond de tous les écrans |
-| Texte principal | #1C1B19 | Titres et textes |
-| Texte secondaire | #7A756B | Légendes, aides, icônes |
+| Texte principal | #2B2926 | Titres et textes, filets de rubrique (gris très foncé) |
+| Texte secondaire | #6B665C | Légendes, aides, icônes (assez foncé pour se lire en petit) |
 | Traits fins | #E3DDD1 | Séparateurs et contours |
-| Traits des champs | #CFC8BA | Soulignement des champs de saisie |
+| Traits des champs | #CFC8BA | Soulignement des champs de saisie, traits entre les lignes d'une liste |
 | Accent | #7B3F3A | Bouton « + », boutons principaux, liens |
 | Étiquette | #8A6A45 | Petite étiquette au-dessus des titres d'écran |
 | Alerte (à valider) | #A32D2D | Suppression et réinitialisation |
@@ -48,7 +48,8 @@ Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé
 ## Forme et espacement
 
 - Coins : 2 px pour les images, champs et boutons, bouton « + » compris (un carré, comme le logo).
-- Traits très fins (épaisseur hairline), jamais épais.
+- Traits très fins (épaisseur hairline). **Seule exception, style magazine** : un filet de 2 px en texte principal au-dessus de chaque rubrique (« Dans votre collection », « Toutes les œuvres »…).
+- Étiquettes de rubrique (style magazine) : 11 px, capitales, lettres espacées de 2,4 px.
 - Unité d'espacement : 8 px. Marges latérales d'écran : 20 à 24 px.
 - Zone tactile d'au moins 48 px pour chaque bouton.
 - Icônes : une seule famille, trait fin (par exemple Feather via `@expo/vector-icons`), de couleur texte secondaire. Aucune icône système colorée.
@@ -91,42 +92,30 @@ Affiché une seule fois, tant qu'aucun accès n'a été créé.
 
 ### 3. Accueil
 
-En-tête : étiquette « Galerie personnelle » à gauche, boutons « + » et roue à droite (même ligne, alignés au centre vertical). En dessous, titre « Ma collection » (graisse Medium, 32 px) sur toute la largeur, sur une seule ligne (numberOfLines 1, adjustsFontSizeToFit). Pas de titre technique (« index »).
+Style « magazine » (maquette « 1 · Le magazine » du canevas de design). Marges latérales de 20 px. Calculs dans `src/utils/collection.ts` (sans IA), testés dans `tests/accueil`.
 
-- Roue des paramètres : toujours en haut à droite.
-- Bouton « + » **carré**, coins 2 px, fond plein #7B3F3A, icône Feather « plus » #F6F2EA, sans contour (direction « Le carré » des maquettes). Petit : 44 × 44 px, icône 22 px, en haut à droite (à gauche de la roue). Grand : 96 × 96 px, icône 40 px, centré si la collection est vide.
-- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le grand bouton « + » carré, centré sous le message.
-- **Avec au moins une œuvre** : le bouton « + » passe en haut à droite, à gauche de la roue. Le message d'invitation disparaît. Contenu :
-  - **Marges** : tout le contenu a une marge latérale de 24 px. Le carrousel est centré : paddingHorizontal = (largeur écran - largeur carte) / 2.
-  - **Carrousel horizontal** de 5 œuvres tirées au hasard (ou toutes si moins de 5). Composant indépendant (`src/components/Carousel.tsx`). Chaque carte :
-    - Largeur = 80 % de la largeur de l'écran, espacement de 12 px entre les cartes (ItemSeparatorComponent).
-    - Image (coins 2 px) dans un emplacement de la largeur de la carte, hauteur 260 px, jamais recadrée : **aucun fond autour de l'image** (l'œuvre seule sur le fond de l'écran). Le fond #E3DDD1 ne sert qu'aux œuvres sans image.
-    - Pas de hauteur fixe sur la carte ni sur le conteneur du FlatList. Pas de pagingEnabled. SnapToInterval = cardWidth + 12, snapToAlignment start, decelerationRate fast, disableIntervalMomentum.
-    - Titre centré : numberOfLines 2, sans hauteur minimale (l'artiste suit directement), lineHeight 24, marginTop 12, fontFamily title, fontSize 18, couleur texte principal.
-    - Artiste centré : numberOfLines 1, lineHeight 20, marginTop 4, fontSize 14, couleur texte secondaire.
-    - Points de pagination : 16 px sous la légende, puis 32 px d'espace avant le premier groupe.
-    - Les tirets et espaces spéciaux sont nettoyés à l'affichage (idem carrousel).
-    - L'appui ouvre le détail de l'œuvre.
-    - Points de pagination sous la liste, dans le flux normal, marginTop 16 : point inactif 6 × 6 en #CFC8BA, point actif 16 × 6 (pastille) en #7B3F3A, 6 px d'espace entre les points.
-  - **Regroupement par artiste** sous le carrousel :
-    - En-tête : nom (style étiquette #8A6A45) et nombre d'œuvres dans un **unique Text** (le compteur est un `<Text>` imbriqué). Pas de flexDirection row, pas de largeur fixe. Le retour à la ligne se fait naturellement. Marges latérales de 24 px.
-    - Grille de **2 colonnes** pour 2 œuvres ou plus : chaque œuvre occupe exactement la moitié de la largeur (moins l'espacement de 8 px entre colonnes).
-    - **Groupe d'une seule œuvre** : l'image est centrée horizontalement (alignSelf center), à la même largeur qu'une colonne. Le titre et l'année sont centrés sous l'image (textAlign center).
-    - Image carrée (coins 2 px), sans fond blanc ni cadre autour. Fond de chargement #E3DDD1.
-    - Titre (numberOfLines 3, ellipsizeMode tail) et année alignés à gauche sous l'image (sauf cas 1 œuvre → centré).
-    - Artistes triés par ordre alphabétique, « Artiste inconnu » en dernier.
-    - Œuvres d'un groupe triées par année croissante.
-  - **Espace de sécurité en bas** : hauteur de la barre de navigation Android (zone sûre) + 24 px, pour que la dernière œuvre ne passe pas dessous.
+- **En-tête** (56 px sous la zone sûre, trait fin texte principal en bas) : « X-GALLERY » à gauche (Bold, 15 px, lettres espacées de 5 px). À droite : le bouton « + », puis l'icône Feather `menu` (20 px, texte principal) qui ouvre les Paramètres. Zones tactiles de 48 px.
+- Bouton « + » **carré**, coins 2 px, fond plein #7B3F3A, icône Feather « plus » #F6F2EA, sans contour. Petit : carré de 28 × 28 px, icône 14 px, dans une zone tactile de 48 px. Grand : 96 × 96 px, icône 40 px, centré si la collection est vide.
+- **Collection vide** : message « Votre collection est encore vide. Commencez à conserver la trace des œuvres qui vous touchent. », et le grand bouton « + » carré, centré sous le message. Le petit « + » de l'en-tête est masqué.
+- **Avec au moins une œuvre** :
+  1. **À la une** : une œuvre avec image, différente chaque jour (la même toute la journée). Image en pleine largeur, jamais recadrée, hauteur au plus 1,25 × la largeur (une image plus haute est réduite et centrée). Dessous : « À LA UNE » à gauche et le mois en capitales à droite (« NOVEMBRE 2026 », étiquette de rubrique en texte secondaire), le titre (Medium, 44 px, interligne 46, lettres resserrées de 1,2 px, 4 lignes au plus), puis « Artiste, année » (15 px). L'appui ouvre le détail.
+  2. **Dans votre collection** (sommaire) : jusqu'à trois lignes numérotées 01, 02, 03 (numéro 13 px en accent, titre Medium 20 px, sous-titre 13 px en texte secondaire), séparées par un trait fin #CFC8BA :
+     - l'artiste qui a le plus d'œuvres (au moins 2) : son nom, puis deux de ses titres ; ouvre sa plus ancienne œuvre ;
+     - le siècle qui a le plus d'œuvres (au moins 2, ignoré s'il ne contient que les œuvres de cet artiste) : « Le XIXe siècle », puis le nombre d'œuvres, d'artistes et les années ; ouvre la plus ancienne ;
+     - la fiche la plus récente à compléter (titre « Œuvre inconnue », artiste, année ou description manquants) : son titre, ou « Une œuvre encore sans nom », puis ce qui manque ; ouvre la modification.
+     La rubrique disparaît si aucune ligne ne s'applique.
+  3. **Toutes les œuvres** : étiquette à gauche, « N œuvres » à droite (13 px, texte secondaire). Grille sur 2 colonnes de même largeur, 12 px entre les colonnes, 24 px entre les œuvres, de la plus récente à la plus ancienne (une sur deux dans chaque colonne). Chaque image garde ses proportions, sans recadrage ni fond autour, hauteur au plus 1,5 × la largeur de la colonne. Titre Medium 14 px (3 lignes au plus), artiste 12 px en texte secondaire. Fond #E3DDD1 et signe ✦ pour une œuvre sans image.
+- Images affichées sans fondu d'apparition (`fadeDuration` 0), composant `src/components/home/NaturalImage.tsx`. Les tirets et espaces spéciaux sont nettoyés à l'affichage.
 - L'accueil est l'onglet « Collection » de la barre d'onglets (voir ci-dessous).
 
 ### Barre d'onglets
 
 Barre en bas des écrans principaux, avec deux onglets : « Collection » (l'accueil) et « Galerie vivante ».
 
-- Fond #F6F2EA, trait fin (hairline) #E3DDD1 en haut, aucune ombre.
-- Icônes Feather fines : `grid` (Collection), `sun` (Galerie vivante), taille 20.
-- Onglet actif : icône et libellé en accent #7B3F3A. Inactif : texte secondaire #7A756B.
-- Libellés Satoshi Regular 12 px. Zone tactile d'au moins 48 px ; la barre s'ajoute à la zone sûre du bas.
+- Fond #F6F2EA, trait fin (hairline) en texte principal en haut, aucune ombre.
+- Aucune icône : libellés en capitales « COLLECTION » et « GALERIE VIVANTE », 11 px, lettres espacées de 2 px.
+- Onglet actif : Medium, texte principal. Inactif : Regular, texte secondaire.
+- Zone tactile d'au moins 48 px ; la barre s'ajoute à la zone sûre du bas.
 - Les autres écrans (ajout, détail, modification, paramètres, connexion) s'ouvrent par-dessus, sans barre d'onglets.
 
 ### 7. Galerie vivante
