@@ -1,5 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
-import { Link, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   FlatList,
@@ -105,14 +105,13 @@ export default function LivingGalleryScreen() {
           <Text style={styles.emptyHint}>
             Commencez à conserver la trace des œuvres qui vous touchent.
           </Text>
-          <Link href="/add" asChild>
-            <Pressable
-              accessibilityLabel="Ajouter une œuvre"
-              style={({ pressed }) => [styles.bigAddButton, pressed && styles.pressed]}
-            >
-              <Feather name="plus" size={40} color={ON_ACCENT} />
-            </Pressable>
-          </Link>
+          <Pressable
+            onPress={() => router.push('/add')}
+            accessibilityLabel="Ajouter une œuvre"
+            style={({ pressed }) => [styles.bigAddButton, pressed && styles.pressed]}
+          >
+            <Feather name="plus" size={40} color={ON_ACCENT} />
+          </Pressable>
         </View>
       </View>
     );

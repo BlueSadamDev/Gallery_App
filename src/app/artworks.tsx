@@ -1,4 +1,4 @@
-import { Link, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -107,11 +107,13 @@ export default function ArtworksScreen() {
             <View key={section.key} style={styles.group}>
               <View style={styles.groupHead}>
                 {view === 'artiste' && section.key ? (
-                  <Link href={`/artist/${encodeURIComponent(section.title)}`} asChild>
-                    <Pressable accessibilityRole="link" style={({ pressed }) => [styles.groupLink, pressed && magazine.pressed]}>
-                      <Text style={[styles.groupTitle, styles.groupTitleLink]}>{formatDisplayText(section.title)}</Text>
-                    </Pressable>
-                  </Link>
+                  <Pressable
+                    onPress={() => router.push(`/artist/${encodeURIComponent(section.title)}`)}
+                    accessibilityRole="link"
+                    style={({ pressed }) => [styles.groupLink, pressed && magazine.pressed]}
+                  >
+                    <Text style={[styles.groupTitle, styles.groupTitleLink]}>{formatDisplayText(section.title)}</Text>
+                  </Pressable>
                 ) : (
                   <Text style={styles.groupTitle}>{formatDisplayText(section.title)}</Text>
                 )}

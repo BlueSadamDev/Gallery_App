@@ -1,5 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
-import { Link, router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -127,11 +127,13 @@ export default function DetailScreen() {
             <Text style={styles.title}>{formatDisplayText(artwork.title)}</Text>
             {artwork.artist.trim() ? (
               <>
-                <Link href={`/artist/${encodeURIComponent(artwork.artist.trim())}`} asChild>
-                  <Pressable accessibilityRole="link" style={({ pressed }) => [styles.artistLink, pressed && magazine.pressed]}>
-                    <Text style={styles.artist}>{formatDisplayText(artwork.artist.trim())}</Text>
-                  </Pressable>
-                </Link>
+                <Pressable
+                  onPress={() => router.push(`/artist/${encodeURIComponent(artwork.artist.trim())}`)}
+                  accessibilityRole="link"
+                  style={({ pressed }) => [styles.artistLink, pressed && magazine.pressed]}
+                >
+                  <Text style={styles.artist}>{formatDisplayText(artwork.artist.trim())}</Text>
+                </Pressable>
                 {sameArtist >= 2 ? (
                   <Text style={styles.artistCount}>{sameArtist} œuvres dans votre collection</Text>
                 ) : null}
@@ -174,23 +176,22 @@ export default function DetailScreen() {
           {next ? (
             <View style={magazine.section}>
               <Text style={magazine.sectionLabel}>ŒUVRE SUIVANTE</Text>
-              <Link href={`/detail/${next.id}`} replace asChild>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Œuvre suivante : ${next.title}`}
-                  style={({ pressed }) => [styles.nextRow, pressed && magazine.pressed]}
-                >
-                  {next.imageUri ? <NaturalImage uri={next.imageUri} width={96} maxHeight={120} /> : null}
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.number}>{formatInventory(numbers.get(next.id) ?? 0)}</Text>
-                    <Text style={styles.nextTitle} numberOfLines={3}>{formatDisplayText(next.title)}</Text>
-                    {next.artist.trim() ? (
-                      <Text style={styles.nextArtist} numberOfLines={1}>{formatDisplayText(next.artist.trim())}</Text>
-                    ) : null}
-                  </View>
-                  <Feather name="arrow-right" size={20} color={colors.textPrimary} />
-                </Pressable>
-              </Link>
+              <Pressable
+                onPress={() => router.replace(`/detail/${next.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Œuvre suivante : ${next.title}`}
+                style={({ pressed }) => [styles.nextRow, pressed && magazine.pressed]}
+              >
+                {next.imageUri ? <NaturalImage uri={next.imageUri} width={96} maxHeight={120} /> : null}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.number}>{formatInventory(numbers.get(next.id) ?? 0)}</Text>
+                  <Text style={styles.nextTitle} numberOfLines={3}>{formatDisplayText(next.title)}</Text>
+                  {next.artist.trim() ? (
+                    <Text style={styles.nextArtist} numberOfLines={1}>{formatDisplayText(next.artist.trim())}</Text>
+                  ) : null}
+                </View>
+                <Feather name="arrow-right" size={20} color={colors.textPrimary} />
+              </Pressable>
             </View>
           ) : null}
 
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: 44,
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: 10,
   },
   artist: {
     fontFamily: fonts.regular,

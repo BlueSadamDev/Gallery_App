@@ -19,11 +19,11 @@ Ce document est la référence unique pour l'apparence de l'app. Respecte-le à 
 | Texte secondaire | #6B665C | Légendes, aides, icônes (assez foncé pour se lire en petit) |
 | Traits fins | #E3DDD1 | Séparateurs et contours |
 | Traits des champs | #CFC8BA | Soulignement des champs de saisie, traits entre les lignes d'une liste |
-| Accent | #7B3F3A | Bouton « + », boutons principaux, liens |
+| Accent | #7B3F3A | Bouton « + », numéros (style magazine) ; boutons principaux de la connexion et des paramètres |
 | Étiquette | #8A6A45 | Petite étiquette au-dessus des titres d'écran |
 | Alerte (à valider) | #A32D2D | Suppression et réinitialisation |
 
-Un seul bouton plein par écran, de couleur accent. Le texte sur l'accent est #F6F2EA.
+Un seul bouton plein par écran. Style magazine (ajout, modification) : gris très foncé #2B2926, texte crème #F6F2EA en capitales espacées, pleine largeur, 52 px de haut, coins 2 px ; liens soulignés en texte principal. Connexion et paramètres gardent pour l'instant le bouton plein accent (texte #F6F2EA).
 
 Ces valeurs sont aussi celles du thème central (`src/theme/index.ts`), utilisé par l'accueil, le détail, la modification, les paramètres et la connexion : aucun écran ne garde l'ancien fond blanc #FAFAFA ni l'accent doré. Tous les boutons sont rectangulaires, coins de 2 px (aucune pilule).
 
@@ -120,7 +120,7 @@ Barre en bas des écrans principaux, avec deux onglets : « Collection » (l'acc
 
 ### En-tête des pages intérieures (style magazine)
 
-Détail, Toutes les œuvres et page artiste (`src/components/magazine/MagazineHeader.tsx`) : 56 px sous la zone sûre, trait fin texte principal en bas. Flèche Feather `arrow-left` (20 px, texte principal) à gauche, rubrique au centre en capitales (11 px, lettres espacées de 2,4 px), action facultative à droite (icône 18 px). Zones tactiles 48 px. Marges de 20 px, rubriques avec filet de 2 px (styles communs `src/components/magazine/styles.ts`).
+Détail, Toutes les œuvres, page artiste, ajout et modification (`src/components/magazine/MagazineHeader.tsx`) : 56 px sous la zone sûre, trait fin texte principal en bas. Flèche Feather `arrow-left` (20 px, texte principal) à gauche (croix `x` sur le sommaire de l'ajout), rubrique au centre en capitales (11 px, lettres espacées de 2,4 px), action facultative à droite (icône 18 px). Zones tactiles 48 px. Marges de 20 px, rubriques avec filet de 2 px (styles communs `src/components/magazine/styles.ts`).
 
 ### 3 bis. Toutes les œuvres (les archives)
 
@@ -160,10 +160,15 @@ Les œuvres sont présentées comme dans une exposition, sur un mur continu.
 
 ### 4. Ajout d'une œuvre
 
-Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE », titre d'étape (Medium, 32 px), roue des paramètres (icône Feather fine, texte secondaire). Couleurs de ce document (pas le fichier de thème). Le bouton retour d'Android revient à l'étape précédente sans rien perdre.
+Un seul écran, en plusieurs étapes, au style magazine. En-tête magazine : rubrique « NOUVELLE ŒUVRE » ; croix pour fermer sur le sommaire, flèche de retour aux étapes suivantes ; pas de roue des paramètres. Grand titre d'étape (Medium 40 px), marges de 20 px, rubriques à filet de 2 px. Le bouton retour d'Android (et la flèche) revient à l'étape précédente sans rien perdre.
 
-1. **Choix** (« Ajouter une œuvre ») : « Rechercher par titre » (bouton plein accent) et « Ajouter ma photo » (bouton à contour fin accent). « Ajouter ma photo » ouvre l'étape « Ma photo », qui propose deux boutons à contour côte à côte, « Appareil photo » et « Galerie » (aucune fenêtre Android).
-   - **Ma photo** : la photo (320 px de haut, jamais recadrée), « Photographier le cartel » (contour, facultatif ; miniature 64 px + « Retirer » une fois pris), bouton plein « Identifier l'œuvre », aide en 12 px : « La photo est réduite et ses informations de lieu sont retirées avant l'envoi. En offre gratuite, Google peut utiliser les photos envoyées pour améliorer ses produits. », lien « Saisir l'œuvre à la main ».
+Composants communs (`src/components/add/ui.tsx`) : champs soulignés (trait #CFC8BA), nom du champ en capitales 11 px espacées de 2,4 px au-dessus (texte secondaire) ; bouton principal unique, gris très foncé #2B2926, texte crème en capitales espacées, pleine largeur, 52 px, coins 2 px ; boutons secondaires à contour fin en texte principal ; liens soulignés en texte principal.
+
+1. **Sommaire** (« Ajouter une œuvre ») : « Trois façons d'entrer une œuvre dans votre collection. » (15 px, texte secondaire). Sous un filet de 2 px, trois lignes séparées par un trait fin #CFC8BA : numéro (13 px, accent), titre (Medium 24 px), sous-titre (13 px, texte secondaire), flèche à droite.
+   - 01 **Rechercher par titre** : « Un titre ou un artiste : la fiche se remplit à partir de Wikidata. » Ouvre l'étape « Rechercher ».
+   - 02 **Ma photo** : « Photographiez l'œuvre ou son cartel : l'IA propose des pistes, vous confirmez. » Liens soulignés en capitales dans la ligne : APPAREIL PHOTO et GALERIE, qui ouvrent l'étape « Ma photo » avec la photo choisie (aucune fenêtre Android). Toucher le reste de la ligne ouvre l'appareil photo.
+   - 03 **Saisir à la main** : « Vous remplissez la fiche vous-même. » Ouvre une fiche vierge.
+   - **Ma photo** : la photo (320 px de haut, jamais recadrée) ; rubrique « LE CARTEL » (« FACULTATIF » à droite) avec « Photographier le cartel » (contour ; miniature 64 px + « Retirer » une fois pris) ; rubrique « IDENTIFICATION » avec les messages, le bouton principal « Identifier l'œuvre », aide en 12 px : « La photo est réduite et ses informations de lieu sont retirées avant l'envoi. En offre gratuite, Google peut utiliser les photos envoyées pour améliorer ses produits. », lien « Saisir l'œuvre à la main ».
    - Rien ne part sans appui sur « Identifier l'œuvre » ; un seul appui suffit, sans relance automatique ; seuls un quota atteint ou une panne du modèle (surcharge, modèle introuvable) font passer au modèle suivant (voir « Quota de l'IA »). Bouton grisé hors ligne.
    - Avant l'envoi, la photo et le cartel sont réduits à 1024 px sur le grand côté et réencodés en JPEG (`expo-image-manipulator`), ce qui supprime les métadonnées dont la position GPS. Le cartel n'est pas conservé dans l'app.
    - L'IA renvoie séparément le texte qu'elle lit (cartel, plaque, inscription) et des pistes structurées (titres, artiste, année, confiance). Elle ne doit jamais composer de titre : une inscription gravée sur l'œuvre n'est pas un titre.
@@ -172,12 +177,12 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
    - **Œuvre inconnue** : si l'identification n'a rien donné (confiance faible, aucune proposition, « Aucune ne convient » sur les propositions issues de la photo, ou échec de l'IA), l'app propose « Conserver comme œuvre inconnue » (bouton à contour sous le message de l'étape « Ma photo », lien « Conserver ma photo comme œuvre inconnue » à l'étape « Rechercher »). La fiche s'ouvre avec le titre « Œuvre inconnue » (modifiable), ma photo et les autres champs vides ; rien n'est enregistré sans « Enregistrer ». « Compléter avec l'IA » demande d'abord un vrai titre pour une œuvre inconnue.
    - Ma photo reste l'image par défaut de la fiche ; « Image suivante » montre les images Wikimedia.
    - Échec de l'IA : le message dit la cause et quoi faire (clé non reconnue, accès refusé, quota de la minute ou du jour, modèle indisponible, service surchargé, délai dépassé, hors ligne, réponse bloquée ou illisible). Textes dans `src/services/ai/errors.ts`.
-2. **Recherche** (« Rechercher ») : champs soulignés Titre * / Artiste (facultatif) / Année (facultatif), bouton plein « Rechercher ».
+2. **Recherche** (« Rechercher ») : rubrique « VOTRE RECHERCHE », champs soulignés Titre * / Artiste (facultatif) / Année (facultatif), bouton principal « Rechercher ».
    - Trop d'homonymes et ni artiste ni année : « Ce titre correspond à de nombreuses œuvres. Précisez l'artiste ou l'année. » + « Afficher quand même ».
    - Aucun résultat : message pour ajouter l'artiste, l'année ou corriger le titre.
    - Hors ligne (bouton grisé), service occupé ou en panne : message simple + lien « Saisir l'œuvre à la main ».
-3. **Propositions** : lignes séparées d'un trait fin : miniature 64 px (coins 2 px, fond #E3DDD1), titre (Medium 16 px), « artiste, année » et lieu (13 px, texte secondaire). « Voir 5 autres » (contour) et lien « Aucune ne convient » : les œuvres montrées sont exclues et l'app demande de préciser. Après la recherche initiale + 2 relances sans succès, le lien « Saisir l'œuvre à la main » apparaît.
-4. **Fiche** (« Vérifier la fiche ») : image (320 px de haut, jamais recadrée), « Image suivante » et « Utiliser ma photo » (qui déplie deux liens, « Appareil photo » et « Galerie ») ; champs Titre *, Artiste, Année, Style, Description, préremplis et modifiables ; bouton plein « Enregistrer » ; lien « Pas la bonne œuvre » (retour à la liste, œuvre exclue).
+3. **Propositions** : rubrique « 5 PROPOSITIONS » (nombre affiché), liste numérotée, lignes séparées d'un trait fin #CFC8BA : miniature 64 px à gauche (coins 2 px, fond #E3DDD1), numéro 01, 02… (13 px, accent), titre (Medium 18 px), « artiste, année » et lieu (13 px, texte secondaire), flèche à droite. « Voir 5 autres » (contour) et lien « Aucune ne convient » : les œuvres montrées sont exclues et l'app demande de préciser. Après la recherche initiale + 2 relances sans succès, le lien « Saisir l'œuvre à la main » apparaît.
+4. **Fiche** (« Vérifier la fiche », aussi pour la saisie à la main) : petite image (120 px, jamais recadrée, fond #E3DDD1) et, à côté, le lien « Changer l'image » qui déplie « Image suivante », « Appareil photo » et « Galerie » ; rubrique « LA FICHE » : Titre *, Artiste, Année, Style, Description, préremplis et modifiables ; rubrique « EN PLUS » (« FACULTATIF » à droite) : Technique, Lieu de conservation, Vue le (texte libre), enregistrés avec l'œuvre ; bouton principal « Enregistrer » en bas ; lien « Pas la bonne œuvre » (retour à la liste, œuvre exclue).
    - **Description par l'IA** : rédigée à l'ouverture d'une proposition (si une clé Gemini est enregistrée), en 2 à 3 phrases, uniquement à partir des faits trouvés : titre, artiste, année, lieu et extrait du résumé Wikipédia de l'œuvre avec son lien. Sources du résumé, dans l'ordre : article relié à l'œuvre dans Wikidata (français, anglais, puis espagnol, italien, allemand, catalan, néerlandais, portugais) ; à défaut, recherche dans Wikipédia (français puis anglais) par titre et artiste, retenue seulement si le résumé cite le nom de l'artiste et la moitié au moins des mots du titre (jamais pour un artiste inconnu). Sans extrait, l'app écrit sans IA une phrase avec les seuls faits de Wikidata : « Œuvre de Jackson Pollock (1943). Lieu de conservation : Museum of Modern Art. » (« Œuvre d'un artiste inconnu » si l'artiste n'est pas connu). Sans artiste connu ni lieu, la description reste vide. Mention discrète « À vérifier » (12 px, Regular, texte secondaire) à droite du libellé ; elle disparaît dès que vous modifiez le texte ou enregistrez, et n'est jamais stockée. Liens « Régénérer » et « Effacer » sous le champ.
    - Rien n'est enregistré sans « Enregistrer ». L'image Wikimedia est alors téléchargée et copiée dans le stockage de l'app ; aucune adresse Internet n'est conservée. Si la copie échoue, l'app propose d'enregistrer sans image.
 
@@ -216,8 +221,8 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 
 ### 5 bis. Modification d'une œuvre
 
-- En-tête sans titre technique, roue Feather fine (texte secondaire) ; étiquette « MODIFICATION » et titre « Modifier l'œuvre » (Medium 32 px). Couleurs et composants de l'écran d'ajout (fond #F6F2EA, champs soulignés, boutons coins 2 px).
-- Image (320 px de haut, jamais recadrée, fond #E3DDD1), boutons à contour « Appareil photo » et « Galerie », puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Titre *, Artiste, Année, Style, Description, Technique, Lieu de conservation, Vue le (texte libre, par exemple « 12 mai 2026 ») et le bouton plein « Enregistrer ».
+- En-tête magazine : rubrique « MODIFICATION », flèche de retour, pas de roue des paramètres. Titre « Modifier l'œuvre » (Medium 40 px). Même présentation que la fiche de l'ajout (fond #F6F2EA, champs soulignés, rubriques à filet, bouton principal gris très foncé).
+- Petite image (120 px, jamais recadrée, fond #E3DDD1) avec le lien « Changer l'image » (« Appareil photo », « Galerie ») ; puis bouton à contour fin **« Compléter avec l'IA »** (zone tactile 48 px) ; rubrique « LA FICHE » : Titre *, Artiste, Année, Style, Description ; rubrique « EN PLUS » (« FACULTATIF ») : Technique, Lieu de conservation, Vue le (texte libre, par exemple « 12 mai 2026 ») ; bouton principal « Enregistrer » en bas.
 - « Compléter avec l'IA » : même recherche vérifiée qu'à l'ajout (IA + Wikidata) à partir du titre, de l'artiste et de l'année enregistrés ; sans résultat, nouvelle recherche sur le titre seul. Une seule œuvre : « Œuvre trouvée : titre, artiste, année. Utiliser ces informations ? ». Plusieurs : liste de propositions (comme à l'ajout, « Voir 5 autres », « Aucune ne convient »). Nombreux homonymes sans artiste ni année : l'app demande de les ajouter.
 - Seuls les champs **vides** sont remplis : artiste, année, description (rédigée par l'IA à partir du résumé Wikipédia, mention « À vérifier » qui disparaît dès que vous modifiez le texte ou enregistrez) et image Wikimedia si l'œuvre n'a pas d'image. Le style n'est pas rempli (Wikidata ne le fournit pas).
 - Artiste ou année déjà saisis mais différents de Wikidata : fenêtre « Différences avec Wikidata » (« Année : « 1890 » ici, « 1889 » selon Wikidata ») avec « Garder les miennes » (par défaut) ou « Remplacer ».
@@ -255,4 +260,4 @@ Recherche, catégories, sauvegarde ou export de la collection, compte en ligne, 
 
 1. Supprimer le titre technique « index » en haut de l'accueil.
 2. ✅ Passer le bouton « + » de bleu à l'accent #7B3F3A, en bouton rond (sans contour).
-3. Remplacer la roue système par une icône fine grise.
+3. ✅ Remplacer la roue système par une icône fine grise (retirée de l'ajout et de la modification).

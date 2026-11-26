@@ -4,7 +4,7 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { fonts } from '@/theme';
 import { GOOGLE_FREE_TIER_NOTICE } from '@/services/ai/usage';
-import { LinkButton, Notice, palette, PrimaryButton, SecondaryButton } from './ui';
+import { LinkButton, Notice, palette, PrimaryButton, Rubric, SecondaryButton } from './ui';
 
 type Props = {
   photoUri: string;
@@ -29,70 +29,75 @@ export function PhotoIdentify(props: Props) {
     <View>
       <Image source={{ uri: props.photoUri }} style={styles.photo} resizeMode="contain" />
 
-      {props.cartelUri ? (
-        <View style={styles.cartelRow}>
-          <Image source={{ uri: props.cartelUri }} style={styles.cartel} resizeMode="cover" />
-          <Text style={styles.cartelText}>Cartel ajouté</Text>
-          <LinkButton label="Retirer" onPress={props.onRemoveCartel} disabled={props.identifying} />
-        </View>
-      ) : (
-        <View style={styles.spaced}>
-          <SecondaryButton
-            label="Photographier le cartel"
-            onPress={props.onTakeCartel}
-            disabled={props.identifying}
-          />
-          <Text style={styles.help}>Facultatif : la petite étiquette à côté de l’œuvre aide à l’identifier.</Text>
-        </View>
-      )}
+      <Rubric label="LE CARTEL" right="FACULTATIF">
+        {props.cartelUri ? (
+          <View style={styles.cartelRow}>
+            <Image source={{ uri: props.cartelUri }} style={styles.cartel} resizeMode="cover" />
+            <Text style={styles.cartelText}>Cartel ajouté</Text>
+            <LinkButton label="Retirer" onPress={props.onRemoveCartel} disabled={props.identifying} />
+          </View>
+        ) : (
+          <View>
+            <SecondaryButton
+              label="Photographier le cartel"
+              onPress={props.onTakeCartel}
+              disabled={props.identifying}
+            />
+            <Text style={styles.help}>La petite étiquette à côté de l’œuvre aide à l’identifier.</Text>
+          </View>
+        )}
+      </Rubric>
 
-      {props.offline ? (
-        <Notice>Vous êtes hors ligne. L’identification n’est pas disponible.</Notice>
-      ) : null}
-      {props.message ? <Notice>{props.message}</Notice> : null}
-      {props.onKeepUnknown ? (
-        <View style={styles.keep}>
-          <SecondaryButton
-            label="Conserver comme œuvre inconnue"
-            onPress={props.onKeepUnknown}
-            disabled={props.identifying}
-          />
-        </View>
-      ) : null}
+      <Rubric label="IDENTIFICATION">
+        {props.offline ? (
+          <Notice>Vous êtes hors ligne. L’identification n’est pas disponible.</Notice>
+        ) : null}
+        {props.message ? <Notice>{props.message}</Notice> : null}
+        {props.onKeepUnknown ? (
+          <View style={styles.keep}>
+            <SecondaryButton
+              label="Conserver comme œuvre inconnue"
+              onPress={props.onKeepUnknown}
+              disabled={props.identifying}
+            />
+          </View>
+        ) : null}
 
-      {props.readText ? (
-        <View style={styles.readBlock}>
-          <Text style={styles.readLabel}>Inscription lue</Text>
-          <Text style={styles.readText}>« {props.readText} »</Text>
-          <LinkButton
-            label="Chercher avec ce texte"
-            onPress={props.onUseReadText}
-            disabled={props.identifying}
-          />
-        </View>
-      ) : null}
+        {props.readText ? (
+          <View style={styles.readBlock}>
+            <Text style={styles.readLabel}>Inscription lue</Text>
+            <Text style={styles.readText}>« {props.readText} »</Text>
+            <LinkButton
+              label="Chercher avec ce texte"
+              onPress={props.onUseReadText}
+              disabled={props.identifying}
+            />
+          </View>
+        ) : null}
 
-      <PrimaryButton
-        label={props.identifying ? 'Identification…' : 'Identifier l’œuvre'}
-        onPress={props.onIdentify}
-        disabled={props.offline}
-        loading={props.identifying}
-      />
-      <Text style={styles.help}>
-        La photo est réduite et ses informations de lieu sont retirées avant l’envoi.{' '}
-        {GOOGLE_FREE_TIER_NOTICE}
-      </Text>
-      <LinkButton
-        label="Saisir l’œuvre à la main"
-        onPress={props.onManual}
-        disabled={props.identifying}
-      />
+        <PrimaryButton
+          label={props.identifying ? 'Identification…' : 'Identifier l’œuvre'}
+          onPress={props.onIdentify}
+          disabled={props.offline}
+          loading={props.identifying}
+        />
+        <Text style={styles.help}>
+          La photo est réduite et ses informations de lieu sont retirées avant l’envoi.{' '}
+          {GOOGLE_FREE_TIER_NOTICE}
+        </Text>
+        <LinkButton
+          label="Saisir l’œuvre à la main"
+          onPress={props.onManual}
+          disabled={props.identifying}
+        />
+      </Rubric>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   photo: {
+    marginTop: 24,
     width: '100%',
     height: 320,
     borderRadius: 2,
@@ -101,16 +106,10 @@ const styles = StyleSheet.create({
   keep: {
     marginBottom: 16,
   },
-  spaced: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
   cartelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginTop: 8,
-    marginBottom: 24,
   },
   cartel: {
     width: 64,
