@@ -10,7 +10,7 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 - 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description, et en option technique, lieu de conservation, date de visite)
 - 🔎 **Recherche d'œuvre fiable** (écran d'ajout) :
   - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
-  - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut. Si rien n'est trouvé, l'app propose de la **conserver comme œuvre inconnue**.
+  - « Ma photo » (liens « Appareil photo » et « Galerie » du sommaire de l'ajout) : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut. Si rien n'est trouvé, l'app propose de la **conserver comme œuvre inconnue**.
   - L'**IA Gemini** ne fait que préparer la recherche (pistes) et rédiger une description à partir des seuls faits trouvés (mention « À vérifier »). La clé est saisie dans les réglages, rangée dans le stockage sécurisé du téléphone et envoyée dans un en-tête. Pensez à mettre une limite de dépense basse sur la clé.
 - ✨ **Compléter avec l'IA** (écran Modifier) : retrouve une œuvre déjà enregistrée dans Wikidata et remplit seulement les champs vides (artiste, année, description « À vérifier », image Wikimedia si l'œuvre n'en a pas). Une différence avec ce que vous avez saisi est signalée, jamais remplacée sans votre accord. Rien n'est enregistré sans « Enregistrer ».
 - 🔐 Connexion / inscription protégée par mot de passe
@@ -24,11 +24,11 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `(tabs)/_layout.tsx` : barre d'onglets en bas
   - `(tabs)/index.tsx` : onglet « Collection » (galerie principale)
   - `(tabs)/galerie.tsx` : onglet « Galerie vivante »
-  - `add.tsx` : ajout d'une œuvre (choix, ma photo, recherche, propositions, fiche)
+  - `add.tsx` : ajout d'une œuvre (sommaire en trois lignes, ma photo, recherche, propositions, fiche)
   - `detail/[id].tsx`, `edit/[id].tsx` : détail et édition d'une photo
   - `artworks.tsx` : toutes les œuvres ; `artist/[name].tsx` : page d'un artiste
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
-- `src/components/` : composants réutilisables (`home/` et `magazine/` pour l'accueil et les pages magazine, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout ; `Carousel.tsx` n'est plus utilisé depuis l'accueil magazine)
+- `src/components/` : composants réutilisables (`home/` et `magazine/` pour l'accueil et les pages magazine, `gallery/` pour la Galerie vivante, `add/` pour les écrans d'ajout et de modification ; `Carousel.tsx` n'est plus utilisé depuis l'accueil magazine)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
 - `src/services/ai/` : point d'entrée unique de tous les appels à l'IA (fournisseur Gemini, classement des erreurs et messages)
 - `tests/ia/` : tests automatiques de la couche IA, avec des réponses de Google simulées (aucun appel réel)
