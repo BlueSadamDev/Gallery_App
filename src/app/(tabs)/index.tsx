@@ -1,5 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
-import { type Href, Link, Stack, useFocusEffect } from 'expo-router';
+import { type Href, Link, router, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -32,32 +32,30 @@ function sommaireHref(entry: SommaireEntry): Href {
 
 function AddButton() {
   return (
-    <Link href="/add" asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Ajouter une œuvre"
-        style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-      >
-        {/* Petit carré bordeaux de 28 px dans une zone tactile de 48 px. */}
-        <View style={styles.addSquare}>
-          <Feather name="plus" size={14} color={colors.onAccent} />
-        </View>
-      </Pressable>
-    </Link>
+    <Pressable
+      onPress={() => router.push('/add')}
+      accessibilityRole="button"
+      accessibilityLabel="Ajouter une œuvre"
+      style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+    >
+      {/* Petit carré bordeaux de 28 px dans une zone tactile de 48 px. */}
+      <View style={styles.addSquare}>
+        <Feather name="plus" size={14} color={colors.onAccent} />
+      </View>
+    </Pressable>
   );
 }
 
 function MenuButton() {
   return (
-    <Link href="/settings" asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Paramètres"
-        style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-      >
-        <Feather name="menu" size={20} color={colors.textPrimary} />
-      </Pressable>
-    </Link>
+    <Pressable
+      onPress={() => router.push('/settings')}
+      accessibilityRole="button"
+      accessibilityLabel="Paramètres"
+      style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+    >
+      <Feather name="menu" size={20} color={colors.textPrimary} />
+    </Pressable>
   );
 }
 
@@ -109,15 +107,14 @@ export default function HomeScreen() {
           <Text style={styles.emptyHint}>
             Commencez à conserver la trace des œuvres qui vous touchent.
           </Text>
-          <Link href="/add" asChild>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Ajouter une œuvre"
-              style={({ pressed }) => [styles.bigAddButton, pressed && styles.pressed]}
-            >
-              <Feather name="plus" size={40} color={colors.onAccent} />
-            </Pressable>
-          </Link>
+          <Pressable
+            onPress={() => router.push('/add')}
+            accessibilityRole="button"
+            accessibilityLabel="Ajouter une œuvre"
+            style={({ pressed }) => [styles.bigAddButton, pressed && styles.pressed]}
+          >
+            <Feather name="plus" size={40} color={colors.onAccent} />
+          </Pressable>
         </View>
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scroll}>
@@ -147,26 +144,26 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>DANS VOTRE COLLECTION</Text>
               {sommaire.map((entry, index) => (
-                <Link key={entry.key} href={sommaireHref(entry)} asChild>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={({ pressed }) => [
-                      styles.tocRow,
-                      index < sommaire.length - 1 && styles.tocDivider,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.tocNumber}>{String(index + 1).padStart(2, '0')}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.tocTitle} numberOfLines={2}>
-                        {formatDisplayText(entry.title)}
-                      </Text>
-                      <Text style={styles.tocSubtitle} numberOfLines={2}>
-                        {formatDisplayText(entry.subtitle)}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </Link>
+                <Pressable
+                  key={entry.key}
+                  onPress={() => router.push(sommaireHref(entry))}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [
+                    styles.tocRow,
+                    index < sommaire.length - 1 && styles.tocDivider,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.tocNumber}>{String(index + 1).padStart(2, '0')}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.tocTitle} numberOfLines={2}>
+                      {formatDisplayText(entry.title)}
+                    </Text>
+                    <Text style={styles.tocSubtitle} numberOfLines={2}>
+                      {formatDisplayText(entry.subtitle)}
+                    </Text>
+                  </View>
+                </Pressable>
               ))}
             </View>
           ) : null}
@@ -174,15 +171,14 @@ export default function HomeScreen() {
           {/* 3. Toutes les œuvres, de la plus récente à la plus ancienne */}
           <View style={[styles.section, styles.gridHeader]}>
             <Text style={styles.sectionLabel}>TOUTES LES ŒUVRES</Text>
-            <Link href="/artworks" asChild>
-              <Pressable
-                accessibilityRole="link"
-                accessibilityLabel={`Voir les archives : ${countLabel(artworks.length)}`}
-                style={({ pressed }) => [styles.countLink, pressed && styles.pressed]}
-              >
-                <Text style={styles.count}>{countLabel(artworks.length)}</Text>
-              </Pressable>
-            </Link>
+            <Pressable
+              onPress={() => router.push('/artworks')}
+              accessibilityRole="link"
+              accessibilityLabel={`Voir les archives : ${countLabel(artworks.length)}`}
+              style={({ pressed }) => [styles.countLink, pressed && styles.pressed]}
+            >
+              <Text style={styles.count}>{countLabel(artworks.length)}</Text>
+            </Pressable>
           </View>
           <View style={styles.grid}>
             <ArtworkGrid artworks={artworks} columnWidth={columnWidth} />
