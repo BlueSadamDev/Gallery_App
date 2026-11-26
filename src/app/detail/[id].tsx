@@ -1,58 +1,66 @@
+import Feather from '@expo/vector-icons/Feather';
 import { Link, router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { colors, fonts, spacing, radius } from '@/theme';
-import { palette } from '@/components/add/ui';
-import { Artwork, deleteArtwork, getArtwork } from '@/db/database';
+import { colors, fonts, spacing } from '@/theme';
+import { Artwork, deleteArtwork, getArtworks } from '@/db/database';
+import NaturalImage from '@/components/home/NaturalImage';
+import MagazineHeader, { HeaderIconButton } from '@/components/magazine/MagazineHeader';
+import { magazine, SIDE } from '@/components/magazine/styles';
+import {
+  formatInventory,
+  inventoryNumbers,
+  nextArtwork,
+  splitLead,
+  worksByArtist,
+} from '@/utils/collection';
+import { formatDisplayText } from '@/utils/text';
 
-function SettingsButton() {
-  return (
-    <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton} accessibilityLabel="Paramètres">
-        <Feather name="settings" size={22} color={palette.textSecondary} />
-      </Pressable>
-    </Link>
-  );
-}
+// Détail d'une œuvre, « l'article » du magazine (DESIGN.md, section 5).
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [artwork, setArtwork] = useState<Artwork | null>(null);
+  const numericId = Number(id);
+  const [all, setAll] = useState<Artwork[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const { width } = useWindowDimensions();
 
-  // Charge l'œuvre à chaque fois que l'écran redevient visible
-  // (utile après une modification).
+  // Recharge la collection à chaque retour sur l'écran (utile après une modification).
+  // Toute la collection sert au numéro, au nombre d'œuvres de l'artiste et à l'œuvre suivante.
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      const numericId = Number(id);
-      if (Number.isNaN(numericId)) {
-        setArtwork(null);
-        return;
-      }
-      getArtwork(numericId)
-        .then((row) => {
-          if (active) setArtwork(row);
+      getArtworks()
+        .then((rows) => {
+          if (active) setAll(rows);
         })
         .catch((error) => {
           console.error('Erreur de chargement de l’œuvre', error);
+        })
+        .finally(() => {
+          if (active) setLoaded(true);
         });
       return () => {
         active = false;
       };
-    }, [id])
+    }, [])
   );
 
+  const artwork = all.find((a) => a.id === numericId) ?? null;
+  const numbers = useMemo(() => inventoryNumbers(all), [all]);
+  const next = artwork ? nextArtwork(all, artwork.id) : null;
+  const sameArtist = artwork ? worksByArtist(all, artwork.artist).length : 0;
+  const { lead, rest } = splitLead(artwork?.description ?? '');
+
   function handleDelete() {
-    const numericId = Number(id);
     Alert.alert(
       'Supprimer cette œuvre ?',
       'Cette action est définitive et ne peut pas être annulée.',
@@ -75,81 +83,127 @@ export default function DetailScreen() {
     );
   }
 
+  function openEdit() {
+    router.push({ pathname: '/edit/[id]', params: { id: String(numericId) } });
+  }
+
+  // Lignes de l'encadré « Fiche » : une valeur vide s'affiche « À compléter ».
+  const fiche: [string, string][] = artwork
+    ? [
+        ['ARTISTE', artwork.artist.trim()],
+        ['ANNÉE', artwork.year.trim()],
+        ['STYLE', artwork.style.trim()],
+        ['TECHNIQUE', (artwork.technique ?? '').trim()],
+        ['LIEU DE CONSERVATION', (artwork.location ?? '').trim()],
+        ['VUE LE', (artwork.visitDate ?? '').trim()],
+      ]
+    : [];
+  const ficheIncomplete = fiche.some(([, value]) => !value);
+
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: '',
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: palette.background },
-          headerTintColor: palette.text,
-          headerRight: () => <SettingsButton />,
-        }}
+    <View style={magazine.screen}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <MagazineHeader
+        label="COLLECTION"
+        right={artwork ? <HeaderIconButton icon="edit-2" label="Modifier l'œuvre" onPress={openEdit} /> : undefined}
       />
 
       {!artwork ? (
         <View style={styles.centerBox}>
-          <Text style={styles.emptyText}>Œuvre introuvable.</Text>
+          {loaded ? <Text style={styles.emptyText}>Œuvre introuvable.</Text> : null}
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {artwork.imageUri ? (
-            <View style={styles.imageWrap}>
-              <Image
-                source={{ uri: artwork.imageUri }}
-                style={styles.image}
-                resizeMode="cover"
-              />
-            </View>
-          ) : (
-            <View style={[styles.imageWrap, styles.imagePlaceholder]}>
-              <Text style={styles.placeholderIcon}>✦</Text>
-            </View>
-          )}
+            <NaturalImage uri={artwork.imageUri} width={width} maxHeight={width * 1.25} align="center" />
+          ) : null}
 
-          <View style={styles.infoBlock}>
-            <Text style={styles.title}>{artwork.title}</Text>
-            {artwork.artist ? (
-              <Text style={styles.artist}>{artwork.artist}</Text>
-            ) : null}
-            {artwork.year ? (
-              <Text style={styles.year}>{artwork.year}</Text>
-            ) : null}
-            {artwork.style ? (
-              <Text style={styles.styleText}>{artwork.style}</Text>
-            ) : null}
-            {artwork.description ? (
-              <Text style={styles.description}>{artwork.description}</Text>
+          {/* Titre de l'article */}
+          <View style={styles.head}>
+            <View style={magazine.kickerRow}>
+              <Text style={styles.number}>{formatInventory(numbers.get(artwork.id) ?? 0)}</Text>
+              {artwork.year.trim() ? <Text style={magazine.kicker}>{artwork.year.trim()}</Text> : null}
+            </View>
+            <Text style={styles.title}>{formatDisplayText(artwork.title)}</Text>
+            {artwork.artist.trim() ? (
+              <>
+                <Link href={`/artist/${encodeURIComponent(artwork.artist.trim())}`} asChild>
+                  <Pressable accessibilityRole="link" style={({ pressed }) => [styles.artistLink, pressed && magazine.pressed]}>
+                    <Text style={styles.artist}>{formatDisplayText(artwork.artist.trim())}</Text>
+                  </Pressable>
+                </Link>
+                {sameArtist >= 2 ? (
+                  <Text style={styles.artistCount}>{sameArtist} œuvres dans votre collection</Text>
+                ) : null}
+              </>
             ) : null}
           </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.editButton,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() =>
-              router.push({
-                pathname: '/edit/[id]',
-                params: { id: String(artwork.id) },
-              })
-            }
-          >
-            <Text style={styles.editButtonText}>Modifier</Text>
-          </Pressable>
+          {/* L'œuvre : chapeau puis texte */}
+          {lead || rest ? (
+            <View style={magazine.section}>
+              <Text style={magazine.sectionLabel}>L&apos;ŒUVRE</Text>
+              {lead ? <Text style={styles.lead}>{formatDisplayText(lead)}</Text> : null}
+              {rest ? <Text style={styles.body}>{formatDisplayText(rest)}</Text> : null}
+            </View>
+          ) : null}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.deleteButton,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleDelete}
-          >
-            <Text style={styles.deleteButtonText}>Supprimer</Text>
-          </Pressable>
+          {/* Fiche, façon cartel */}
+          <View style={magazine.section}>
+            <Text style={magazine.sectionLabel}>FICHE</Text>
+            <View style={styles.fiche}>
+              {fiche.map(([label, value], index) => (
+                <View key={label} style={[styles.ficheRow, index < fiche.length - 1 && styles.ficheDivider]}>
+                  <Text style={styles.ficheLabel}>{label}</Text>
+                  <Text style={[styles.ficheValue, !value && styles.ficheEmpty]}>
+                    {value ? formatDisplayText(value) : 'À compléter'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={openEdit}
+              style={({ pressed }) => [styles.textButton, pressed && magazine.pressed]}
+            >
+              <Text style={magazine.link}>{ficheIncomplete ? 'Compléter la fiche' : 'Modifier la fiche'}</Text>
+            </Pressable>
+          </View>
+
+          {/* Œuvre suivante */}
+          {next ? (
+            <View style={magazine.section}>
+              <Text style={magazine.sectionLabel}>ŒUVRE SUIVANTE</Text>
+              <Link href={`/detail/${next.id}`} replace asChild>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Œuvre suivante : ${next.title}`}
+                  style={({ pressed }) => [styles.nextRow, pressed && magazine.pressed]}
+                >
+                  {next.imageUri ? <NaturalImage uri={next.imageUri} width={96} maxHeight={120} /> : null}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.number}>{formatInventory(numbers.get(next.id) ?? 0)}</Text>
+                    <Text style={styles.nextTitle} numberOfLines={3}>{formatDisplayText(next.title)}</Text>
+                    {next.artist.trim() ? (
+                      <Text style={styles.nextArtist} numberOfLines={1}>{formatDisplayText(next.artist.trim())}</Text>
+                    ) : null}
+                  </View>
+                  <Feather name="arrow-right" size={20} color={colors.textPrimary} />
+                </Pressable>
+              </Link>
+            </View>
+          ) : null}
+
+          {/* Suppression, en lien discret */}
+          <View style={styles.deleteZone}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleDelete}
+              style={({ pressed }) => [styles.textButton, pressed && magazine.pressed]}
+            >
+              <Text style={styles.deleteText}>Supprimer l&apos;œuvre</Text>
+            </Pressable>
+          </View>
         </ScrollView>
       )}
     </View>
@@ -157,9 +211,8 @@ export default function DetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
+  content: {
+    paddingBottom: spacing.xl,
   },
   centerBox: {
     flex: 1,
@@ -167,107 +220,123 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    fontFamily: fonts.title,
-    fontSize: 18,
+    fontFamily: fonts.regular,
+    fontSize: 15,
     color: colors.textSecondary,
   },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
+  head: {
+    paddingHorizontal: SIDE,
+    paddingTop: 20,
   },
-  imageWrap: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.border,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  imagePlaceholder: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  placeholderIcon: {
-    fontSize: 44,
+  number: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    letterSpacing: 2,
     color: colors.accent,
-    opacity: 0.5,
-  },
-  infoBlock: {
-    marginTop: spacing.lg,
   },
   title: {
-    fontFamily: fonts.titleBold,
-    fontSize: 26,
+    fontFamily: fonts.medium,
+    fontSize: 40,
+    lineHeight: 43,
+    letterSpacing: -1.1,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
+    marginTop: 14,
+  },
+  artistLink: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
+    marginTop: 4,
   },
   artist: {
-    fontFamily: fonts.medium,
-    fontSize: 17,
-    color: colors.accent,
-    marginBottom: spacing.xs,
-  },
-  year: {
-    fontFamily: fonts.regular,
-    fontSize: 15,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
-  },
-  styleText: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    color: colors.accent,
-    marginBottom: spacing.md,
-    textTransform: 'capitalize',
-  },
-  description: {
     fontFamily: fonts.regular,
     fontSize: 15,
     color: colors.textPrimary,
-    lineHeight: 22,
+    textDecorationLine: 'underline',
   },
-  editButton: {
-    backgroundColor: colors.accent,
-    paddingVertical: 14,
-    borderRadius: 2,
-    alignItems: 'center',
-    marginTop: spacing.xl,
+  artistCount: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
-  editButtonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 16,
-    color: colors.onAccent,
+  lead: {
+    fontFamily: fonts.medium,
+    fontSize: 19,
+    lineHeight: 28,
+    color: colors.textPrimary,
+    marginTop: 16,
   },
-  deleteButton: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    paddingVertical: 14,
-    borderRadius: 2,
-    alignItems: 'center',
-    marginTop: spacing.md,
+  body: {
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    lineHeight: 24,
+    color: colors.textPrimary,
+    marginTop: 14,
   },
-  deleteButtonText: {
-    fontFamily: fonts.semibold,
-    fontSize: 16,
-    color: colors.danger,
+  fiche: {
+    marginTop: 8,
   },
-  buttonPressed: {
-    opacity: 0.85,
+  ficheRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 16,
+    paddingVertical: 13,
   },
-  settingsButton: {
-    minWidth: 48,
+  ficheDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+  },
+  ficheLabel: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: colors.textSecondary,
+  },
+  ficheValue: {
+    flex: 1,
+    textAlign: 'right',
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  ficheEmpty: {
+    color: colors.textSecondary,
+  },
+  textButton: {
+    alignSelf: 'flex-start',
     minHeight: 48,
-    alignItems: 'center',
     justifyContent: 'center',
   },
+  nextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingVertical: 16,
+  },
+  nextTitle: {
+    fontFamily: fonts.medium,
+    fontSize: 22,
+    lineHeight: 27,
+    color: colors.textPrimary,
+    marginTop: 4,
+  },
+  nextArtist: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  deleteZone: {
+    marginTop: 20,
+    marginHorizontal: SIDE,
+    paddingTop: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.divider,
+  },
+  deleteText: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.danger,
+  },
 });
-
-
-

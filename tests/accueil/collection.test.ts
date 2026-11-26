@@ -2,12 +2,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Artwork } from '@/db/database';
 import {
+  artistSummary,
   buildSommaire,
   centuryLabel,
   centuryOf,
+  formatInventory,
+  groupByArtist,
+  groupByCentury,
+  inventoryNumbers,
   monthLabel,
+  nextArtwork,
   parseYear,
   pickCover,
+  splitLead,
+  worksByArtist,
 } from '@/utils/collection';
 
 let nextId = 1;
@@ -20,6 +28,9 @@ function oeuvre(champs: Partial<Artwork>): Artwork {
     year: '1900',
     style: '',
     imageUri: 'file:///image.jpg',
+    technique: '',
+    location: '',
+    visitDate: '',
     ...champs,
   };
 }
@@ -74,6 +85,8 @@ test('sommaire : artiste, siècle, puis fiche à compléter', () => {
   ]);
   assert.deepEqual(sommaire.map((e) => e.key), ['artiste', 'siecle', 'a-completer']);
   assert.equal(sommaire[0].title, 'Christoffer Wilhelm Eckersberg');
+  assert.equal(sommaire[0].target, 'artist');
+  assert.equal(sommaire[1].target, 'century');
   assert.equal(sommaire[0].subtitle, "Le Départ du fils prodigue et L'escalier de l'Ara Coeli");
   assert.equal(sommaire[1].title, 'Le XIXe siècle');
   assert.equal(sommaire[1].subtitle, '3 œuvres de 2 artistes, de 1813 à 1899');
@@ -101,4 +114,58 @@ test('plusieurs fiches à compléter : la plus récente, avec le nombre', () => 
   const [entree] = buildSommaire([ancienne, recente]);
   assert.equal(entree.artworkId, recente.id);
   assert.equal(entree.subtitle, 'À compléter : la description · 2 fiches à compléter');
+});
+
+test("numéros d'inventaire dans l'ordre d'ajout", () => {
+  const a = oeuvre({});
+  const b = oeuvre({});
+  const c = oeuvre({});
+  const numeros = inventoryNumbers([c, a, b]);
+  assert.equal(numeros.get(a.id), 1);
+  assert.equal(numeros.get(c.id), 3);
+  assert.equal(formatInventory(3), 'N° 03');
+  assert.equal(formatInventory(104), 'N° 104');
+});
+
+test('chapeau : la première phrase, puis le reste', () => {
+  assert.deepEqual(
+    splitLead('Deux figures dans un cadre antique. La composition est rigoureuse. Une lumière claire.'),
+    { lead: 'Deux figures dans un cadre antique.', rest: 'La composition est rigoureuse. Une lumière claire.' },
+  );
+  assert.deepEqual(splitLead('Une seule phrase'), { lead: 'Une seule phrase', rest: '' });
+  assert.deepEqual(splitLead('  '), { lead: '', rest: '' });
+  const longue = `${'mot '.repeat(70)}fin. Suite.`;
+  assert.equal(splitLead(longue).lead, '');
+});
+
+test('œuvre suivante : de la plus récente à la plus ancienne, puis retour au début', () => {
+  const ancienne = oeuvre({});
+  const recente = oeuvre({});
+  const oeuvres = [ancienne, recente];
+  assert.equal(nextArtwork(oeuvres, recente.id)?.id, ancienne.id);
+  assert.equal(nextArtwork(oeuvres, ancienne.id)?.id, recente.id);
+  assert.equal(nextArtwork([ancienne], ancienne.id), null);
+});
+
+test('rubriques par artiste et par siècle', () => {
+  const monet = oeuvre({ artist: 'Claude Monet', year: '1899' });
+  const eck2 = oeuvre({ artist: 'Eckersberg', year: '1814' });
+  const eck1 = oeuvre({ artist: ' eckersberg ', year: '1813' });
+  const inconnu = oeuvre({ artist: '', year: '' });
+  const cloitre = oeuvre({ artist: 'Pietro Vassalletto', year: '1220' });
+  const tout = [monet, eck2, eck1, inconnu, cloitre];
+
+  const artistes = groupByArtist(tout);
+  assert.deepEqual(artistes.map((s) => s.title), ['Claude Monet', 'Eckersberg', 'Pietro Vassalletto', 'Artiste inconnu']);
+  assert.deepEqual(artistes[1].works.map((w) => w.id), [eck1.id, eck2.id]);
+
+  const siecles = groupByCentury(tout);
+  assert.deepEqual(siecles.map((s) => s.title), ['XIIIe siècle', 'XIXe siècle', 'Date inconnue']);
+  assert.equal(siecles[1].works.length, 3);
+
+  const deLui = worksByArtist(tout, 'ECKERSBERG');
+  assert.deepEqual(deLui.map((w) => w.id), [eck1.id, eck2.id]);
+  assert.equal(artistSummary(deLui), '2 œuvres, de 1813 à 1814');
+  assert.equal(artistSummary([monet]), '1 œuvre, 1899');
+  assert.deepEqual(worksByArtist(tout, ''), []);
 });

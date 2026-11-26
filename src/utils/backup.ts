@@ -15,6 +15,9 @@ type BackupArtwork = {
   description: string;
   year: string;
   style: string;
+  technique?: string; // absents des sauvegardes de version 1
+  location?: string;
+  visitDate?: string;
   imageBase64?: string | null;
 };
 
@@ -37,7 +40,8 @@ async function readImageBase64(uri: string): Promise<string> {
 // JSON, puis ouvre le panneau de partage pour le sauvegarder ailleurs.
 // Ne contient JAMAIS la clé API ni le mot de passe.
 export async function exportBackup(): Promise<boolean> {
-  const artworks = await getArtworks();
+  // De la plus ancienne à la plus récente : la restauration garde l'ordre d'ajout (et les numéros).
+  const artworks = (await getArtworks()).slice().sort((a, b) => a.id - b.id);
 
   const data: BackupArtwork[] = [];
   for (const artwork of artworks) {
@@ -55,12 +59,15 @@ export async function exportBackup(): Promise<boolean> {
       description: artwork.description,
       year: artwork.year,
       style: artwork.style,
+      technique: artwork.technique,
+      location: artwork.location,
+      visitDate: artwork.visitDate,
       imageBase64,
     });
   }
 
   const json = JSON.stringify(
-    { version: 1, artworks: data },
+    { version: 2, artworks: data },
     null,
     2
   );
@@ -92,7 +99,7 @@ export async function importBackup(): Promise<number> {
 
   const uri = result.assets[0].uri;
   const json = await FileSystem.readAsStringAsync(uri);
-  const parsed = JSON.parse(json) as { artworks?: BackupArtwork[] };
+  const parsed = JSON.parse(json) as { version?: number; artworks?: BackupArtwork[] };
 
   if (!parsed.artworks || !Array.isArray(parsed.artworks)) {
     throw new Error('Le fichier de sauvegarde est invalide.');
@@ -101,7 +108,10 @@ export async function importBackup(): Promise<number> {
   await ensureImagesDir();
   let inserted = 0;
 
-  for (const item of parsed.artworks) {
+  // Version 1 : œuvres écrites de la plus récente à la plus ancienne. On les remet dans l'ordre d'ajout.
+  const items = (parsed.version ?? 1) < 2 ? parsed.artworks.slice().reverse() : parsed.artworks;
+
+  for (const item of items) {
     let imageUri: string | null = null;
     if (item.imageBase64) {
       const destination =
@@ -117,6 +127,9 @@ export async function importBackup(): Promise<number> {
       description: item.description || '',
       year: item.year || '',
       style: item.style || '',
+      technique: item.technique || '',
+      location: item.location || '',
+      visitDate: item.visitDate || '',
       imageUri,
     });
     inserted++;
