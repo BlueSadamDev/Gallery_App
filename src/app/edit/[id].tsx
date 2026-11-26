@@ -88,6 +88,9 @@ export default function EditScreen() {
   const [year, setYear] = useState('');
   const [description, setDescription] = useState('');
   const [style, setStyle] = useState('');
+  const [technique, setTechnique] = useState('');
+  const [location, setLocation] = useState('');
+  const [visitDate, setVisitDate] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(!Number.isNaN(numericId));
   const [saving, setSaving] = useState(false);
@@ -120,6 +123,9 @@ export default function EditScreen() {
           setYear(artwork.year);
           setDescription(artwork.description);
           setStyle(artwork.style);
+          setTechnique(artwork.technique ?? '');
+          setLocation(artwork.location ?? '');
+          setVisitDate(artwork.visitDate ?? '');
           setImageUri(artwork.imageUri);
         }
       })
@@ -292,6 +298,9 @@ export default function EditScreen() {
         description: description.trim(),
         year: year.trim(),
         style: style.trim(),
+        technique: technique.trim(),
+        location: location.trim(),
+        visitDate: visitDate.trim(),
         imageUri: finalImageUri,
       });
       router.back();
@@ -368,6 +377,10 @@ export default function EditScreen() {
             multiline
             hint={descriptionFromAi ? 'À vérifier' : undefined}
           />
+          {/* Champs facultatifs de l'encadré « Fiche » du détail. */}
+          <Field label="Technique" value={technique} onChangeText={setTechnique} placeholder="Ex. Huile sur toile, marbre" />
+          <Field label="Lieu de conservation" value={location} onChangeText={setLocation} placeholder="Musée, ville" />
+          <Field label="Vue le" value={visitDate} onChangeText={setVisitDate} placeholder="Date de votre visite, ex. 12 mai 2026" />
 
           <PrimaryButton
             label={loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}

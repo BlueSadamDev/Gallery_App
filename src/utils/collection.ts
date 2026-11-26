@@ -102,7 +102,8 @@ function joinFr(items: string[]): string {
   return `${items.slice(0, -1).join(', ')} et ${items[items.length - 1]}`;
 }
 
-function artistKey(artist: string): string | null {
+// Clé de regroupement d'un artiste (sans majuscules ni espaces autour) ; null si inconnu.
+export function artistKey(artist: string): string | null {
   const key = artist.trim().toLowerCase();
   return key === '' || key === 'artiste inconnu' ? null : key;
 }
@@ -112,8 +113,9 @@ export type SommaireEntry = {
   title: string;
   subtitle: string;
   artworkId: number;
-  // Écran ouvert à l'appui : le détail, ou la modification pour une fiche à compléter.
-  target: 'detail' | 'edit';
+  // Écran ouvert à l'appui : la page de l'artiste, toutes les œuvres classées par siècle,
+  // ou la modification pour une fiche à compléter.
+  target: 'artist' | 'century' | 'edit';
 };
 
 function artistEntry(artworks: Artwork[]): { entry: SommaireEntry; ids: Set<number> } | null {
@@ -135,7 +137,7 @@ function artistEntry(artworks: Artwork[]): { entry: SommaireEntry; ids: Set<numb
   const titles = works.slice(0, 2).map((w) => w.title.trim());
   const subtitle = works.length === 2 ? joinFr(titles) : `${works.length} œuvres, dont ${joinFr(titles)}`;
   return {
-    entry: { key: 'artiste', title: works[0].artist.trim(), subtitle, artworkId: works[0].id, target: 'detail' },
+    entry: { key: 'artiste', title: works[0].artist.trim(), subtitle, artworkId: works[0].id, target: 'artist' },
     ids: new Set(works.map((w) => w.id)),
   };
 }
@@ -167,7 +169,7 @@ function centuryEntry(artworks: Artwork[], artistIds: Set<number> | null): Somma
     const max = Math.max(...years);
     if (min > 0) subtitle += min === max ? `, toutes de ${min}` : `, de ${min} à ${max}`;
   }
-  return { key: 'siecle', title: `Le ${centuryLabel(best[0])}`, subtitle, artworkId: works[0].id, target: 'detail' };
+  return { key: 'siecle', title: `Le ${centuryLabel(best[0])}`, subtitle, artworkId: works[0].id, target: 'century' };
 }
 
 function missingFields(artwork: Artwork): string[] {
@@ -207,4 +209,108 @@ export function buildSommaire(artworks: Artwork[]): SommaireEntry[] {
     toCompleteEntry(artworks),
   ];
   return entries.filter((e): e is SommaireEntry => e !== null);
+}
+
+// ---------------------------------------------------------------------------
+// Lot 2 : détail, toutes les œuvres, page artiste.
+
+// Numéros d'inventaire : 1 pour la première œuvre ajoutée, puis dans l'ordre d'ajout.
+export function inventoryNumbers(artworks: Artwork[]): Map<number, number> {
+  const ids = artworks.map((a) => a.id).sort((a, b) => a - b);
+  return new Map(ids.map((id, index) => [id, index + 1]));
+}
+
+// « N° 01 », « N° 12 », « N° 104 ».
+export function formatInventory(n: number): string {
+  return `N° ${String(n).padStart(2, '0')}`;
+}
+
+// Chapeau d'un article : la première phrase de la description, puis le reste.
+// Pas de chapeau si la première phrase est trop longue (le texte reste d'un seul bloc).
+export function splitLead(description: string): { lead: string; rest: string } {
+  const text = description.trim();
+  if (!text) return { lead: '', rest: '' };
+  const match = text.match(/^([\s\S]+?[.!?…])\s+(?=[A-ZÀ-ÖØ-Þ«"“(])/);
+  const lead = match ? match[1] : text;
+  if (lead.length > 240) return { lead: '', rest: text };
+  return { lead, rest: text.slice(lead.length).trim() };
+}
+
+// Œuvre suivante dans l'ordre de « Toutes les œuvres » (de la plus récente à la plus ancienne),
+// en revenant à la première après la dernière. null s'il n'y a qu'une œuvre.
+export function nextArtwork(artworks: Artwork[], id: number): Artwork | null {
+  if (artworks.length < 2) return null;
+  const ordered = artworks.slice().sort((a, b) => b.id - a.id);
+  const index = ordered.findIndex((a) => a.id === id);
+  if (index === -1) return null;
+  return ordered[(index + 1) % ordered.length];
+}
+
+export type Section = {
+  key: string;
+  title: string;
+  works: Artwork[];
+};
+
+// Rubriques par artiste : ordre alphabétique, « Artiste inconnu » en dernier,
+// œuvres de chaque artiste par année croissante.
+export function groupByArtist(artworks: Artwork[]): Section[] {
+  const groups = new Map<string, Section>();
+  for (const artwork of artworks) {
+    const key = artistKey(artwork.artist) ?? '';
+    const title = key ? artwork.artist.trim() : 'Artiste inconnu';
+    const section = groups.get(key) ?? { key, title, works: [] };
+    section.works.push(artwork);
+    groups.set(key, section);
+  }
+  return [...groups.values()]
+    .map((section) => ({ ...section, works: section.works.slice().sort(byYear) }))
+    .sort((a, b) => {
+      if (!a.key) return 1;
+      if (!b.key) return -1;
+      return a.key.localeCompare(b.key, 'fr');
+    });
+}
+
+// Rubriques par siècle : du plus ancien au plus récent, « Date inconnue » en dernier,
+// œuvres de chaque siècle par année croissante.
+export function groupByCentury(artworks: Artwork[]): Section[] {
+  const groups = new Map<number | null, Artwork[]>();
+  for (const artwork of artworks) {
+    const century = centuryOf(artwork.year);
+    groups.set(century, [...(groups.get(century) ?? []), artwork]);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => {
+      if (a === null) return 1;
+      if (b === null) return -1;
+      return a - b;
+    })
+    .map(([century, works]) => ({
+      key: century === null ? 'inconnu' : String(century),
+      title: century === null ? 'Date inconnue' : centuryLabel(century),
+      works: works.slice().sort(byYear),
+    }));
+}
+
+// Œuvres d'un artiste (même clé que le regroupement), par année croissante.
+export function worksByArtist(artworks: Artwork[], artist: string): Artwork[] {
+  const key = artistKey(artist);
+  if (!key) return [];
+  return artworks.filter((a) => artistKey(a.artist) === key).sort(byYear);
+}
+
+// « 2 œuvres, de 1813 à 1814 » sous le nom de l'artiste.
+export function artistSummary(works: Artwork[]): string {
+  const count = works.length === 1 ? '1 œuvre' : `${works.length} œuvres`;
+  const years = works.map((w) => parseYear(w.year)).filter((y): y is number => y !== null && y > 0);
+  if (years.length === 0) return count;
+  const min = Math.min(...years);
+  const max = Math.max(...years);
+  return min === max ? `${count}, ${min}` : `${count}, de ${min} à ${max}`;
+}
+
+// « 1 œuvre », « 12 œuvres ».
+export function countLabel(n: number): string {
+  return n === 1 ? '1 œuvre' : `${n} œuvres`;
 }

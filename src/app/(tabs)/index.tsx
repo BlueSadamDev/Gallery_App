@@ -1,5 +1,5 @@
 import Feather from '@expo/vector-icons/Feather';
-import { Link, Stack, useFocusEffect } from 'expo-router';
+import { type Href, Link, Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -13,15 +13,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '@/theme';
 import { Artwork, getArtworks } from '@/db/database';
 import NaturalImage from '@/components/home/NaturalImage';
-import { buildSommaire, monthLabel, pickCover } from '@/utils/collection';
+import ArtworkGrid, { GRID_GAP } from '@/components/magazine/ArtworkGrid';
+import { buildSommaire, countLabel, monthLabel, pickCover, type SommaireEntry } from '@/utils/collection';
 import { formatDisplayText } from '@/utils/text';
 
 // Accueil « magazine » (DESIGN.md, section Accueil) :
 // en-tête X-GALLERY, œuvre à la une, sommaire « Dans votre collection », puis toutes les œuvres.
 
-// Marges latérales et espace entre les deux colonnes de la grille.
+// Marges latérales.
 const SIDE = 20;
-const GAP = 12;
+
+// Écran ouvert par une ligne du sommaire.
+function sommaireHref(entry: SommaireEntry): Href {
+  if (entry.target === 'artist') return `/artist/${encodeURIComponent(entry.title)}`;
+  if (entry.target === 'century') return '/artworks?vue=siecle';
+  return `/edit/${entry.artworkId}`;
+}
 
 function AddButton() {
   return (
@@ -79,7 +86,7 @@ export default function HomeScreen() {
 
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const columnWidth = (width - SIDE * 2 - GAP) / 2;
+  const columnWidth = (width - SIDE * 2 - GRID_GAP) / 2;
 
   const cover = useMemo(() => pickCover(artworks, today), [artworks, today]);
   const sommaire = useMemo(() => buildSommaire(artworks), [artworks]);
@@ -140,11 +147,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>DANS VOTRE COLLECTION</Text>
               {sommaire.map((entry, index) => (
-                <Link
-                  key={entry.key}
-                  href={entry.target === 'edit' ? `/edit/${entry.artworkId}` : `/detail/${entry.artworkId}`}
-                  asChild
-                >
+                <Link key={entry.key} href={sommaireHref(entry)} asChild>
                   <Pressable
                     accessibilityRole="button"
                     style={({ pressed }) => [
@@ -171,36 +174,18 @@ export default function HomeScreen() {
           {/* 3. Toutes les œuvres, de la plus récente à la plus ancienne */}
           <View style={[styles.section, styles.gridHeader]}>
             <Text style={styles.sectionLabel}>TOUTES LES ŒUVRES</Text>
-            <Text style={styles.count}>
-              {artworks.length === 1 ? '1 œuvre' : `${artworks.length} œuvres`}
-            </Text>
+            <Link href="/artworks" asChild>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`Voir les archives : ${countLabel(artworks.length)}`}
+                style={({ pressed }) => [styles.countLink, pressed && styles.pressed]}
+              >
+                <Text style={styles.count}>{countLabel(artworks.length)}</Text>
+              </Pressable>
+            </Link>
           </View>
           <View style={styles.grid}>
-            {[0, 1].map((column) => (
-              <View key={column} style={{ width: columnWidth, gap: spacing.lg }}>
-                {artworks
-                  .filter((_, index) => index % 2 === column)
-                  .map((artwork) => (
-                    <Link key={String(artwork.id)} href={`/detail/${artwork.id}`} asChild>
-                      <Pressable accessibilityRole="button" accessibilityLabel={artwork.title}>
-                        <NaturalImage
-                          uri={artwork.imageUri}
-                          width={columnWidth}
-                          maxHeight={columnWidth * 1.5}
-                        />
-                        <Text style={styles.tileTitle} numberOfLines={3}>
-                          {formatDisplayText(artwork.title)}
-                        </Text>
-                        {artwork.artist.trim() ? (
-                          <Text style={styles.tileArtist} numberOfLines={1}>
-                            {formatDisplayText(artwork.artist)}
-                          </Text>
-                        ) : null}
-                      </Pressable>
-                    </Link>
-                  ))}
-              </View>
-            ))}
+            <ArtworkGrid artworks={artworks} columnWidth={columnWidth} />
           </View>
         </ScrollView>
       )}
@@ -329,30 +314,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'baseline',
   },
+  countLink: {
+    minHeight: 44,
+    justifyContent: 'center',
+    marginVertical: -14,
+  },
   count: {
     fontFamily: fonts.regular,
     fontSize: 13,
-    color: colors.textSecondary,
+    color: colors.textPrimary,
+    textDecorationLine: 'underline',
   },
   grid: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: GAP,
     paddingHorizontal: SIDE,
     paddingTop: spacing.md,
-  },
-  tileTitle: {
-    fontFamily: fonts.medium,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.textPrimary,
-    marginTop: 8,
-  },
-  tileArtist: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   emptyBody: {
     flex: 1,

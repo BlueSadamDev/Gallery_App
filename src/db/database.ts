@@ -9,6 +9,10 @@ export type Artwork = {
   year: string;
   style: string;
   imageUri: string | null;
+  // Champs facultatifs de la fiche (lot 2 de la refonte) : vides si non renseignés.
+  technique: string;
+  location: string; // lieu de conservation (musée, ville)
+  visitDate: string; // date de la visite, en texte libre
 };
 
 // Type pour la création d'une œuvre (sans l'id, généré automatiquement).
@@ -19,7 +23,14 @@ export type NewArtwork = {
   year: string;
   style: string;
   imageUri: string | null;
+  // Facultatifs : absents = vides à la création, inchangés à la modification.
+  technique?: string;
+  location?: string;
+  visitDate?: string;
 };
+
+// Colonnes ajoutées après la première version : créées automatiquement sur les anciennes bases.
+const ADDED_COLUMNS = ['style', 'technique', 'location', 'visitDate'];
 
 // Nom du fichier de la base de données locale (sur le téléphone).
 const DB_NAME = 'gallery.db';
@@ -41,17 +52,22 @@ export async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
           description TEXT NOT NULL,
           year TEXT NOT NULL,
           style TEXT NOT NULL DEFAULT '',
-          imageUri TEXT
+          imageUri TEXT,
+          technique TEXT NOT NULL DEFAULT '',
+          location TEXT NOT NULL DEFAULT '',
+          visitDate TEXT NOT NULL DEFAULT ''
         );
       `);
-      // Migration : ajoute la colonne "style" si elle n'existe pas (anciennes bases).
+      // Migration : ajoute les colonnes qui manquent (anciennes bases), sans toucher aux œuvres.
       const columns = await db.getAllAsync<{ name: string }>(
         'PRAGMA table_info(artworks);'
       );
-      if (!columns.some((col) => col.name === 'style')) {
-        await db.execAsync(
-          `ALTER TABLE artworks ADD COLUMN style TEXT NOT NULL DEFAULT '';`
-        );
+      for (const column of ADDED_COLUMNS) {
+        if (!columns.some((col) => col.name === column)) {
+          await db.execAsync(
+            `ALTER TABLE artworks ADD COLUMN ${column} TEXT NOT NULL DEFAULT '';`
+          );
+        }
       }
       return db;
     })();
@@ -82,14 +98,17 @@ export async function getArtwork(id: number): Promise<Artwork | null> {
 export async function addArtwork(artwork: NewArtwork): Promise<Artwork> {
   const db = await initDatabase();
   const result = await db.runAsync(
-    `INSERT INTO artworks (title, artist, description, year, style, imageUri)
-     VALUES (?, ?, ?, ?, ?, ?);`,
+    `INSERT INTO artworks (title, artist, description, year, style, imageUri, technique, location, visitDate)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
     artwork.title,
     artwork.artist,
     artwork.description,
     artwork.year,
     artwork.style,
-    artwork.imageUri
+    artwork.imageUri,
+    artwork.technique ?? '',
+    artwork.location ?? '',
+    artwork.visitDate ?? ''
   );
   const inserted = await getArtwork(result.lastInsertRowId);
   if (!inserted) {
@@ -99,6 +118,7 @@ export async function addArtwork(artwork: NewArtwork): Promise<Artwork> {
 }
 
 // Met à jour les informations d'une œuvre existante.
+// Un champ facultatif absent (technique, lieu, date de visite) garde sa valeur.
 export async function updateArtwork(
   id: number,
   artwork: NewArtwork
@@ -106,7 +126,9 @@ export async function updateArtwork(
   const db = await initDatabase();
   await db.runAsync(
     `UPDATE artworks
-     SET title = ?, artist = ?, description = ?, year = ?, style = ?, imageUri = ?
+     SET title = ?, artist = ?, description = ?, year = ?, style = ?, imageUri = ?,
+         technique = COALESCE(?, technique), location = COALESCE(?, location),
+         visitDate = COALESCE(?, visitDate)
      WHERE id = ?;`,
     artwork.title,
     artwork.artist,
@@ -114,6 +136,9 @@ export async function updateArtwork(
     artwork.year,
     artwork.style,
     artwork.imageUri,
+    artwork.technique ?? null,
+    artwork.location ?? null,
+    artwork.visitDate ?? null,
     id
   );
 }

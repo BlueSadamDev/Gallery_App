@@ -100,12 +100,12 @@ Style « magazine » (maquette « 1 · Le magazine » du canevas de design). Mar
 - **Avec au moins une œuvre** :
   1. **À la une** : une œuvre avec image, différente chaque jour (la même toute la journée). Image en pleine largeur, jamais recadrée, hauteur au plus 1,25 × la largeur (une image plus haute est réduite et centrée). Dessous : « À LA UNE » à gauche et le mois en capitales à droite (« NOVEMBRE 2026 », étiquette de rubrique en texte secondaire), le titre (Medium, 44 px, interligne 46, lettres resserrées de 1,2 px, 4 lignes au plus), puis « Artiste, année » (15 px). L'appui ouvre le détail.
   2. **Dans votre collection** (sommaire) : jusqu'à trois lignes numérotées 01, 02, 03 (numéro 13 px en accent, titre Medium 20 px, sous-titre 13 px en texte secondaire), séparées par un trait fin #CFC8BA :
-     - l'artiste qui a le plus d'œuvres (au moins 2) : son nom, puis deux de ses titres ; ouvre sa plus ancienne œuvre ;
-     - le siècle qui a le plus d'œuvres (au moins 2, ignoré s'il ne contient que les œuvres de cet artiste) : « Le XIXe siècle », puis le nombre d'œuvres, d'artistes et les années ; ouvre la plus ancienne ;
+     - l'artiste qui a le plus d'œuvres (au moins 2) : son nom, puis deux de ses titres ; ouvre sa page artiste ;
+     - le siècle qui a le plus d'œuvres (au moins 2, ignoré s'il ne contient que les œuvres de cet artiste) : « Le XIXe siècle », puis le nombre d'œuvres, d'artistes et les années ; ouvre « Toutes les œuvres » classées par siècle ;
      - la fiche la plus récente à compléter (titre « Œuvre inconnue », artiste, année ou description manquants) : son titre, ou « Une œuvre encore sans nom », puis ce qui manque ; ouvre la modification.
      La rubrique disparaît si aucune ligne ne s'applique.
-  3. **Toutes les œuvres** : étiquette à gauche, « N œuvres » à droite (13 px, texte secondaire). Grille sur 2 colonnes de même largeur, 12 px entre les colonnes, 24 px entre les œuvres, de la plus récente à la plus ancienne (une sur deux dans chaque colonne). Chaque image garde ses proportions, sans recadrage ni fond autour, hauteur au plus 1,5 × la largeur de la colonne. Titre Medium 14 px (3 lignes au plus), artiste 12 px en texte secondaire. Fond #E3DDD1 et signe ✦ pour une œuvre sans image.
-- Images affichées sans fondu d'apparition (`fadeDuration` 0), composant `src/components/home/NaturalImage.tsx`. Les tirets et espaces spéciaux sont nettoyés à l'affichage.
+  3. **Toutes les œuvres** : étiquette à gauche, « N œuvres » à droite (13 px, texte principal souligné, zone tactile 44 px) qui ouvre l'écran « Toutes les œuvres ». Grille sur 2 colonnes de même largeur, 12 px entre les colonnes, 24 px entre les œuvres, de la plus récente à la plus ancienne (une sur deux dans chaque colonne). Chaque image garde ses proportions, sans recadrage ni fond autour, hauteur au plus 1,5 × la largeur de la colonne. Titre Medium 14 px (3 lignes au plus), artiste 12 px en texte secondaire. Fond #E3DDD1 et signe ✦ pour une œuvre sans image.
+- Images affichées sans fondu d'apparition (`fadeDuration` 0), composant `src/components/home/NaturalImage.tsx`. Grille commune `src/components/magazine/ArtworkGrid.tsx`. Les tirets et espaces spéciaux sont nettoyés à l'affichage.
 - L'accueil est l'onglet « Collection » de la barre d'onglets (voir ci-dessous).
 
 ### Barre d'onglets
@@ -116,7 +116,23 @@ Barre en bas des écrans principaux, avec deux onglets : « Collection » (l'acc
 - Aucune icône : libellés en capitales « COLLECTION » et « GALERIE VIVANTE », 11 px, lettres espacées de 2 px.
 - Onglet actif : Medium, texte principal. Inactif : Regular, texte secondaire.
 - Zone tactile d'au moins 48 px ; la barre s'ajoute à la zone sûre du bas.
-- Les autres écrans (ajout, détail, modification, paramètres, connexion) s'ouvrent par-dessus, sans barre d'onglets.
+- Les autres écrans (ajout, détail, toutes les œuvres, page artiste, modification, paramètres, connexion) s'ouvrent par-dessus, sans barre d'onglets.
+
+### En-tête des pages intérieures (style magazine)
+
+Détail, Toutes les œuvres et page artiste (`src/components/magazine/MagazineHeader.tsx`) : 56 px sous la zone sûre, trait fin texte principal en bas. Flèche Feather `arrow-left` (20 px, texte principal) à gauche, rubrique au centre en capitales (11 px, lettres espacées de 2,4 px), action facultative à droite (icône 18 px). Zones tactiles 48 px. Marges de 20 px, rubriques avec filet de 2 px (styles communs `src/components/magazine/styles.ts`).
+
+### 3 bis. Toutes les œuvres (les archives)
+
+Écran `src/app/artworks.tsx`, ouvert par « N œuvres » de l'accueil.
+
+- En-tête : rubrique « COLLECTION ».
+- « LES ARCHIVES » à gauche et « 12 ŒUVRES » à droite (petites capitales, texte secondaire), puis le titre « Toutes les œuvres » (Medium, 40 px, interligne 44).
+- Classements sous un filet de 2 px : « TOUT », « PAR ARTISTE », « PAR SIÈCLE » (11 px, lettres espacées de 2 px, 24 px entre eux, zone tactile 48 px). Ouvert : Medium, texte principal, souligné de 2 px ; les autres en texte secondaire. « ?vue=siecle » ou « ?vue=artiste » dans l'adresse choisit le classement à l'ouverture.
+- Tout : la grille de l'accueil, de la plus récente à la plus ancienne.
+- Par artiste : une rubrique par artiste (ordre alphabétique, « Artiste inconnu » en dernier) ; nom en Medium 20 px, souligné, qui ouvre la page artiste ; nombre d'œuvres à droite (13 px, texte secondaire) ; trait fin #CFC8BA dessous ; œuvres par année croissante.
+- Par siècle : une rubrique par siècle (« XIXe siècle », du plus ancien au plus récent, « Date inconnue » en dernier), même présentation sans lien.
+- Chaque œuvre porte son **numéro d'inventaire** au-dessus du titre (« N° 01 », 11 px, accent, lettres espacées de 1,5 px) : 1 pour la première œuvre ajoutée, puis dans l'ordre d'ajout. Le numéro change si une œuvre plus ancienne est supprimée.
 
 ### 7. Galerie vivante
 
@@ -177,16 +193,31 @@ Un seul écran, en plusieurs étapes. En-tête : étiquette « NOUVELLE ŒUVRE �
 - Tous les appels à l'IA passent par `src/services/ai` (aucun écran n'appelle Google directement). Le réglage « temperature » n'est plus envoyé (ignoré par les modèles récents) ; « Régénérer » demande une autre formulation dans la consigne.
 - **Quota de l'IA** (limites gratuites relevées le 21/11/2026, dans `src/services/ai/quotas.ts`) : 3.5 et 3.1 Flash-Lite 15 par minute et 500 par jour ; 3.6 et 3.8 Flash 5 par minute et 20 par jour. Le compteur du jour revient à zéro à minuit, heure du Pacifique. L'app compte les demandes de chaque modèle ; si le modèle choisi a atteint sa limite, ou si Google répond « quota de la minute » ou « quota du jour », elle passe aussitôt au modèle suivant (le plus gros quota du jour d'abord). Elle passe aussi au suivant si Google répond « surchargé » (500, 503 : modèle mis de côté 5 minutes) ou « modèle introuvable » (404, ou quota gratuit à zéro : mis de côté jusqu'à minuit) ; ces mises de côté sont oubliées au redémarrage de l'app. Toute autre erreur (clé, accès, hors ligne, délai dépassé, réponse bloquée) est affichée sans changer de modèle. Aucun modèle disponible : message de quota de la minute, sinon de surcharge, sinon de quota du jour. Le compteur ne contient que des nombres.
 
-### 5. Détail d'une œuvre
+### 5. Détail d'une œuvre (l'article)
 
-- Visuel en haut, pleine largeur.
-- Titre, puis artiste et année en légende, puis description.
-- Actions : modifier et supprimer (icônes fines). La suppression demande une confirmation.
+- En-tête magazine : rubrique « COLLECTION », icône Feather `edit-2` à droite qui ouvre la modification. Pas de roue des paramètres.
+- Image en pleine largeur, jamais recadrée, hauteur au plus 1,25 × la largeur (réduite et centrée au-delà). Rien si l'œuvre n'a pas d'image.
+- Numéro d'inventaire à gauche (accent) et année à droite (petites capitales, texte secondaire), puis le titre (Medium, 40 px, interligne 43, lettres resserrées de 1,1 px).
+- Nom de l'artiste souligné (15 px, zone tactile 44 px) qui ouvre sa page ; dessous, « 2 œuvres dans votre collection » (13 px, texte secondaire) s'il en a au moins deux.
+- Rubrique « L'ŒUVRE » : la première phrase de la description en chapeau (Medium, 19 px, interligne 28), puis le reste (15 px, interligne 24). Pas de chapeau si la première phrase dépasse 240 caractères. Rubrique absente sans description.
+- Rubrique « FICHE », façon cartel : Artiste, Année, Style, Technique, Lieu de conservation, Vue le. Libellé à gauche (11 px, capitales, texte secondaire), valeur à droite (14 px) ; « À compléter » en texte secondaire si vide ; trait fin #CFC8BA entre les lignes. Lien souligné « Compléter la fiche » (ou « Modifier la fiche » si tout est rempli) qui ouvre la modification.
+- Rubrique « ŒUVRE SUIVANTE » : miniature (96 px de large, jamais recadrée), numéro, titre (Medium 22 px), artiste, flèche. Ordre de « Toutes les œuvres » (de la plus récente à la plus ancienne, puis retour à la première). L'œuvre suivante remplace la page (le retour revient à la liste d'origine). Absente s'il n'y a qu'une œuvre.
+- « Supprimer l'œuvre » en bas, lien discret (13 px, couleur Alerte) sous un trait fin. La suppression demande une confirmation.
+
+### 5 ter. Page artiste (le portrait)
+
+Écran `src/app/artist/[name].tsx`, ouvert en touchant le nom d'un artiste (détail, Toutes les œuvres, sommaire de l'accueil).
+
+- En-tête magazine : rubrique « ARTISTE ».
+- « PORTRAIT » (petites capitales), le nom tel qu'écrit dans les fiches (Medium, 40 px), puis « 2 œuvres, de 1813 à 1814 » (15 px, texte secondaire).
+- Rubrique « SES ŒUVRES » : la grille magazine avec les numéros d'inventaire, par année croissante.
+- Les fiches dont l'artiste s'écrit pareil, sans tenir compte des majuscules ni des espaces autour, sont regroupées.
+- Aucune œuvre : « Aucune œuvre de cet artiste dans votre collection. »
 
 ### 5 bis. Modification d'une œuvre
 
 - En-tête sans titre technique, roue Feather fine (texte secondaire) ; étiquette « MODIFICATION » et titre « Modifier l'œuvre » (Medium 32 px). Couleurs et composants de l'écran d'ajout (fond #F6F2EA, champs soulignés, boutons coins 2 px).
-- Image (320 px de haut, jamais recadrée, fond #E3DDD1), boutons à contour « Appareil photo » et « Galerie », puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Titre *, Artiste, Année, Style, Description et le bouton plein « Enregistrer ».
+- Image (320 px de haut, jamais recadrée, fond #E3DDD1), boutons à contour « Appareil photo » et « Galerie », puis bouton à contour fin accent **« Compléter avec l'IA »** (zone tactile 48 px), puis les champs Titre *, Artiste, Année, Style, Description, Technique, Lieu de conservation, Vue le (texte libre, par exemple « 12 mai 2026 ») et le bouton plein « Enregistrer ».
 - « Compléter avec l'IA » : même recherche vérifiée qu'à l'ajout (IA + Wikidata) à partir du titre, de l'artiste et de l'année enregistrés ; sans résultat, nouvelle recherche sur le titre seul. Une seule œuvre : « Œuvre trouvée : titre, artiste, année. Utiliser ces informations ? ». Plusieurs : liste de propositions (comme à l'ajout, « Voir 5 autres », « Aucune ne convient »). Nombreux homonymes sans artiste ni année : l'app demande de les ajouter.
 - Seuls les champs **vides** sont remplis : artiste, année, description (rédigée par l'IA à partir du résumé Wikipédia, mention « À vérifier » qui disparaît dès que vous modifiez le texte ou enregistrez) et image Wikimedia si l'œuvre n'a pas d'image. Le style n'est pas rempli (Wikidata ne le fournit pas).
 - Artiste ou année déjà saisis mais différents de Wikidata : fenêtre « Différences avec Wikidata » (« Année : « 1890 » ici, « 1889 » selon Wikidata ») avec « Garder les miennes » (par défaut) ou « Remplacer ».
@@ -208,7 +239,7 @@ Contenu actuel :
 
 ## Données d'une œuvre
 
-Nom, artiste, année, description, visuel. Tout reste sur le téléphone. Le visuel est copié dans le stockage de l'app, pour rester disponible même si la photo d'origine est supprimée.
+Nom, artiste, année, style, description, visuel, et trois champs facultatifs : technique, lieu de conservation, date de votre visite (texte libre). Les colonnes manquantes sont ajoutées automatiquement aux anciennes bases, sans toucher aux œuvres. La sauvegarde (version 2) contient ces champs et garde l'ordre d'ajout ; une sauvegarde de la version 1 est remise dans l'ordre d'ajout à la restauration. Tout reste sur le téléphone. Le visuel est copié dans le stockage de l'app, pour rester disponible même si la photo d'origine est supprimée.
 
 ## Sécurité de l'accès
 
@@ -218,7 +249,7 @@ Nom, artiste, année, description, visuel. Tout reste sur le téléphone. Le vis
 
 ## Hors version 1
 
-Recherche, tri, page Artistes, catégories, sauvegarde ou export de la collection, compte en ligne, mode sombre.
+Recherche, catégories, sauvegarde ou export de la collection, compte en ligne, mode sombre.
 
 ## Corrections à appliquer en priorité
 

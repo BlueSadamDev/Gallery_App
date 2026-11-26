@@ -6,7 +6,8 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
 
 - 📷 Galerie photo : ajout, détail, édition, suppression (bouton « + » carré bordeaux : grand et centré quand la collection est vide, sinon petit en haut à droite, à gauche du menu des paramètres)
 - 📰 **Accueil « magazine »** : une œuvre à la une qui change chaque jour, un sommaire « Dans votre collection » calculé sur le téléphone sans IA (artiste, siècle, fiche à compléter), puis toutes les œuvres sur deux colonnes
-- 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description)
+- 📚 **Toutes les œuvres** (classement tout, par artiste ou par siècle, numéros d'inventaire), **page artiste**, et **détail façon article** (chapeau, encadré « Fiche », œuvre suivante)
+- 🗂️ Stockage local avec **SQLite** (titre, auteur, année, style, description, et en option technique, lieu de conservation, date de visite)
 - 🔎 **Recherche d'œuvre fiable** (écran d'ajout) :
   - « Rechercher par titre » (artiste et année facultatifs) : des propositions vérifiées viennent de **Wikidata** (images Wikimedia Commons, sans clé). Vous choisissez l'œuvre, vérifiez la fiche, et pouvez refuser (« Aucune ne convient », « Pas la bonne œuvre ») ou saisir à la main.
   - « Ajouter ma photo » : identification sur appui de « Identifier l'œuvre » seulement, cartel facultatif ; la photo est réduite et ses métadonnées (GPS) sont supprimées avant l'envoi. Votre photo reste l'image par défaut. Si rien n'est trouvé, l'app propose de la **conserver comme œuvre inconnue**.
@@ -25,8 +26,9 @@ Application Android de galerie photos créée avec **Expo** (React Native + Type
   - `(tabs)/galerie.tsx` : onglet « Galerie vivante »
   - `add.tsx` : ajout d'une œuvre (choix, ma photo, recherche, propositions, fiche)
   - `detail/[id].tsx`, `edit/[id].tsx` : détail et édition d'une photo
+  - `artworks.tsx` : toutes les œuvres ; `artist/[name].tsx` : page d'un artiste
   - `login.tsx`, `register.tsx`, `settings.tsx` : authentification et réglages
-- `src/components/` : composants réutilisables (`home/` pour l'accueil, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout ; `Carousel.tsx` n'est plus utilisé depuis l'accueil magazine)
+- `src/components/` : composants réutilisables (`home/` et `magazine/` pour l'accueil et les pages magazine, `gallery/` pour la Galerie vivante, `add/` pour l'écran d'ajout ; `Carousel.tsx` n'est plus utilisé depuis l'accueil magazine)
 - `src/services/` : position approximative et météo (Galerie vivante) ; `artworkSearch/` : recherche d'œuvres (Wikidata, vérification artiste/année)
 - `src/services/ai/` : point d'entrée unique de tous les appels à l'IA (fournisseur Gemini, classement des erreurs et messages)
 - `tests/ia/` : tests automatiques de la couche IA, avec des réponses de Google simulées (aucun appel réel)
@@ -80,7 +82,7 @@ npm run test:ia
 
 ## Tester l'accueil magazine
 
-Vérifie le choix de l'œuvre à la une (la même toute la journée, une autre le lendemain) et le sommaire « Dans votre collection » (artiste, siècle, fiche à compléter) :
+Vérifie le choix de l'œuvre à la une (la même toute la journée, une autre le lendemain), le sommaire « Dans votre collection » (artiste, siècle, fiche à compléter), les numéros d'inventaire, les classements par artiste et par siècle, le chapeau du détail et l'œuvre suivante :
 
 ```bash
 npm run test:accueil
