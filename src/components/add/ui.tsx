@@ -1,8 +1,12 @@
-// Éléments d'interface communs au parcours d'ajout d'une œuvre.
-// Couleurs, coins et tailles repris de DESIGN.md (comme l'écran d'accueil).
+// Éléments d'interface communs au parcours d'ajout et à la modification d'une œuvre.
+// Style « magazine » de DESIGN.md : rubriques à filet, étiquettes en capitales espacées,
+// champs soulignés, bouton principal gris très foncé. L'accent (bordeaux) est réservé
+// au bouton « + » et aux numéros.
 
+import type { ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { fonts } from '@/theme';
+import { magazine } from '@/components/magazine/styles';
 
 export const palette = {
   background: '#F6F2EA',
@@ -24,12 +28,14 @@ type ButtonProps = {
   loading?: boolean;
 };
 
-// Bouton plein, couleur accent (un seul par écran).
+// Bouton principal plein (un seul par écran) : gris très foncé, texte crème en capitales,
+// pleine largeur, 52 px de haut.
 export function PrimaryButton({ label, onPress, disabled, loading }: ButtonProps) {
   const inactive = disabled || loading;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       disabled={inactive}
       style={({ pressed }) => [
@@ -40,17 +46,18 @@ export function PrimaryButton({ label, onPress, disabled, loading }: ButtonProps
       ]}
     >
       {loading ? <ActivityIndicator color={palette.onAccent} /> : null}
-      <Text style={styles.primaryText}>{label}</Text>
+      <Text style={styles.primaryText}>{label.toUpperCase()}</Text>
     </Pressable>
   );
 }
 
-// Bouton à contour fin.
+// Bouton à contour fin (texte principal).
 export function SecondaryButton({ label, onPress, disabled, loading }: ButtonProps) {
   const inactive = disabled || loading;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       onPress={onPress}
       disabled={inactive}
       style={({ pressed }) => [
@@ -60,20 +67,29 @@ export function SecondaryButton({ label, onPress, disabled, loading }: ButtonPro
         pressed && !inactive && styles.pressed,
       ]}
     >
-      {loading ? <ActivityIndicator color={palette.accent} /> : null}
-      <Text style={styles.secondaryText}>{label}</Text>
+      {loading ? <ActivityIndicator color={palette.text} /> : null}
+      <Text style={styles.secondaryText}>{label.toUpperCase()}</Text>
     </Pressable>
   );
 }
 
-// Lien texte discret (zone tactile de 48 px).
-export function LinkButton({ label, onPress, disabled }: ButtonProps) {
+// Lien souligné (texte principal, zone tactile de 48 px).
+export function LinkButton({
+  label,
+  onPress,
+  disabled,
+  align = 'center',
+}: ButtonProps & { align?: 'center' | 'left' }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [styles.link, (disabled || pressed) && styles.disabled]}
+      style={({ pressed }) => [
+        styles.link,
+        align === 'left' && styles.linkLeft,
+        (disabled || pressed) && styles.disabled,
+      ]}
     >
       <Text style={styles.linkText}>{label}</Text>
     </Pressable>
@@ -89,12 +105,12 @@ type FieldProps = {
   hint?: string; // mention discrète à droite du libellé (ex. « À vérifier »)
 };
 
-// Champ de saisie souligné d'un trait fin.
+// Champ souligné, nom en capitales 11 px au-dessus.
 export function Field({ label, value, onChangeText, placeholder, multiline, hint }: FieldProps) {
   return (
     <View style={styles.field}>
       <View style={styles.fieldHeader}>
-        <Text style={styles.fieldLabel}>{label}</Text>
+        <Text style={styles.fieldLabel}>{label.toUpperCase()}</Text>
         {hint ? <Text style={styles.fieldHint}>{hint}</Text> : null}
       </View>
       <TextInput
@@ -105,18 +121,41 @@ export function Field({ label, value, onChangeText, placeholder, multiline, hint
         placeholderTextColor={palette.textSecondary}
         multiline={multiline}
         textAlignVertical={multiline ? 'top' : 'center'}
+        accessibilityLabel={label}
       />
     </View>
   );
 }
 
-// Petite étiquette au-dessus d'un titre d'écran.
-export function Eyebrow({ children }: { children: string }) {
-  return <Text style={styles.eyebrow}>{children}</Text>;
+// Grand titre de page (Medium 40 px).
+export function ScreenTitle({ children }: { children: string }) {
+  return <Text style={magazine.pageTitle}>{children}</Text>;
 }
 
-export function ScreenTitle({ children }: { children: string }) {
-  return <Text style={styles.title}>{children}</Text>;
+// Phrase d'introduction sous le titre (15 px, texte secondaire).
+export function Intro({ children }: { children: string }) {
+  return <Text style={styles.intro}>{children}</Text>;
+}
+
+// Rubrique : filet de 2 px, étiquette en capitales à gauche, mention facultative à droite.
+export function Rubric({
+  label,
+  right,
+  children,
+}: {
+  label: string;
+  right?: string;
+  children: ReactNode;
+}) {
+  return (
+    <View style={styles.rubric}>
+      <View style={magazine.kickerRow}>
+        <Text style={magazine.sectionLabel}>{label}</Text>
+        {right ? <Text style={magazine.kicker}>{right}</Text> : null}
+      </View>
+      <View style={styles.rubricBody}>{children}</View>
+    </View>
+  );
 }
 
 // Message d'information ou d'erreur, sobre.
@@ -135,21 +174,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primary: {
-    backgroundColor: palette.accent,
+    height: 52,
+    alignSelf: 'stretch',
+    backgroundColor: palette.text,
   },
   primaryText: {
     fontFamily: fonts.medium,
-    fontSize: 15,
+    fontSize: 13,
+    letterSpacing: 2.4,
     color: palette.onAccent,
   },
   secondary: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: palette.accent,
+    borderColor: palette.text,
   },
   secondaryText: {
     fontFamily: fonts.medium,
-    fontSize: 15,
-    color: palette.accent,
+    fontSize: 12,
+    letterSpacing: 2,
+    color: palette.text,
   },
   disabled: {
     opacity: 0.45,
@@ -162,10 +205,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  linkLeft: {
+    alignItems: 'flex-start',
+  },
   linkText: {
     fontFamily: fonts.regular,
-    fontSize: 15,
-    color: palette.accent,
+    fontSize: 13,
+    color: palette.text,
+    textDecorationLine: 'underline',
   },
   field: {
     marginBottom: 24,
@@ -178,9 +225,9 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontFamily: fonts.regular,
-    fontSize: 12,
-    letterSpacing: 0.6,
-    color: palette.label,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    color: palette.textSecondary,
   },
   fieldHint: {
     fontFamily: fonts.regular,
@@ -199,19 +246,21 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 96,
   },
-  eyebrow: {
+  intro: {
     fontFamily: fonts.regular,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: palette.label,
-    marginBottom: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    color: palette.textSecondary,
+    marginTop: 12,
   },
-  title: {
-    fontFamily: fonts.title,
-    fontSize: 32,
-    color: palette.text,
-    marginBottom: 24,
+  rubric: {
+    marginTop: 32,
+    paddingTop: 12,
+    borderTopWidth: 2,
+    borderTopColor: palette.text,
+  },
+  rubricBody: {
+    marginTop: 16,
   },
   notice: {
     fontFamily: fonts.regular,

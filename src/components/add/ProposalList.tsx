@@ -1,11 +1,11 @@
-// Liste des propositions d'œuvres : miniature, titre, artiste, année, lieu.
+// Liste numérotée des propositions d'œuvres : miniature à gauche, numéro, titre, artiste, année, lieu.
 
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { fonts } from '@/theme';
 import { USER_AGENT, type Proposal } from '@/services/artworkSearch';
-import { LinkButton, Notice, palette, SecondaryButton } from './ui';
+import { LinkButton, Notice, palette, Rubric, SecondaryButton } from './ui';
 
 type Props = {
   proposals: Proposal[];
@@ -36,18 +36,20 @@ function Thumbnail({ uri }: { uri: string | null }) {
 }
 
 export function ProposalList({ proposals, hasMore, onSelect, onMore, onNone }: Props) {
+  const count = `${proposals.length} PROPOSITION${proposals.length > 1 ? 'S' : ''}`;
   return (
-    <View>
+    <Rubric label={count}>
       <Notice>Choisissez l’œuvre qui correspond.</Notice>
-      {proposals.map((proposal) => (
+      {proposals.map((proposal, index) => (
         <Pressable
           key={proposal.id}
           accessibilityRole="button"
           onPress={() => onSelect(proposal)}
-          style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.row, index === 0 && styles.firstRow, pressed && styles.pressed]}
         >
           <Thumbnail uri={proposal.thumbnailUrl} />
           <View style={styles.texts}>
+            <Text style={styles.number}>{String(index + 1).padStart(2, '0')}</Text>
             <Text style={styles.title} numberOfLines={2}>
               {proposal.title || 'Sans titre'}
             </Text>
@@ -60,14 +62,14 @@ export function ProposalList({ proposals, hasMore, onSelect, onMore, onNone }: P
               </Text>
             ) : null}
           </View>
-          <Feather name="chevron-right" size={18} color={palette.textSecondary} />
+          <Feather name="arrow-right" size={18} color={palette.textSecondary} />
         </Pressable>
       ))}
       <View style={styles.actions}>
         {hasMore ? <SecondaryButton label="Voir 5 autres" onPress={onMore} /> : null}
         <LinkButton label="Aucune ne convient" onPress={onNone} />
       </View>
-    </View>
+    </Rubric>
   );
 }
 
@@ -76,10 +78,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: palette.hairline,
+    borderBottomColor: palette.field,
     minHeight: 48,
+  },
+  firstRow: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.field,
+  },
+  number: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: palette.accent,
+    marginBottom: 2,
   },
   pressed: {
     opacity: 0.7,
@@ -99,8 +111,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.medium,
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 23,
     color: palette.text,
   },
   caption: {

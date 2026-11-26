@@ -1,27 +1,27 @@
-import { Link, router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 import { useNetworkState } from 'expo-network';
 import { fonts } from '@/theme';
 import {
-  Eyebrow,
   Field,
   palette,
   PrimaryButton,
+  Rubric,
   ScreenTitle,
   SecondaryButton,
 } from '@/components/add/ui';
+import { ImageBlock, OptionalFields, type SheetImage } from '@/components/add/ArtworkSheet';
+import MagazineHeader from '@/components/magazine/MagazineHeader';
+import { SIDE } from '@/components/magazine/styles';
 import { getArtwork, updateArtwork } from '@/db/database';
 import { pickImageFromGallery, takePhotoWithCamera } from '@/utils/images';
 import { downloadImage } from '@/utils/artworkImageSearch';
@@ -32,21 +32,10 @@ import {
   ArtworkSearchError,
   describeProposal,
   findProposals,
-  USER_AGENT,
   type Proposal,
 } from '@/services/artworkSearch';
 import { describeDifferences, planCompletion } from '@/services/artworkSearch/complete';
 import { ProposalList } from '@/components/add/ProposalList';
-
-function SettingsButton() {
-  return (
-    <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton} accessibilityLabel="Paramètres">
-        <Feather name="settings" size={22} color={palette.textSecondary} />
-      </Pressable>
-    </Link>
-  );
-}
 
 const PAGE_SIZE = 5;
 
@@ -311,17 +300,17 @@ export default function EditScreen() {
     }
   }
 
+  // Image affichée : celle de Wikimedia proposée (pas encore copiée), sinon celle de l'œuvre.
+  const shownImage: SheetImage = remoteImageUrl
+    ? { kind: 'remote', url: remoteImageUrl }
+    : imageUri
+      ? { kind: 'local', uri: imageUri }
+      : null;
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: '',
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: palette.background },
-          headerTintColor: palette.text,
-          headerRight: () => <SettingsButton />,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      <MagazineHeader label="MODIFICATION" />
 
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
@@ -330,18 +319,16 @@ export default function EditScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Eyebrow>MODIFICATION</Eyebrow>
           <ScreenTitle>Modifier l’œuvre</ScreenTitle>
 
-          <Visual key={remoteImageUrl ?? imageUri ?? 'vide'} remoteUrl={remoteImageUrl} localUri={imageUri} />
-          <View style={styles.imageActions}>
-            <View style={styles.half}>
-              <SecondaryButton label="Appareil photo" onPress={handleTakePhoto} disabled={saving} />
-            </View>
-            <View style={styles.half}>
-              <SecondaryButton label="Galerie" onPress={handlePickFromGallery} disabled={saving} />
-            </View>
-          </View>
+          <ImageBlock
+            image={shownImage}
+            disabled={saving}
+            choices={[
+              { label: 'Appareil photo', onPress: handleTakePhoto },
+              { label: 'Galerie', onPress: handlePickFromGallery },
+            ]}
+          />
 
           <View style={styles.completeSection}>
             <SecondaryButton
@@ -362,55 +349,48 @@ export default function EditScreen() {
             ) : null}
           </View>
 
-          <Field label="Titre *" value={title} onChangeText={setTitle} />
-          <Field label="Artiste" value={artist} onChangeText={setArtist} />
-          <Field label="Année" value={year} onChangeText={setYear} />
-          <Field label="Style" value={style} onChangeText={setStyle} placeholder="Ex. Impressionnisme" />
-          <Field
-            label="Description"
-            value={description}
-            onChangeText={(text) => {
-              setDescription(text);
-              setDescriptionFromAi(false);
-            }}
-            placeholder="Quelques mots sur cette œuvre"
-            multiline
-            hint={descriptionFromAi ? 'À vérifier' : undefined}
-          />
-          {/* Champs facultatifs de l'encadré « Fiche » du détail. */}
-          <Field label="Technique" value={technique} onChangeText={setTechnique} placeholder="Ex. Huile sur toile, marbre" />
-          <Field label="Lieu de conservation" value={location} onChangeText={setLocation} placeholder="Musée, ville" />
-          <Field label="Vue le" value={visitDate} onChangeText={setVisitDate} placeholder="Date de votre visite, ex. 12 mai 2026" />
+          <Rubric label="LA FICHE">
+            <Field label="Titre *" value={title} onChangeText={setTitle} />
+            <Field label="Artiste" value={artist} onChangeText={setArtist} />
+            <Field label="Année" value={year} onChangeText={setYear} />
+            <Field label="Style" value={style} onChangeText={setStyle} placeholder="Ex. Impressionnisme" />
+            <Field
+              label="Description"
+              value={description}
+              onChangeText={(text) => {
+                setDescription(text);
+                setDescriptionFromAi(false);
+              }}
+              placeholder="Quelques mots sur cette œuvre"
+              multiline
+              hint={descriptionFromAi ? 'À vérifier' : undefined}
+            />
+          </Rubric>
 
-          <PrimaryButton
-            label={loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}
-            onPress={handleSave}
-            disabled={!canSave || loading}
-            loading={saving}
+          {/* Champs facultatifs de la rubrique « FICHE » du détail. */}
+          <OptionalFields
+            technique={technique}
+            location={location}
+            visitDate={visitDate}
+            onChange={(field, value) => {
+              if (field === 'technique') setTechnique(value);
+              if (field === 'location') setLocation(value);
+              if (field === 'visitDate') setVisitDate(value);
+            }}
           />
+
+          <View style={styles.bottom}>
+            <PrimaryButton
+              label={loading ? 'Chargement…' : saving ? 'Enregistrement…' : 'Enregistrer'}
+              onPress={handleSave}
+              disabled={!canSave || loading}
+              loading={saving}
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </>
   );
-}
-
-// Image de l'œuvre : jamais recadrée ; fond de chargement #E3DDD1.
-function Visual({ remoteUrl, localUri }: { remoteUrl: string | null; localUri: string | null }) {
-  const [failed, setFailed] = useState(false);
-  const source = remoteUrl
-    ? { uri: remoteUrl, headers: { 'User-Agent': USER_AGENT } }
-    : localUri
-      ? { uri: localUri }
-      : null;
-  if (!source || failed) {
-    return (
-      <View style={[styles.visual, styles.visualEmpty]}>
-        <Feather name="image" size={28} color={palette.textSecondary} />
-        <Text style={styles.visualText}>{failed ? 'Image indisponible' : 'Aucune image'}</Text>
-      </View>
-    );
-  }
-  return <Image source={source} style={styles.visual} resizeMode="contain" onError={() => setFailed(true)} />;
 }
 
 const styles = StyleSheet.create({
@@ -420,38 +400,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: SIDE,
     paddingTop: 8,
     paddingBottom: 120,
   },
-  visual: {
-    width: '100%',
-    height: 320,
-    borderRadius: 2,
-    backgroundColor: palette.placeholder,
-    marginTop: 24,
-  },
-  visualEmpty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  visualText: {
-    fontFamily: fonts.regular,
-    fontSize: 13,
-    color: palette.textSecondary,
-  },
-  imageActions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  half: {
-    flex: 1,
-  },
   completeSection: {
     marginTop: 16,
-    marginBottom: 32,
   },
   completeMessage: {
     fontFamily: fonts.regular,
@@ -459,10 +413,7 @@ const styles = StyleSheet.create({
     color: palette.textSecondary,
     marginTop: 8,
   },
-  settingsButton: {
-    minWidth: 48,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  bottom: {
+    marginTop: 16,
   },
 });

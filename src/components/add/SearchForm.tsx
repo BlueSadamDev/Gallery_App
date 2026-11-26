@@ -1,7 +1,7 @@
 // Formulaire de recherche : titre obligatoire, artiste et année facultatifs.
 
 import { View } from 'react-native';
-import { Field, LinkButton, Notice, PrimaryButton, SecondaryButton } from './ui';
+import { Field, LinkButton, Notice, PrimaryButton, Rubric, SecondaryButton } from './ui';
 
 type Props = {
   title: string;
@@ -22,7 +22,7 @@ type Props = {
 export function SearchForm(props: Props) {
   const canSearch = props.title.trim().length > 0 && !props.searching && !props.offline;
   return (
-    <View>
+    <Rubric label="VOTRE RECHERCHE">
       {props.offline ? (
         <Notice>Vous êtes hors ligne. Vous pouvez saisir l’œuvre à la main.</Notice>
       ) : null}
@@ -62,6 +62,6 @@ export function SearchForm(props: Props) {
           <LinkButton label="Conserver ma photo comme œuvre inconnue" onPress={props.onKeepUnknown} />
         ) : null}
       </View>
-    </View>
+    </Rubric>
   );
 }

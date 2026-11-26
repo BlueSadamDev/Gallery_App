@@ -10,14 +10,19 @@ type Props = {
   label: string;
   // Bouton facultatif à droite (par exemple « Modifier »).
   right?: ReactNode;
+  // Icône de gauche : flèche (par défaut) ou croix pour fermer (sommaire de l'ajout).
+  backIcon?: 'arrow-left' | 'x';
+  // Action de gauche à la place du retour simple (étapes internes de l'ajout).
+  onBack?: () => void;
 };
 
 // En-tête des pages intérieures du magazine : retour, rubrique au centre, action à droite.
-export default function MagazineHeader({ label, right }: Props) {
+export default function MagazineHeader({ label, right, backIcon = 'arrow-left', onBack }: Props) {
   const insets = useSafeAreaInsets();
 
   function goBack() {
-    if (router.canGoBack()) router.back();
+    if (onBack) onBack();
+    else if (router.canGoBack()) router.back();
     else router.replace('/');
   }
 
@@ -26,11 +31,11 @@ export default function MagazineHeader({ label, right }: Props) {
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Retour"
+          accessibilityLabel={backIcon === 'x' ? 'Fermer' : 'Retour'}
           onPress={goBack}
           style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
         >
-          <Feather name="arrow-left" size={20} color={colors.textPrimary} />
+          <Feather name={backIcon} size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.label} numberOfLines={1}>{label}</Text>
         {right ?? <View style={styles.iconButton} />}

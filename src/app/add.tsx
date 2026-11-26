@@ -1,4 +1,4 @@
-import { Link, router, Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -7,10 +7,14 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNetworkState } from 'expo-network';
+import { fonts } from '@/theme';
+import MagazineHeader from '@/components/magazine/MagazineHeader';
+import { SIDE } from '@/components/magazine/styles';
 import { addArtwork } from '@/db/database';
 import {
   pickImageFromGallery,
@@ -33,20 +37,13 @@ import {
   listArtworkImages,
   type Proposal,
 } from '@/services/artworkSearch';
-import {
-  Eyebrow,
-  Notice,
-  palette,
-  PrimaryButton,
-  ScreenTitle,
-  SecondaryButton,
-} from '@/components/add/ui';
+import { Intro, palette, ScreenTitle } from '@/components/add/ui';
 import { SearchForm } from '@/components/add/SearchForm';
 import { ProposalList } from '@/components/add/ProposalList';
 import { ArtworkSheet, type SheetForm, type SheetImage } from '@/components/add/ArtworkSheet';
 
 // Étapes de l'écran d'ajout.
-// choice : deux boutons ; photo : ma photo et identification ; search : formulaire ;
+// choice : sommaire (trois façons d'ajouter) ; photo : ma photo et identification ; search : formulaire ;
 // results : propositions ; sheet : fiche.
 type Phase = 'choice' | 'photo' | 'search' | 'results' | 'sheet';
 
@@ -54,15 +51,62 @@ const PAGE_SIZE = 5;
 const IMAGE_WIDTH = 1024; // largeur de l'image Wikimedia affichée et copiée
 const MAX_MISSES = 3; // recherche initiale + 2 relances sans succès → saisie manuelle
 
-const EMPTY_FORM: SheetForm = { title: '', artist: '', year: '', style: '', description: '' };
+const EMPTY_FORM: SheetForm = {
+  title: '',
+  artist: '',
+  year: '',
+  style: '',
+  description: '',
+  technique: '',
+  location: '',
+  visitDate: '',
+};
 
-function SettingsButton() {
+// Ligne numérotée du sommaire : numéro (accent), titre, sous-titre, flèche à droite.
+// `links` : liens soulignés en capitales placés directement dans la ligne.
+function SummaryRow({
+  number,
+  title,
+  subtitle,
+  onPress,
+  links,
+}: {
+  number: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+  links?: { label: string; onPress: () => void }[];
+}) {
   return (
-    <Link href="/settings" asChild>
-      <Pressable style={styles.settingsButton} accessibilityLabel="Paramètres">
-        <Feather name="settings" size={22} color={palette.textSecondary} />
-      </Pressable>
-    </Link>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.summaryRow, pressed && styles.pressed]}
+    >
+      <View style={styles.summaryTexts}>
+        <Text style={styles.summaryNumber}>{number}</Text>
+        <Text style={styles.summaryTitle}>{title}</Text>
+        <Text style={styles.summarySubtitle}>{subtitle}</Text>
+        {links ? (
+          <View style={styles.summaryLinks}>
+            {links.map((link) => (
+              <Pressable
+                key={link.label}
+                accessibilityRole="button"
+                accessibilityLabel={link.label}
+                onPress={link.onPress}
+                hitSlop={8}
+                style={({ pressed }) => [styles.summaryLink, pressed && styles.pressed]}
+              >
+                <Text style={styles.summaryLinkText}>{link.label.toUpperCase()}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
+      <Feather name="arrow-right" size={20} color={palette.textSecondary} />
+    </Pressable>
   );
 }
 
@@ -77,7 +121,7 @@ function errorMessage(error: unknown): string {
 }
 
 // Ouvre l'appareil photo ou la galerie ; renvoie le chemin de la copie locale.
-// Le choix se fait avec deux boutons dans l'écran « Ma photo », pas dans une fenêtre Android.
+// Le choix se fait avec les liens du sommaire, pas dans une fenêtre Android.
 async function getPhoto(source: 'camera' | 'gallery'): Promise<string | null> {
   try {
     return source === 'camera' ? await takePhotoWithCamera() : await pickImageFromGallery();
@@ -282,11 +326,17 @@ export default function AddScreen() {
     setDescriptionState('idle');
     selectedIdRef.current = null;
     setSelected(null);
-    setForm({ ...EMPTY_FORM, title: query.title, artist: query.artist, year: query.year });
+    // Depuis le sommaire (« Saisir à la main ») : fiche vierge, sans photo.
+    const fromSummary = from === 'choice';
+    setForm(
+      fromSummary
+        ? EMPTY_FORM
+        : { ...EMPTY_FORM, title: query.title, artist: query.artist, year: query.year }
+    );
     setImageFiles([]);
     setImageIndex(0);
     // Ma photo, si j'en ai ajouté une, reste l'image par défaut.
-    setSheetImage(image ?? (photoUri ? { kind: 'local', uri: photoUri } : null));
+    setSheetImage(image ?? (!fromSummary && photoUri ? { kind: 'local', uri: photoUri } : null));
     setSheetFrom(from);
     setPhase('sheet');
   }
@@ -391,6 +441,9 @@ export default function AddScreen() {
         year: form.year.trim(),
         style: form.style.trim(),
         description: form.description.trim(),
+        technique: form.technique.trim(),
+        location: form.location.trim(),
+        visitDate: form.visitDate.trim(),
         imageUri,
       });
       router.back();
@@ -402,16 +455,7 @@ export default function AddScreen() {
   }
 
   // ----- Ma photo (étape 4) -----
-  // « Ajouter ma photo » : ouvre l'écran « Ma photo » avec ses deux boutons.
-  function handleAddPhoto() {
-    setMessage(null);
-    setPhotoUri(null);
-    setCartelUri(null);
-    setReadText(null);
-    setPhotoMissed(false);
-    setPhase('photo');
-  }
-
+  // Liens « Appareil photo » et « Galerie » du sommaire : ouvrent « Ma photo » avec la photo choisie.
   async function handlePickPhoto(source: 'camera' | 'gallery') {
     const uri = await getPhoto(source);
     if (!uri) return;
@@ -505,13 +549,12 @@ export default function AddScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: '',
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: palette.background },
-          headerTintColor: palette.text,
-          headerRight: () => <SettingsButton />,
+      <Stack.Screen options={{ headerShown: false }} />
+      <MagazineHeader
+        label="NOUVELLE ŒUVRE"
+        backIcon={phase === 'choice' ? 'x' : 'arrow-left'}
+        onBack={() => {
+          if (!goBack()) router.back();
         }}
       />
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
@@ -521,37 +564,41 @@ export default function AddScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Eyebrow>Nouvelle œuvre</Eyebrow>
           <ScreenTitle>{titles[phase]}</ScreenTitle>
 
           {phase === 'choice' ? (
-            <View style={styles.choice}>
-              <Notice>Retrouvez l’œuvre par son titre, ou partez de votre photo.</Notice>
-              <PrimaryButton
-                label="Rechercher par titre"
-                onPress={() => {
-                  setMessage(null);
-                  setPhotoUri(null);
-                  setCartelUri(null);
-                  setPhase('search');
-                }}
-              />
-              <SecondaryButton label="Ajouter ma photo" onPress={handleAddPhoto} />
-            </View>
-          ) : null}
-
-          {phase === 'photo' && !photoUri ? (
-            <View style={styles.choice}>
-              <Notice>Photographiez l’œuvre, ou choisissez une photo déjà prise.</Notice>
-              <View style={styles.sourceRow}>
-                <View style={styles.sourceHalf}>
-                  <SecondaryButton label="Appareil photo" onPress={() => handlePickPhoto('camera')} />
-                </View>
-                <View style={styles.sourceHalf}>
-                  <SecondaryButton label="Galerie" onPress={() => handlePickPhoto('gallery')} />
-                </View>
+            <>
+              <Intro>Trois façons d’entrer une œuvre dans votre collection.</Intro>
+              <View style={styles.summary}>
+                <SummaryRow
+                  number="01"
+                  title="Rechercher par titre"
+                  subtitle="Un titre ou un artiste : la fiche se remplit à partir de Wikidata."
+                  onPress={() => {
+                    setMessage(null);
+                    setPhotoUri(null);
+                    setCartelUri(null);
+                    setPhase('search');
+                  }}
+                />
+                <SummaryRow
+                  number="02"
+                  title="Ma photo"
+                  subtitle="Photographiez l’œuvre ou son cartel : l’IA propose des pistes, vous confirmez."
+                  onPress={() => handlePickPhoto('camera')}
+                  links={[
+                    { label: 'Appareil photo', onPress: () => handlePickPhoto('camera') },
+                    { label: 'Galerie', onPress: () => handlePickPhoto('gallery') },
+                  ]}
+                />
+                <SummaryRow
+                  number="03"
+                  title="Saisir à la main"
+                  subtitle="Vous remplissez la fiche vous-même."
+                  onPress={() => openManual('choice')}
+                />
               </View>
-            </View>
+            </>
           ) : null}
 
           {phase === 'photo' && photoUri ? (
@@ -628,24 +675,62 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: SIDE,
     paddingTop: 8,
     paddingBottom: 120,
   },
-  choice: {
-    gap: 12,
+  summary: {
+    marginTop: 32,
+    borderTopWidth: 2,
+    borderTopColor: palette.text,
   },
-  sourceRow: {
+  summaryRow: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: 16,
+    paddingVertical: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: palette.field,
   },
-  sourceHalf: {
+  summaryTexts: {
     flex: 1,
   },
-  settingsButton: {
-    minWidth: 48,
-    minHeight: 48,
-    alignItems: 'center',
+  summaryNumber: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: palette.accent,
+  },
+  summaryTitle: {
+    fontFamily: fonts.medium,
+    fontSize: 24,
+    lineHeight: 30,
+    color: palette.text,
+    marginTop: 4,
+  },
+  summarySubtitle: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+    color: palette.textSecondary,
+    marginTop: 4,
+  },
+  summaryLinks: {
+    flexDirection: 'row',
+    gap: 24,
+    marginTop: 4,
+  },
+  summaryLink: {
+    minHeight: 44,
     justifyContent: 'center',
+  },
+  summaryLinkText: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    letterSpacing: 2.4,
+    color: palette.text,
+    textDecorationLine: 'underline',
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
